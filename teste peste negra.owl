@@ -1,0 +1,365 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="#teste peste negra.owl"
+         xmlns="#teste peste negra.owl#">
+
+<owl:Ontology rdf:about="#teste peste negra.owl"/>
+
+<owl:ObjectProperty rdf:about="#eTransmitidaPor">
+  <rdfs:domain rdf:resource="#PesteNegra"/>
+  <rdfs:range rdf:resource="#RatoNegro"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#causa">
+  <rdfs:domain rdf:resource="#PesteNegra"/>
+  <rdfs:range rdf:resource="#Sintoma"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#resultaEmMorteDe">
+  <rdfs:domain rdf:resource="#PesteNegra"/>
+  <rdfs:range rdf:resource="#Pessoa"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#temEstagio">
+  <rdfs:domain rdf:resource="#PesteNegra"/>
+  <rdfs:range rdf:resource="#EstagioPesteNegra"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#requer">
+  <rdfs:domain rdf:resource="#EstagioPesteNegra"/>
+  <rdfs:range rdf:resource="#ConceitoAbstrato"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#atribuiuCausaA">
+  <rdfs:domain rdf:resource="#Europeu"/>
+  <rdfs:range rdf:resource="#Judeu"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#supostamenteTrouxe">
+  <rdfs:domain rdf:resource="#Judeu"/>
+  <rdfs:range rdf:resource="#PesteNegra"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#supostamenteEnvenenou">
+  <rdfs:domain rdf:resource="#Judeu"/>
+  <rdfs:range rdf:resource="#PocoDeAgua"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#impactou">
+  <rdfs:domain rdf:resource="#PesteNegra"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#associadoA">
+  <rdfs:domain rdf:resource="#Gato"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#quaseCausouExtincaoDe">
+  <rdfs:domain rdf:resource="#PesteNegra"/>
+  <rdfs:range rdf:resource="#Gato"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#foiDeficienteEmRelacaoA">
+  <rdfs:domain rdf:resource="#CienciaMedica"/>
+  <rdfs:range rdf:resource="#PesteNegra"/>
+</owl:ObjectProperty>
+
+<owl:Class rdf:about="#Doenca">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#PesteNegra">
+  <rdfs:subClassOf rdf:resource="#Doenca"/>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#eTransmitidaPor"/>
+      <owl:someValuesFrom rdf:resource="#RatoNegro"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#causa"/>
+      <owl:someValuesFrom rdf:resource="#ManchaNegra"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#resultaEmMorteDe"/>
+      <owl:someValuesFrom rdf:resource="#Pessoa"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#causa"/>
+      <owl:someValuesFrom rdf:resource="#FebreAlta"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#causa"/>
+      <owl:someValuesFrom rdf:resource="#Calafrio"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#causa"/>
+      <owl:someValuesFrom rdf:resource="#DorNoCorpo"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#causa"/>
+      <owl:someValuesFrom rdf:resource="#DorDeCabeca"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#causa"/>
+      <owl:someValuesFrom rdf:resource="#Nausea"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#causa"/>
+      <owl:someValuesFrom rdf:resource="#Vomito"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#causa"/>
+      <owl:someValuesFrom rdf:resource="#Convulsao"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#temEstagio"/>
+      <owl:someValuesFrom rdf:resource="#PesteBubonica"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#temEstagio"/>
+      <owl:someValuesFrom rdf:resource="#PesteSepticemica"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#temEstagio"/>
+      <owl:someValuesFrom rdf:resource="#PestePneumonica"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#quaseCausouExtincaoDe"/>
+      <owl:someValuesFrom rdf:resource="#Gato"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+</owl:Class>
+
+<owl:Class rdf:about="#EstagioPesteNegra">
+  <rdfs:subClassOf rdf:resource="#PesteNegra"/>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#requer"/>
+      <owl:someValuesFrom rdf:resource="#Tratamento"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#requer"/>
+      <owl:someValuesFrom rdf:resource="#Diagnostico"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+</owl:Class>
+
+<owl:Class rdf:about="#PesteBubonica">
+  <rdfs:subClassOf rdf:resource="#EstagioPesteNegra"/>
+</owl:Class>
+
+<owl:Class rdf:about="#PesteSepticemica">
+  <rdfs:subClassOf rdf:resource="#EstagioPesteNegra"/>
+</owl:Class>
+
+<owl:Class rdf:about="#PestePneumonica">
+  <rdfs:subClassOf rdf:resource="#EstagioPesteNegra"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Sintoma">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#FebreAlta">
+  <rdfs:subClassOf rdf:resource="#Sintoma"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Calafrio">
+  <rdfs:subClassOf rdf:resource="#Sintoma"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DorNoCorpo">
+  <rdfs:subClassOf rdf:resource="#Sintoma"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DorDeCabeca">
+  <rdfs:subClassOf rdf:resource="#Sintoma"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Nausea">
+  <rdfs:subClassOf rdf:resource="#Sintoma"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Vomito">
+  <rdfs:subClassOf rdf:resource="#Sintoma"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Convulsao">
+  <rdfs:subClassOf rdf:resource="#Sintoma"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ManchaNegra">
+  <rdfs:subClassOf rdf:resource="#Sintoma"/>
+</owl:Class>
+
+<owl:Class rdf:about="#SerVivo">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Animal">
+  <rdfs:subClassOf rdf:resource="#SerVivo"/>
+  <owl:disjointWith rdf:resource="#Pessoa"/>
+</owl:Class>
+
+<owl:Class rdf:about="#RatoNegro">
+  <rdfs:subClassOf rdf:resource="#Animal"/>
+  <owl:disjointWith rdf:resource="#Gato"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Gato">
+  <rdfs:subClassOf rdf:resource="#Animal"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Pessoa">
+  <rdfs:subClassOf rdf:resource="#SerVivo"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Europeu">
+  <rdfs:subClassOf rdf:resource="#Pessoa"/>
+  <owl:disjointWith rdf:resource="#Judeu"/>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#atribuiuCausaA"/>
+      <owl:someValuesFrom rdf:resource="#Judeu"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+</owl:Class>
+
+<owl:Class rdf:about="#Judeu">
+  <rdfs:subClassOf rdf:resource="#Pessoa"/>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#supostamenteTrouxe"/>
+      <owl:someValuesFrom rdf:resource="#PesteNegra"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+  <rdfs:subClassOf>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#supostamenteEnvenenou"/>
+      <owl:someValuesFrom rdf:resource="#PocoDeAgua"/>
+    </owl:Restriction>
+  </rdfs:subClassOf>
+</owl:Class>
+
+<owl:Class rdf:about="#EventoHistorico">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Conflito">
+  <rdfs:subClassOf rdf:resource="#EventoHistorico"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Organizacao">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Instituicao">
+  <rdfs:subClassOf rdf:resource="#Organizacao"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Localizacao">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#PocoDeAgua">
+  <rdfs:subClassOf rdf:resource="#Localizacao"/>
+</owl:Class>
+
+<owl:Class rdf:about="#EntidadeMitologica">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ConceitoAbstrato">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#CienciaMedica">
+  <rdfs:subClassOf rdf:resource="#ConceitoAbstrato"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Tratamento">
+  <rdfs:subClassOf rdf:resource="#ConceitoAbstrato"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Diagnostico">
+  <rdfs:subClassOf rdf:resource="#ConceitoAbstrato"/>
+</owl:Class>
+
+<owl:NamedIndividual rdf:about="#PandemiaPesteNegra">
+  <rdf:type rdf:resource="#PesteNegra"/>
+  <impactou rdf:resource="#GuerraDosCemAnos"/>
+  <impactou rdf:resource="#IgrejaCatolica"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#GuerraDosCemAnos">
+  <rdf:type rdf:resource="#Conflito"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#IgrejaCatolica">
+  <rdf:type rdf:resource="#Instituicao"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#Demonio">
+  <rdf:type rdf:resource="#EntidadeMitologica"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#CienciaMedicaDaEpoca">
+  <rdf:type rdf:resource="#CienciaMedica"/>
+  <foiDeficienteEmRelacaoA rdf:resource="#PandemiaPesteNegra"/>
+</owl:NamedIndividual>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#FebreAlta"/>
+    <rdf:Description rdf:about="#Calafrio"/>
+    <rdf:Description rdf:about="#DorNoCorpo"/>
+    <rdf:Description rdf:about="#DorDeCabeca"/>
+    <rdf:Description rdf:about="#Nausea"/>
+    <rdf:Description rdf:about="#Vomito"/>
+    <rdf:Description rdf:about="#Convulsao"/>
+    <rdf:Description rdf:about="#ManchaNegra"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#PesteBubonica"/>
+    <rdf:Description rdf:about="#PesteSepticemica"/>
+    <rdf:Description rdf:about="#PestePneumonica"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+
+</rdf:RDF>
