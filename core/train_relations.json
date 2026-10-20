@@ -1,0 +1,58 @@
+[
+  {
+    "text": "O Paracetamol alivia e trata a febre rapidamente em pacientes adultos.",
+    "sub_name": "Paracetamol",
+    "sub_type": "DRUG",
+    "obj_name": "febre",
+    "obj_type": "SYMPTOM",
+    "relation": "trata"
+  },
+  {
+    "text": "O uso continuado de Aspirina previne o infarto agudo do miocárdio.",
+    "sub_name": "Aspirina",
+    "sub_type": "DRUG",
+    "obj_name": "infarto",
+    "obj_type": "DISEASE",
+    "relation": "previne"
+  },
+  {
+    "text": "O consumo de álcool causa cirrose hepática em pacientes predispostos.",
+    "sub_name": "álcool",
+    "sub_type": "DRUG",
+    "obj_name": "cirrose hepática",
+    "obj_type": "DISEASE",
+    "relation": "causa"
+  },
+  {
+    "text": "O Ibuprofeno trata a inflamação nas articulações.",
+    "sub_name": "Ibuprofeno",
+    "sub_type": "DRUG",
+    "obj_name": "inflamação",
+    "obj_type": "SYMPTOM",
+    "relation": "trata"
+  },
+  {
+    "text": "O paciente tomou Paracetamol e apresentou tontura pela manhã.",
+    "sub_name": "Paracetamol",
+    "sub_type": "DRUG",
+    "obj_name": "tontura",
+    "obj_type": "SYMPTOM",
+    "relation": "causa"
+  },
+  {
+    "text": "A vacina contra gripe previne a infecção viral em idosos.",
+    "sub_name": "vacina contra gripe",
+    "sub_type": "DRUG",
+    "obj_name": "infecção viral",
+    "obj_type": "DISEASE",
+    "relation": "previne"
+  },
+  {
+    "text": "O médico mencionou o Paracetamol e a febre no prontuário.",
+    "sub_name": "Paracetamol",
+    "sub_type": "DRUG",
+    "obj_name": "febre",
+    "obj_type": "SYMPTOM",
+    "relation": "no_relation"
+  }
+]
