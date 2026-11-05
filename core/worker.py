@@ -1,6 +1,6 @@
 from PySide6.QtCore import QThread, Signal
 from core.synonym_detector import SynonymDetector
-from core.ontology_intergrator import OntologyIntegrator
+from ontology_intergrator import build_owl_ontology
 
 class SynonymWorker(QThread):
     """
@@ -35,7 +35,7 @@ class SynonymWorker(QThread):
 
             # 3. Executa a integração com o Owlready2 (Passo 2)
             self.progresso.emit("Injetando axiomas owl:equivalentClass na ontologia...")
-            integrador = OntologyIntegrator(self.caminho_ontologia)
+            integrador = build_owl_ontology(self.caminho_ontologia)
             integrador.aplicar_equivalencias_da_ml(grupos)
 
             # 4. Salva o resultado final
