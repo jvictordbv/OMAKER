@@ -603,6 +603,7 @@ class OntoApp(QMainWindow):
                 texto=texto, nome_arquivo=nome_arquivo, api_key=api_key,
                 modelo_llm=modelo_llm, temp_llm=temp_llm, pasta_destino=pasta_destino,
                 uri_base=uri_base,
+                protege_exe=self.configuracoes.value("caminho_protege", ""),
                 log_callback=lambda msg: [self.texto_log.append(msg), QApplication.processEvents()]
             )
             
@@ -642,6 +643,7 @@ class OntoApp(QMainWindow):
                 api_key=api_key,
                 modelo_llm=self.combo_modelo.currentText(),
                 temp_llm=self.slider_temp.value() / 100,
+                protege_exe=self.configuracoes.value("caminho_protege", ""),
                 log_callback=lambda msg: [self.log_atualizador.append(msg), QApplication.processEvents()]
             )
             

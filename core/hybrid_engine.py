@@ -177,7 +177,6 @@ def filter_by_domain(triples, log):
 
 # ----------------------------------------------------------------------------- engine
 class HybridEngine:
-    JAVA_EXE = os.environ.get("OMAKER_JAVA", "")
     # Where entities come from: "ner" (model only), "llm" (Qwen only) or "both" (merged).
     ENTITY_SOURCE = os.environ.get("OMAKER_ENTITIES", "both").lower()
 
@@ -270,15 +269,16 @@ class HybridEngine:
 
     # ---- same public API as the old SemanticEngine -------------------------------------
     @staticmethod
-    def construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback):
+    def construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback, protege_exe=""):
         """taxonomy + triples -> .owl file, plus what the reasoner said about it."""
         from core import owl_builder
+        from core.java_locator import find_java
 
         if not uri_base.endswith(("#", "/")):
             uri_base += "#"
         world, onto = owl_builder.new_world_ontology(f"{uri_base}{nome_arquivo}.owl")
         added = owl_builder.populate(onto, taxonomy, triples, log_callback)
-        status = owl_builder.run_reasoner(world, log_callback, HybridEngine.JAVA_EXE)
+        status = owl_builder.run_reasoner(world, log_callback, find_java(protege_exe) or "")
 
         os.makedirs(pasta_destino or ".", exist_ok=True)
         caminho = owl_builder.save(onto, os.path.join(pasta_destino or ".", f"{nome_arquivo}.owl"))
@@ -286,18 +286,22 @@ class HybridEngine:
         return OntologyResult(caminho, status, added)
 
     @staticmethod
-    def gerar_ontologia(texto, nome_arquivo, api_key, modelo_llm, temp_llm, pasta_destino, uri_base, log_callback):
+    def gerar_ontologia(texto, nome_arquivo, api_key, modelo_llm, temp_llm, pasta_destino, uri_base, log_callback,
+                        protege_exe=""):
         taxonomy, triples = HybridEngine.extrair(texto, modelo_llm, temp_llm, log_callback)
-        return HybridEngine.construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback)
+        return HybridEngine.construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback,
+                                      protege_exe=protege_exe)
 
     @staticmethod
-    def atualizar_ontologia(caminho_owl, texto, api_key, log_callback, modelo_llm=DEFAULT_MODEL, temp_llm=0.1):
+    def atualizar_ontologia(caminho_owl, texto, api_key, log_callback, modelo_llm=DEFAULT_MODEL, temp_llm=0.1,
+                            protege_exe=""):
         from core import owl_builder
+        from core.java_locator import find_java
 
         taxonomy, triples = HybridEngine.extrair(texto, modelo_llm, temp_llm, log_callback)
         world, onto = owl_builder.load_world_ontology(caminho_owl)
         added = owl_builder.populate(onto, taxonomy, triples, log_callback)
-        status = owl_builder.run_reasoner(world, log_callback, HybridEngine.JAVA_EXE)
+        status = owl_builder.run_reasoner(world, log_callback, find_java(protege_exe) or "")
         owl_builder.save(onto, caminho_owl)
         log_callback("\n> [SUCCESS] Merge finished.")
         return OntologyResult(caminho_owl, status, added)

@@ -18,7 +18,7 @@ O OMAKER é um ecossistema computacional projetado para mitigar o gargalo da aqu
 
 ### 1. Pré-requisitos
 - [uv](https://docs.astral.sh/uv/) instalado (ele baixa o Python 3.12 indicado em `.python-version`).
-- Java 11+ no PATH (ou defina a variável `OMAKER_JAVA` com o caminho do executável), usado pelo raciocinador HermiT.
+- Java 11+, usado pelo raciocinador HermiT. O OMAKER procura em OMAKER_JAVA, JAVA_HOME, PATH, Program Files e no JRE que vem com o Protégé (caminho informado nas Configurações).
 - [Ollama](https://ollama.com/) em execução com o modelo configurado: `ollama pull qwen3:8b`.
 
 ### 2. Clonar o Repositório e Instalar as Dependências

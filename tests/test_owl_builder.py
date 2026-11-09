@@ -22,17 +22,30 @@ def test_run_reasoner_unavailable_without_java(monkeypatch):
     assert owl_builder.run_reasoner(world, log=lambda m: None) is ReasonerStatus.UNAVAILABLE
 
 
-def test_run_reasoner_consistent(monkeypatch):
+def test_run_reasoner_without_java_explains(monkeypatch):
+    monkeypatch.setattr(owl_builder.shutil, "which", lambda _: None)
+    monkeypatch.setattr(owl_builder, "sync_reasoner_hermit", _raise(AssertionError("não deveria rodar")))
+    world, _ = owl_builder.new_world_ontology("http://t.org/x.owl")
+    lines = []
+    assert owl_builder.run_reasoner(world, log=lines.append) is ReasonerStatus.UNAVAILABLE
+    assert any("Java não encontrado" in line for line in lines)
+
+
+def test_run_reasoner_consistent(tmp_path, monkeypatch):
+    java = tmp_path / "java.exe"
+    java.write_bytes(b"")
     monkeypatch.setattr(owl_builder, "sync_reasoner_hermit", lambda *a, **k: None)
     world, _ = owl_builder.new_world_ontology("http://t.org/x.owl")
-    assert owl_builder.run_reasoner(world, log=lambda m: None) is ReasonerStatus.CONSISTENT
+    assert owl_builder.run_reasoner(world, log=lambda m: None, java_exe=str(java)) is ReasonerStatus.CONSISTENT
 
 
-def test_run_reasoner_inconsistent(monkeypatch):
+def test_run_reasoner_inconsistent(tmp_path, monkeypatch):
+    java = tmp_path / "java.exe"
+    java.write_bytes(b"")
     err = owl_builder.OwlReadyInconsistentOntologyError("boom")
     monkeypatch.setattr(owl_builder, "sync_reasoner_hermit", _raise(err))
     world, _ = owl_builder.new_world_ontology("http://t.org/x.owl")
-    assert owl_builder.run_reasoner(world, log=lambda m: None) is ReasonerStatus.INCONSISTENT
+    assert owl_builder.run_reasoner(world, log=lambda m: None, java_exe=str(java)) is ReasonerStatus.INCONSISTENT
 
 
 def test_construir_reports_reasoner_unavailable(tmp_path, monkeypatch, sample_extraction):

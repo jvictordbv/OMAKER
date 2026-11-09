@@ -101,9 +101,14 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
 
 def run_reasoner(world, log=print, java_exe: str = "") -> ReasonerStatus:
     if java_exe and not os.path.exists(java_exe):
-        log(f"> [HERMIT] OMAKER_JAVA points to a file that does not exist ({java_exe}); trying 'java' from PATH.")
+        log(f"> [HERMIT] O Java informado não existe ({java_exe}); tentando o 'java' do PATH.")
         java_exe = ""
-    owlready2.JAVA_EXE = java_exe or shutil.which("java") or "java"
+    java_exe = java_exe or shutil.which("java") or ""
+    if not java_exe:
+        log("> [HERMIT] Java não encontrado. Instale o Java 11+ ou informe o caminho do Protégé "
+            "nas Configurações (o OMAKER usa o Java que vem com ele).")
+        return ReasonerStatus.UNAVAILABLE
+    owlready2.JAVA_EXE = java_exe
     log("> [HERMIT] Running the reasoner for logical validation...")
     try:
         sync_reasoner_hermit(world, infer_property_values=True)
@@ -114,7 +119,7 @@ def run_reasoner(world, log=print, java_exe: str = "") -> ReasonerStatus:
         log("> [HERMIT] The file will be saved, but it needs review.")
         return ReasonerStatus.INCONSISTENT
     except Exception as e:
-        log(f"> [HERMIT] Could not run (check Java / OMAKER_JAVA): {e}")
+        log(f"> [HERMIT] Could not run (verifique o Java): {e}")
         return ReasonerStatus.UNAVAILABLE
 
 
