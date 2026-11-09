@@ -58,6 +58,8 @@ class RelationExtractorPURE(nn.Module):
             nn.Dropout(dropout),
             nn.Linear(hidden, num_relations),
         )
+        # transformers 5 keeps the checkpoint dtype (SpanBERT is fp16); the head is fp32.
+        self.float()
 
     # ------------------------------------------------------------------ input
     def mark_text(self, text: str, sub_span: tuple, sub_type: str, obj_span: tuple, obj_type: str) -> str:

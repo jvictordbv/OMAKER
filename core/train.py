@@ -79,7 +79,7 @@ def train_omaker_pure(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    model = RelationExtractorPURE(model_name=MODEL_NAME, num_relations=len(REL2ID)).float().to(device)
+    model = RelationExtractorPURE(model_name=MODEL_NAME, num_relations=len(REL2ID)).to(device)
 
     optimizer = torch.optim.AdamW(
         [
