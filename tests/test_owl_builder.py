@@ -42,3 +42,17 @@ def test_construir_reports_reasoner_unavailable(tmp_path, monkeypatch, sample_ex
     assert os.path.exists(result.path)
     assert result.reasoner is ReasonerStatus.UNAVAILABLE
     assert result.relations_added == 3
+
+
+def test_atualizar_returns_ontology_result(tmp_path, monkeypatch, sample_extraction):
+    from core.hybrid_engine import OntologyResult
+
+    tax, triples = sample_extraction
+    monkeypatch.setattr(owl_builder, "run_reasoner", lambda *a, **k: ReasonerStatus.UNAVAILABLE)
+    first = HybridEngine.construir(tax, triples, "t", str(tmp_path), "http://t.org/", lambda m: None)
+    monkeypatch.setattr(HybridEngine, "extrair", staticmethod(lambda *a, **k: (tax, triples)))
+    result = HybridEngine.atualizar_ontologia(first.path, "texto", "", lambda m: None)
+    assert isinstance(result, OntologyResult)
+    assert result.path == first.path
+    assert result.reasoner is ReasonerStatus.UNAVAILABLE
+    assert isinstance(result.relations_added, int)

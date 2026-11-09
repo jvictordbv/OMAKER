@@ -295,8 +295,8 @@ class HybridEngine:
 
         taxonomy, triples = HybridEngine.extrair(texto, modelo_llm, temp_llm, log_callback)
         world, onto = owl_builder.load_world_ontology(caminho_owl)
-        owl_builder.populate(onto, taxonomy, triples, log_callback)
-        owl_builder.run_reasoner(world, log_callback, HybridEngine.JAVA_EXE)
+        added = owl_builder.populate(onto, taxonomy, triples, log_callback)
+        status = owl_builder.run_reasoner(world, log_callback, HybridEngine.JAVA_EXE)
         owl_builder.save(onto, caminho_owl)
         log_callback("\n> [SUCCESS] Merge finished.")
-        return True
+        return OntologyResult(caminho_owl, status, added)
