@@ -10,6 +10,7 @@ from PySide6.QtGui import QFont, QIcon, QPixmap
 # Imports modulares das dependências locais
 import ui.recursos_rc as recursos_rc
 from core.hybrid_engine import HybridEngine as SemanticEngine
+from core.iri import DEFAULT_URI_BASE
 
 
 from PySide6.QtWidgets import QMessageBox # (ou PyQt6, dependendo de qual usa)
@@ -557,7 +558,7 @@ class OntoApp(QMainWindow):
     def carregar_configuracoes(self):
         self.input_api.setText(self.configuracoes.value("api_key", ""))
         self.input_autor.setText(self.configuracoes.value("autor", ""))
-        self.input_uri.setText(self.configuracoes.value("uri_base", "http://www.mestrado.edu/ontologias/"))
+        self.input_uri.setText(self.configuracoes.value("uri_base", "") or DEFAULT_URI_BASE)
         self.input_diretorio.setText(self.configuracoes.value("diretorio_exportacao", os.path.abspath(".")))
         
         # --- CARREGA O CAMINHO DO PROTÉGÉ ---
@@ -583,7 +584,7 @@ class OntoApp(QMainWindow):
         api_key = self.configuracoes.value("api_key", "")
         texto = self.texto_entrada.toPlainText().strip()
         nome_arquivo = self.input_nome_arquivo.text().strip()
-        uri_base = self.configuracoes.value("uri_base", "http://www.mestrado.edu/ontologias/")
+        uri_base = self.configuracoes.value("uri_base", "") or DEFAULT_URI_BASE
         modelo_llm = self.combo_modelo.currentText()
         temp_llm = float(self.slider_temp.value() / 100)
         pasta_destino = self.input_diretorio.text()

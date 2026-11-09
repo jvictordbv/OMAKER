@@ -14,6 +14,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from core.iri import DEFAULT_URI_BASE, normalize_base, ontology_iri
 from core.paths import default_checkpoint_path
 from core.labels import (BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION,
                          RELATION_DOMAIN, REL2ID, ROOT_CLASS)
@@ -274,9 +275,9 @@ class HybridEngine:
         from core import owl_builder
         from core.java_locator import find_java
 
-        if not uri_base.endswith(("#", "/")):
-            uri_base += "#"
-        world, onto = owl_builder.new_world_ontology(f"{uri_base}{nome_arquivo}.owl")
+        if normalize_base(uri_base)[1]:
+            log_callback(f"> [IRI] URI base vazia ou inválida; usando {DEFAULT_URI_BASE}")
+        world, onto = owl_builder.new_world_ontology(ontology_iri(uri_base, nome_arquivo))
         added = owl_builder.populate(onto, taxonomy, triples, log_callback)
         status = owl_builder.run_reasoner(world, log_callback, find_java(protege_exe) or "")
 
