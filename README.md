@@ -39,4 +39,9 @@ uv run pytest
 ```
 
 @mastersthesis{barbosa2026omaker,
-  author       = {João Victor Ferreira Barbosa}
+  author       = {João Victor Ferreira Barbosa},
+  title        = {OMAKER: Ontology Mapping \& Knowledge Engineering Resource},
+  school       = {Universidade Federal de Pernambuco (UFPE)},
+  year         = {2026},
+  type         = {Projeto de Mestrado}
+}
