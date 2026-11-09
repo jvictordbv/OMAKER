@@ -1,0 +1,209 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="http://omaker.org/onto/try_text_result.owl"
+         xmlns="http://omaker.org/onto/try_text_result.owl#">
+
+<owl:Ontology rdf:about="http://omaker.org/onto/try_text_result.owl"/>
+
+<owl:ObjectProperty rdf:about="#treats">
+  <rdfs:domain rdf:resource="#Drug"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#prevents">
+  <rdfs:domain rdf:resource="#Drug"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#causes"/>
+
+<owl:Class rdf:about="#BiomedicalEntity">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Drug">
+  <rdfs:subClassOf rdf:resource="#BiomedicalEntity"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Symptom">
+  <rdfs:subClassOf rdf:resource="#BiomedicalEntity"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Disease">
+  <rdfs:subClassOf rdf:resource="#BiomedicalEntity"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Gene">
+  <rdfs:subClassOf rdf:resource="#BiomedicalEntity"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Antidiabetic">
+  <rdfs:subClassOf rdf:resource="#Drug"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Cardiovascular">
+  <rdfs:subClassOf rdf:resource="#Disease"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Antiplatelet">
+  <rdfs:subClassOf rdf:resource="#Drug"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Gastrointestinal">
+  <rdfs:subClassOf rdf:resource="#Symptom"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Respiratory">
+  <rdfs:subClassOf rdf:resource="#Symptom"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Analgesic">
+  <rdfs:subClassOf rdf:resource="#Drug"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Cancer">
+  <rdfs:subClassOf rdf:resource="#Disease"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Hepatic">
+  <rdfs:subClassOf rdf:resource="#Disease"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Neurological">
+  <rdfs:subClassOf rdf:resource="#Symptom"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Behavioral">
+  <rdfs:subClassOf rdf:resource="#Symptom"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Cerebrovascular">
+  <rdfs:subClassOf rdf:resource="#Disease"/>
+</owl:Class>
+
+<owl:NamedIndividual rdf:about="#metformin">
+  <rdf:type rdf:resource="#Antidiabetic"/>
+  <treats rdf:resource="#type_2_diabetes"/>
+  <causes rdf:resource="#vitamin_B12_deficiency"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">metformin</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#type_2_diabetes">
+  <rdf:type rdf:resource="#Disease"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">type 2 diabetes</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#vitamin_B12_deficiency">
+  <rdf:type rdf:resource="#Disease"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">vitamin B12 deficiency</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#Aspirin">
+  <rdf:type rdf:resource="#Antiplatelet"/>
+  <prevents rdf:resource="#myocardial_infarction"/>
+  <prevents rdf:resource="#cardiovascular_disease"/>
+  <causes rdf:resource="#gastric_bleeding"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Aspirin</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#myocardial_infarction">
+  <rdf:type rdf:resource="#Cerebrovascular"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">myocardial infarction</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#cardiovascular_disease">
+  <rdf:type rdf:resource="#Cardiovascular"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cardiovascular disease</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#gastric_bleeding">
+  <rdf:type rdf:resource="#Gastrointestinal"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">gastric bleeding</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#fever">
+  <rdf:type rdf:resource="#Respiratory"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">fever</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#cough">
+  <rdf:type rdf:resource="#Respiratory"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cough</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#paracetamol">
+  <rdf:type rdf:resource="#Analgesic"/>
+  <treats rdf:resource="#fever"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">paracetamol</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#Ibuprofen">
+  <rdf:type rdf:resource="#Analgesic"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ibuprofen</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#headache">
+  <rdf:type rdf:resource="#Neurological"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">headache</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#smoking_status">
+  <rdf:type rdf:resource="#Behavioral"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">smoking status</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lung_cancer">
+  <rdf:type rdf:resource="#Cancer"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">lung cancer</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#Chronic_alcohol_consumption">
+  <rdf:type rdf:resource="#Drug"/>
+  <causes rdf:resource="#liver_cirrhosis"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Chronic alcohol consumption</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#liver_cirrhosis">
+  <rdf:type rdf:resource="#Hepatic"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">liver cirrhosis</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#Statins">
+  <rdf:type rdf:resource="#Drug"/>
+  <prevents rdf:resource="#stroke"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Statins</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#stroke">
+  <rdf:type rdf:resource="#Cerebrovascular"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">stroke</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#Drug"/>
+    <rdf:Description rdf:about="#Symptom"/>
+    <rdf:Description rdf:about="#Disease"/>
+    <rdf:Description rdf:about="#Gene"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#Gastrointestinal"/>
+    <rdf:Description rdf:about="#Neurological"/>
+    <rdf:Description rdf:about="#Respiratory"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#Analgesic"/>
+    <rdf:Description rdf:about="#Antidiabetic"/>
+    <rdf:Description rdf:about="#Antiplatelet"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+
+</rdf:RDF>

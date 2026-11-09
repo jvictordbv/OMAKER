@@ -1,162 +1,250 @@
 [
   {
-    "text": "O Paracetamol alivia e trata a febre rapidamente em pacientes adultos.",
+    "text": "Paracetamol relieves and treats fever quickly in adult patients.",
     "sub_name": "Paracetamol",
     "sub_type": "DRUG",
-    "obj_name": "febre",
+    "obj_name": "fever",
     "obj_type": "SYMPTOM",
-    "relation": "trata"
+    "relation": "treats"
   },
   {
-    "text": "O uso continuado de Aspirina previne o infarto agudo do miocárdio.",
-    "sub_name": "Aspirina",
+    "text": "Ibuprofen treats the joint inflammation caused by arthritis.",
+    "sub_name": "Ibuprofen",
     "sub_type": "DRUG",
-    "obj_name": "infarto",
-    "obj_type": "DISEASE",
-    "relation": "previne"
-  },
-  {
-    "text": "O consumo excessivo de álcool causa cirrose hepática em pacientes predispostos.",
-    "sub_name": "álcool",
-    "sub_type": "DRUG",
-    "obj_name": "cirrose hepática",
-    "obj_type": "DISEASE",
-    "relation": "causa"
-  },
-  {
-    "text": "O Ibuprofeno trata a inflamação nas articulações provocada pela artrite.",
-    "sub_name": "Ibuprofeno",
-    "sub_type": "DRUG",
-    "obj_name": "inflamação",
+    "obj_name": "inflammation",
     "obj_type": "SYMPTOM",
-    "relation": "trata"
+    "relation": "treats"
   },
   {
-    "text": "A vacina contra gripe previne a infecção viral grave em idosos.",
-    "sub_name": "vacina contra gripe",
+    "text": "Dipyrone relieves severe headache within minutes.",
+    "sub_name": "Dipyrone",
     "sub_type": "DRUG",
-    "obj_name": "infecção viral",
-    "obj_type": "DISEASE",
-    "relation": "previne"
-  },
-  {
-    "text": "O uso inadequado de Antibióticos pode provocar resistência bacteriana.",
-    "sub_name": "Antibióticos",
-    "sub_type": "DRUG",
-    "obj_name": "resistência bacteriana",
-    "obj_type": "DISEASE",
-    "relation": "causa"
-  },
-  {
-    "text": "A Dipirona alivia a dor de cabeça forte em poucos minutos.",
-    "sub_name": "Dipirona",
-    "sub_type": "DRUG",
-    "obj_name": "dor de cabeça",
+    "obj_name": "headache",
     "obj_type": "SYMPTOM",
-    "relation": "trata"
+    "relation": "treats"
   },
   {
-    "text": "O tratamento com Metformina previne complicações severas do diabetes tipo 2.",
-    "sub_name": "Metformina",
+    "text": "The patient took Omeprazole to treat heartburn and gastroesophageal reflux.",
+    "sub_name": "Omeprazole",
     "sub_type": "DRUG",
-    "obj_name": "diabetes tipo 2",
-    "obj_type": "DISEASE",
-    "relation": "previne"
-  },
-  {
-    "text": "Fumar tabaco frequentemente causa câncer de pulmão.",
-    "sub_name": "tabaco",
-    "sub_type": "DRUG",
-    "obj_name": "câncer de pulmão",
-    "obj_type": "DISEASE",
-    "relation": "causa"
-  },
-  {
-    "text": "O paciente tomou Omeprazol para tratar azia e refluxo gastroesofágico.",
-    "sub_name": "Omeprazol",
-    "sub_type": "DRUG",
-    "obj_name": "azia",
+    "obj_name": "heartburn",
     "obj_type": "SYMPTOM",
-    "relation": "trata"
+    "relation": "treats"
   },
   {
-    "text": "A administração de Amoxicilina combate a pneumonia bacteriana.",
-    "sub_name": "Amoxicilina",
+    "text": "Amoxicillin is effective against bacterial pneumonia.",
+    "sub_name": "Amoxicillin",
     "sub_type": "DRUG",
-    "obj_name": "pneumonia bacteriana",
+    "obj_name": "bacterial pneumonia",
     "obj_type": "DISEASE",
-    "relation": "trata"
+    "relation": "treats"
   },
   {
-    "text": "Estresse crônico e ansiedade podem provocar hipertensão arterial.",
-    "sub_name": "ansiedade",
-    "sub_type": "SYMPTOM",
-    "obj_name": "hipertensão arterial",
-    "obj_type": "DISEASE",
-    "relation": "causa"
-  },
-  {
-    "text": "O paciente relatou tomar Paracetamol e apresentou tontura horas depois.",
-    "sub_name": "Paracetamol",
-    "sub_type": "DRUG",
-    "obj_name": "tontura",
-    "obj_type": "SYMPTOM",
-    "relation": "causa"
-  },
-  {
-    "text": "O médico prescreveu Paracetamol e anotou que o paciente sentia febre no prontuário.",
-    "sub_name": "Paracetamol",
-    "sub_type": "DRUG",
-    "obj_name": "febre",
-    "obj_type": "SYMPTOM",
-    "relation": "no_relation"
-  },
-  {
-    "text": "No hospital, a Aspirina e o teste para infarto foram registrados no mesmo histórico.",
-    "sub_name": "Aspirina",
-    "sub_type": "DRUG",
-    "obj_name": "infarto",
-    "obj_type": "DISEASE",
-    "relation": "no_relation"
-  },
-  {
-    "text": "A clínica avaliou o consumo de álcool e a presença de cirrose hepática durante a triagem inicial.",
-    "sub_name": "álcool",
-    "sub_type": "DRUG",
-    "obj_name": "cirrose hepática",
-    "obj_type": "DISEASE",
-    "relation": "no_relation"
-  },
-  {
-    "text": "O uso diário de Estatinas reduz o colesterol alto e previne aterosclerose.",
-    "sub_name": "Estatinas",
-    "sub_type": "DRUG",
-    "obj_name": "aterosclerose",
-    "obj_type": "DISEASE",
-    "relation": "previne"
-  },
-  {
-    "text": "A quimioterapia combate o tumor mas gera náusea intensa.",
-    "sub_name": "quimioterapia",
-    "sub_type": "DRUG",
-    "obj_name": "náusea",
-    "obj_type": "SYMPTOM",
-    "relation": "causa"
-  },
-  {
-    "text": "A quimioterapia trata o tumor em estágios avançados.",
-    "sub_name": "quimioterapia",
+    "text": "Chemotherapy treats the tumor in advanced stages.",
+    "sub_name": "Chemotherapy",
     "sub_type": "DRUG",
     "obj_name": "tumor",
     "obj_type": "DISEASE",
-    "relation": "trata"
+    "relation": "treats"
   },
   {
-    "text": "O paciente mencionou uso de Losartana e histórico familiar de hipertensão arterial.",
-    "sub_name": "Losartana",
+    "text": "Insulin therapy controls type 1 diabetes in most patients.",
+    "sub_name": "Insulin",
     "sub_type": "DRUG",
-    "obj_name": "hipertensão arterial",
+    "obj_name": "type 1 diabetes",
     "obj_type": "DISEASE",
-    "relation": "trata"
+    "relation": "treats"
+  },
+  {
+    "text": "Salbutamol relieves wheezing during asthma attacks.",
+    "sub_name": "Salbutamol",
+    "sub_type": "DRUG",
+    "obj_name": "wheezing",
+    "obj_type": "SYMPTOM",
+    "relation": "treats"
+  },
+  {
+    "text": "Oseltamivir treats influenza when started early.",
+    "sub_name": "Oseltamivir",
+    "sub_type": "DRUG",
+    "obj_name": "influenza",
+    "obj_type": "DISEASE",
+    "relation": "treats"
+  },
+  {
+    "text": "Excessive alcohol consumption causes liver cirrhosis in predisposed patients.",
+    "sub_name": "alcohol",
+    "sub_type": "DRUG",
+    "obj_name": "liver cirrhosis",
+    "obj_type": "DISEASE",
+    "relation": "causes"
+  },
+  {
+    "text": "Inappropriate use of antibiotics can cause bacterial resistance.",
+    "sub_name": "antibiotics",
+    "sub_type": "DRUG",
+    "obj_name": "bacterial resistance",
+    "obj_type": "DISEASE",
+    "relation": "causes"
+  },
+  {
+    "text": "Smoking tobacco frequently causes lung cancer.",
+    "sub_name": "tobacco",
+    "sub_type": "DRUG",
+    "obj_name": "lung cancer",
+    "obj_type": "DISEASE",
+    "relation": "causes"
+  },
+  {
+    "text": "Chronic anxiety can lead to arterial hypertension.",
+    "sub_name": "anxiety",
+    "sub_type": "SYMPTOM",
+    "obj_name": "arterial hypertension",
+    "obj_type": "DISEASE",
+    "relation": "causes"
+  },
+  {
+    "text": "The patient took Paracetamol and developed dizziness hours later.",
+    "sub_name": "Paracetamol",
+    "sub_type": "DRUG",
+    "obj_name": "dizziness",
+    "obj_type": "SYMPTOM",
+    "relation": "causes"
+  },
+  {
+    "text": "Chemotherapy fights the tumor but causes intense nausea.",
+    "sub_name": "Chemotherapy",
+    "sub_type": "DRUG",
+    "obj_name": "nausea",
+    "obj_type": "SYMPTOM",
+    "relation": "causes"
+  },
+  {
+    "text": "Poorly controlled diabetes often causes fatigue.",
+    "sub_name": "diabetes",
+    "sub_type": "DISEASE",
+    "obj_name": "fatigue",
+    "obj_type": "SYMPTOM",
+    "relation": "causes"
+  },
+  {
+    "text": "Morphine commonly causes constipation in long-term users.",
+    "sub_name": "Morphine",
+    "sub_type": "DRUG",
+    "obj_name": "constipation",
+    "obj_type": "SYMPTOM",
+    "relation": "causes"
+  },
+  {
+    "text": "Long-term use of Aspirin prevents acute myocardial infarction.",
+    "sub_name": "Aspirin",
+    "sub_type": "DRUG",
+    "obj_name": "myocardial infarction",
+    "obj_type": "DISEASE",
+    "relation": "prevents"
+  },
+  {
+    "text": "The flu vaccine prevents severe viral infection in the elderly.",
+    "sub_name": "flu vaccine",
+    "sub_type": "DRUG",
+    "obj_name": "viral infection",
+    "obj_type": "DISEASE",
+    "relation": "prevents"
+  },
+  {
+    "text": "Treatment with Metformin prevents severe complications of type 2 diabetes.",
+    "sub_name": "Metformin",
+    "sub_type": "DRUG",
+    "obj_name": "type 2 diabetes",
+    "obj_type": "DISEASE",
+    "relation": "prevents"
+  },
+  {
+    "text": "Daily Statins lower cholesterol and prevent atherosclerosis.",
+    "sub_name": "Statins",
+    "sub_type": "DRUG",
+    "obj_name": "atherosclerosis",
+    "obj_type": "DISEASE",
+    "relation": "prevents"
+  },
+  {
+    "text": "Warfarin prevents stroke in patients with atrial fibrillation.",
+    "sub_name": "Warfarin",
+    "sub_type": "DRUG",
+    "obj_name": "stroke",
+    "obj_type": "DISEASE",
+    "relation": "prevents"
+  },
+  {
+    "text": "Folic acid supplementation prevents neural tube defects.",
+    "sub_name": "Folic acid",
+    "sub_type": "DRUG",
+    "obj_name": "neural tube defects",
+    "obj_type": "DISEASE",
+    "relation": "prevents"
+  },
+  {
+    "text": "The doctor prescribed Paracetamol and noted in the chart that the patient had fever.",
+    "sub_name": "Paracetamol",
+    "sub_type": "DRUG",
+    "obj_name": "fever",
+    "obj_type": "SYMPTOM",
+    "relation": "no_relation"
+  },
+  {
+    "text": "At the hospital, Aspirin and the infarction test were recorded in the same history.",
+    "sub_name": "Aspirin",
+    "sub_type": "DRUG",
+    "obj_name": "infarction",
+    "obj_type": "DISEASE",
+    "relation": "no_relation"
+  },
+  {
+    "text": "The clinic assessed alcohol consumption and the presence of liver cirrhosis during initial screening.",
+    "sub_name": "alcohol",
+    "sub_type": "DRUG",
+    "obj_name": "liver cirrhosis",
+    "obj_type": "DISEASE",
+    "relation": "no_relation"
+  },
+  {
+    "text": "The patient mentioned taking Losartan and a family history of arterial hypertension.",
+    "sub_name": "Losartan",
+    "sub_type": "DRUG",
+    "obj_name": "arterial hypertension",
+    "obj_type": "DISEASE",
+    "relation": "no_relation"
+  },
+  {
+    "text": "Ibuprofen was listed next to headache in the pharmacy inventory notes.",
+    "sub_name": "Ibuprofen",
+    "sub_type": "DRUG",
+    "obj_name": "headache",
+    "obj_type": "SYMPTOM",
+    "relation": "no_relation"
+  },
+  {
+    "text": "Metformin and pneumonia were both discussed at the department meeting.",
+    "sub_name": "Metformin",
+    "sub_type": "DRUG",
+    "obj_name": "pneumonia",
+    "obj_type": "DISEASE",
+    "relation": "no_relation"
+  },
+  {
+    "text": "The study excluded patients using Warfarin or reporting nausea at baseline.",
+    "sub_name": "Warfarin",
+    "sub_type": "DRUG",
+    "obj_name": "nausea",
+    "obj_type": "SYMPTOM",
+    "relation": "no_relation"
+  },
+  {
+    "text": "The form asks whether the patient takes Omeprazole and whether asthma runs in the family.",
+    "sub_name": "Omeprazole",
+    "sub_type": "DRUG",
+    "obj_name": "asthma",
+    "obj_type": "DISEASE",
+    "relation": "no_relation"
   }
 ]

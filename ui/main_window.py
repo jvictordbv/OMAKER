@@ -9,7 +9,8 @@ from PySide6.QtGui import QFont, QIcon, QPixmap
 
 # Imports modulares das dependências locais
 import ui.recursos_rc as recursos_rc
-from core.semantic_engine import SemanticEngine
+from core.hybrid_engine import HybridEngine as SemanticEngine
+
 
 from PySide6.QtWidgets import QMessageBox # (ou PyQt6, dependendo de qual usa)
 import subprocess
@@ -554,12 +555,12 @@ class OntoApp(QMainWindow):
         self.slider_temp.setValue(temp_salva)
         self.lbl_valor_temp.setText(f"{temp_salva/100:.2f}")
         
-        modelos_padrao = ["gemini-2.5-flash", "gemini-2.5-pro"]
+        modelos_padrao = ["qwen3:8b"]
         lista_modelos = self.configuracoes.value("lista_modelos_disponiveis", modelos_padrao)
         self.combo_modelo.clear()
         self.combo_modelo.addItems(lista_modelos)
         
-        modelo_salvo = self.configuracoes.value("modelo", "gemini-2.5-flash")
+        modelo_salvo = self.configuracoes.value("modelo", "qwen3:8b")
         index_modelo = self.combo_modelo.findText(modelo_salvo)
         if index_modelo >= 0: self.combo_modelo.setCurrentIndex(index_modelo)
 
@@ -572,7 +573,7 @@ class OntoApp(QMainWindow):
         temp_llm = float(self.slider_temp.value() / 100)
         pasta_destino = self.input_diretorio.text()
 
-        if not api_key or not texto or not nome_arquivo:
+        if not texto or not nome_arquivo:
             QMessageBox.warning(self, "Erro", "Campos obrigatórios ausentes: Chave API, Texto ou Nome do Arquivo.")
             return
 
@@ -613,7 +614,7 @@ class OntoApp(QMainWindow):
         texto = self.texto_entrada_atualizador.toPlainText().strip()
         api_key = self.configuracoes.value("api_key", "")
         
-        if not texto or not api_key: 
+        if not texto:  
             QMessageBox.warning(self, "Aviso", "Preencha o texto e configure a chave de API.")
             return
 

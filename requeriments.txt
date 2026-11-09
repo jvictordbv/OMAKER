@@ -4,3 +4,4 @@ google-generativeai>=0.4.0
 sentence-transformers
 scikit-learn
 numpy
+pip install torch transformers scikit-learn requests owlready2 PySide6
