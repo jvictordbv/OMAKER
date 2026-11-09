@@ -5,11 +5,11 @@
 ---
 
 ## 🏛️ Sobre o Projeto
-O OMAKER é um ecossistema computacional projetado para mitigar o gargalo da aquisição de conhecimento na Web Semântica. Utilizando Large Language Models (LLMs) de última geração (Google Gemini) e engenharia de prompt estruturada, o sistema automatiza a conversão de corpus textuais complexos em ontologias formais expressas em **Lógica de Descrição (DL)**, em estrita conformidade com as diretrizes do **W3C**.
+O OMAKER é um ecossistema computacional projetado para mitigar o gargalo da aquisição de conhecimento na Web Semântica. Combinando reconhecimento de entidades biomédicas (NER), um LLM local (Qwen via Ollama) e extração de relações com PURE/SpanBERT, o sistema automatiza a conversão de corpus textuais complexos em ontologias formais expressas em **Lógica de Descrição (DL)**, em estrita conformidade com as diretrizes do **W3C**.
 
 ### 🛠️ Arquitetura e Tecnologias
-- **Core Semântico:** Owlready2 (Manipulação de grafos RDF/XML e Raciocinador Pellet).
-- **Processamento de Linguagem Natural:** API Google Generative AI (`gemini-2.5`).
+- **Core Semântico:** Owlready2 (manipulação de grafos RDF/XML) e raciocinador HermiT para validar a consistência lógica.
+- **Processamento de Linguagem Natural:** NER biomédico, Qwen local via Ollama e PURE/SpanBERT para relações, tudo executado na máquina do usuário.
 - **Interface Gráfica (GUI):** PySide6 (Qt para Python) com arquitetura modular.
 
 ---
@@ -23,8 +23,8 @@ O OMAKER é um ecossistema computacional projetado para mitigar o gargalo da aqu
 
 ### 2. Clonar o Repositório e Instalar as Dependências
 ```bash
-git clone https://github.com/seu-usuario/Project_OMAKER.git
-cd Project_OMAKER
+git clone https://github.com/jvictordbv/OMAKER.git
+cd OMAKER
 uv sync --extra dev
 ```
 
@@ -35,7 +35,7 @@ uv run python OMAKER.py
 
 ### 4. Testes
 ```bash
-uv run pytest
+uv run pytest -m "not slow and not ollama"
 ```
 
 @mastersthesis{barbosa2026omaker,
