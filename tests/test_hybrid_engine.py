@@ -100,3 +100,26 @@ def test_merge_both_sources(fake_ollama, weak_ner, monkeypatch):
     assert any("6 unique entities" in l for l in logs2), logs2
     assert any("ignored: 'tumor'" in l for l in logs2)
     assert set(tax2["instances"]) == {"Aspirin", "stroke", "Chemotherapy", "tumor", "nausea", "fever"}
+
+
+def test_gemini_model_is_rejected_not_swapped(fake_ollama):
+    from core.llm_client import LLMError
+    with pytest.raises(LLMError) as e:
+        he.HybridEngine._client("gemini-2.5-flash", 0.1, lambda m: None)
+    assert "não é um modelo do Ollama" in str(e.value)
+
+
+EMPTY_TAX = {"classes": {}, "instances": {}, "disjoint": []}
+
+
+def test_atualizar_forwards_model_and_temperature(monkeypatch, tmp_path):
+    from core import owl_builder
+    seen = {}
+    monkeypatch.setattr(he.HybridEngine, "extrair",
+                        staticmethod(lambda texto, modelo, temp, log, **k: seen.update(m=modelo, t=temp) or (EMPTY_TAX, [])))
+    monkeypatch.setattr(owl_builder, "load_world_ontology", lambda path: (object(), object()))
+    monkeypatch.setattr(owl_builder, "populate", lambda onto, tax, triples, log=print: 0)
+    monkeypatch.setattr(owl_builder, "run_reasoner", lambda world, log=print, java_exe="": owl_builder.ReasonerStatus.UNAVAILABLE)
+    monkeypatch.setattr(owl_builder, "save", lambda onto, path: path)
+    he.HybridEngine.atualizar_ontologia(str(tmp_path / "a.owl"), "txt", "", lambda m: None, modelo_llm="x:1b", temp_llm=0.3)
+    assert seen == {"m": "x:1b", "t": 0.3}

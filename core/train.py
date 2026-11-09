@@ -16,7 +16,8 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from transformers import get_linear_schedule_with_warmup
 
-from core.labels import DEFAULT_CHECKPOINT, ID2REL, MODEL_NAME, REL2ID
+from core.paths import default_checkpoint_path
+from core.labels import ID2REL, MODEL_NAME, REL2ID
 from core.relation_extractor import RelationExtractorPURE, find_span
 
 DATA_PATH = Path(__file__).parent / "train_relations.json"
@@ -58,8 +59,9 @@ def train_omaker_pure(
     grad_accum: int = 1,
     val_fraction: float = 0.25,
     seed: int = 42,
-    save_path: str = DEFAULT_CHECKPOINT,
+    save_path: str | None = None,
 ):
+    save_path = str(save_path or default_checkpoint_path())
     random.seed(seed)
     torch.manual_seed(seed)
 

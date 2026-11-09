@@ -270,8 +270,9 @@ class OntoApp(QMainWindow):
         card_arquivo.setObjectName("CardPane")
         layout_card = QVBoxLayout(card_arquivo)
         self.lbl_arquivo_sinonimos = QLabel("Ontologia selecionada: symp.owl")
+        self.caminho_owl_sinonimos = "symp.owl"
         btn_sel = QPushButton("📂 Selecionar Ontologia (.owl)")
-        btn_sel.clicked.connect(self.selecionar_arquivo_owl)
+        btn_sel.clicked.connect(self.selecionar_arquivo_owl_sinonimos)
         layout_card.addWidget(btn_sel)
         layout_card.addWidget(self.lbl_arquivo_sinonimos)
         col_esquerda.addWidget(card_arquivo)
@@ -303,7 +304,7 @@ class OntoApp(QMainWindow):
         self.area_conteudo.addWidget(pagina)
         
     def executar_worker_sinonimos(self):
-        caminho_onto = getattr(self, "caminho_owl_atual", "symp.owl")
+        caminho_onto = self.caminho_owl_sinonimos
         texto = self.input_conceitos_sinonimos.text()
         conceitos = [c.strip() for c in texto.split(",") if c.strip()]
 
@@ -318,8 +319,12 @@ class OntoApp(QMainWindow):
         self.worker = SynonymWorker(caminho_onto, conceitos)
         self.worker.progresso.connect(lambda msg: self.log_sinonimos.append(f"> {msg}"))
         self.worker.concluido.connect(self.ao_concluir_sinonimos)
-        self.worker.erro.connect(lambda err: QMessageBox.critical(self, "Erro", err))
+        self.worker.erro.connect(self.ao_falhar_sinonimos)
         self.worker.start()
+
+    def ao_falhar_sinonimos(self, msg: str):
+        self.btn_rodar_sinonimos.setEnabled(True)
+        QMessageBox.critical(self, "Erro", msg)
 
     def ao_concluir_sinonimos(self, grupos, caminho_saida):
         self.btn_rodar_sinonimos.setEnabled(True)
@@ -381,7 +386,7 @@ class OntoApp(QMainWindow):
         self.input_api = QLineEdit()
         self.input_api.setEchoMode(QLineEdit.EchoMode.Password)
         self.input_api.setPlaceholderText("Cole sua AI_API_KEY do Google AI Studio...")
-        form_layout.addRow(QLabel("Chave de Autenticação API Gemini:"), self.input_api)
+        form_layout.addRow(QLabel("Chave de API (não usada pelo motor local):"), self.input_api)
 
         layout_inputs_modelo = QHBoxLayout()
         self.combo_modelo = QComboBox()
@@ -524,6 +529,12 @@ class OntoApp(QMainWindow):
             self.caminho_owl_atual = caminho
             self.lbl_arquivo_selecionado.setText(caminho)
 
+    def selecionar_arquivo_owl_sinonimos(self):
+        caminho, _ = QFileDialog.getOpenFileName(self, "Selecione a Ontologia", "", "Ontologia OWL (*.owl)")
+        if caminho:
+            self.caminho_owl_sinonimos = caminho
+            self.lbl_arquivo_sinonimos.setText(f"Ontologia selecionada: {caminho}")
+
     def mudar_pagina(self, index): self.area_conteudo.setCurrentIndex(index)
 
     def salvar_configuracoes(self):
@@ -578,7 +589,7 @@ class OntoApp(QMainWindow):
         pasta_destino = self.input_diretorio.text()
 
         if not texto or not nome_arquivo:
-            QMessageBox.warning(self, "Erro", "Campos obrigatórios ausentes: Chave API, Texto ou Nome do Arquivo.")
+            QMessageBox.warning(self, "Erro", "Campos obrigatórios ausentes: Texto ou Nome do Arquivo.")
             return
 
         self.btn_gerar.setEnabled(False)
@@ -615,7 +626,7 @@ class OntoApp(QMainWindow):
         api_key = self.configuracoes.value("api_key", "")
         
         if not texto:  
-            QMessageBox.warning(self, "Aviso", "Preencha o texto e configure a chave de API.")
+            QMessageBox.warning(self, "Aviso", "Preencha o texto das novas evidências.")
             return
 
         # Prepara a interface para o processamento
@@ -629,6 +640,8 @@ class OntoApp(QMainWindow):
                 caminho_owl=self.caminho_owl_atual, 
                 texto=texto, 
                 api_key=api_key,
+                modelo_llm=self.combo_modelo.currentText(),
+                temp_llm=self.slider_temp.value() / 100,
                 log_callback=lambda msg: [self.log_atualizador.append(msg), QApplication.processEvents()]
             )
             

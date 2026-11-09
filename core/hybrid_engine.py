@@ -14,9 +14,10 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from core.labels import (BASE_CLASSES, DEFAULT_CHECKPOINT, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION,
+from core.paths import default_checkpoint_path
+from core.labels import (BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION,
                          RELATION_DOMAIN, REL2ID, ROOT_CLASS)
-from core.llm_client import DEFAULT_MODEL, OllamaClient
+from core.llm_client import DEFAULT_MODEL, LLMError, OllamaClient
 from core.llm_ner import extract_entities_llm, merge_entities
 from core.owl_builder import ReasonerStatus
 from core.text_utils import to_identifier
@@ -176,26 +177,25 @@ def filter_by_domain(triples, log):
 
 # ----------------------------------------------------------------------------- engine
 class HybridEngine:
-    CHECKPOINT = os.environ.get("OMAKER_CHECKPOINT", DEFAULT_CHECKPOINT)
     JAVA_EXE = os.environ.get("OMAKER_JAVA", "")
     # Where entities come from: "ner" (model only), "llm" (Qwen only) or "both" (merged).
     ENTITY_SOURCE = os.environ.get("OMAKER_ENTITIES", "both").lower()
 
     @staticmethod
     def _client(modelo_llm, temp_llm, log):
-        model = modelo_llm if modelo_llm and not modelo_llm.lower().startswith("gemini") else DEFAULT_MODEL
-        if model != modelo_llm:
-            log(f"> [LLM] '{modelo_llm}' is not a local model; using '{model}'.")
+        model = modelo_llm or DEFAULT_MODEL
+        if model.lower().startswith("gemini"):
+            raise LLMError(f"'{model}' não é um modelo do Ollama; escolha um modelo local (ex.: {DEFAULT_MODEL}).")
         client = OllamaClient(model=model)
         client.check()
         return client
 
     @staticmethod
-    def _relations_pure(pairs, log):
+    def _relations_pure(pairs, log, checkpoint):
         from core.relation_extractor import RelationExtractorPURE
 
-        log(f"> [PURE] Loading '{HybridEngine.CHECKPOINT}'...")
-        model = RelationExtractorPURE.load(HybridEngine.CHECKPOINT)
+        log(f"> [PURE] Loading '{checkpoint}'...")
+        model = RelationExtractorPURE.load(str(checkpoint))
         return model.predict(pairs)
 
     @staticmethod
@@ -244,8 +244,9 @@ class HybridEngine:
 
         triples = []
         if pairs:
-            if Path(HybridEngine.CHECKPOINT).exists():
-                preds = HybridEngine._relations_pure(pairs, log)
+            checkpoint = default_checkpoint_path()
+            if checkpoint.exists():
+                preds = HybridEngine._relations_pure(pairs, log, checkpoint)
                 threshold = DEFAULT_CONFIDENCE_THRESHOLD
             else:
                 preds, threshold = HybridEngine._relations_llm(client, pairs, temp_llm, log), 0.0

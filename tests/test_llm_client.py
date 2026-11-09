@@ -30,3 +30,11 @@ def test_check_missing_model_suggests_pull(fake_ollama):
     with pytest.raises(LLMError) as exc:
         OllamaClient("llama3", fake_ollama.host).check()
     assert "ollama pull" in str(exc.value)
+
+
+def test_check_lists_installed_models(fake_ollama):
+    fake_ollama.models[:] = ["org-bench/qwen3:8b-q4_K_M"]
+    with pytest.raises(LLMError) as e:
+        OllamaClient("qwen3:8b", fake_ollama.host).check()
+    assert "org-bench/qwen3:8b-q4_K_M" in str(e.value)
+    assert OllamaClient("qwen3:8b", fake_ollama.host).installed_models() == ["org-bench/qwen3:8b-q4_K_M"]
