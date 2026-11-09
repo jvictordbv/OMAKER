@@ -11,6 +11,7 @@ from PySide6.QtGui import QFont, QIcon, QPixmap
 import ui.recursos_rc as recursos_rc
 from core.hybrid_engine import HybridEngine as SemanticEngine
 from core.iri import DEFAULT_URI_BASE
+from core.protege import abrir_no_protege
 
 
 from PySide6.QtWidgets import QMessageBox # (ou PyQt6, dependendo de qual usa)
@@ -27,38 +28,17 @@ class OntoApp(QMainWindow):
         self.setWindowIcon(QIcon(":/icone_janela.png"))
         
         self.configuracoes = QSettings("MeuMestrado", "OntoGenApp")
+        self.caminho_owl_gerado = ""
         self.setup_ui()
         self.carregar_configuracoes()
 
     
-    def abrir_no_protege(self, caminho_owl, protege_exe, log_callback):
-        pass
-        """
-        import os
-        import subprocess
-
-        if not protege_exe or not os.path.exists(protege_exe):
-            log_callback(f"\n> [ERRO] Executável do Protégé não encontrado em: '{protege_exe}'")
-            log_callback("> [DICA] Vá na aba de Configurações e aponte para o local correto do seu Protege.exe.")
-            return False
-
+    def abrir_protege_clicado(self):
         try:
-            log_callback(f"\n> [PROTÉGÉ] Inicializando e forçando janela para o primeiro plano...")
-            
-            # Normaliza os caminhos para o padrão do Windows (barras invertidas)
-            protege_exe = os.path.normpath(protege_exe)
-            caminho_owl = os.path.normpath(caminho_owl)
-            
-            # O comando 'start "" "caminho"' faz o Windows gerenciar o foco da nova GUI.
-            # Roda em segundo plano sem travar o OMAKER, mas joga o Protégé na frente!
-            comando = f'start "" "{protege_exe}" "{caminho_owl}"'
-            subprocess.Popen(comando, shell=True)
-            
-            log_callback("> [PROTÉGÉ] Instância aberta com foco total!")
-            return True
-        except Exception as e:
-            log_callback(f"> [ERRO] Falha ao iniciar o subprocesso do Protégé: {e}")
-            return False"""
+            abrir_no_protege(self.caminho_owl_gerado,
+                             self.configuracoes.value("caminho_protege", ""))
+        except FileNotFoundError as e:
+            QMessageBox.warning(self, "Protégé", str(e))
 
     def setup_ui(self):
         widget_central = QWidget()
@@ -176,6 +156,11 @@ class OntoApp(QMainWindow):
         col_esquerda.addWidget(lbl_texto)
         col_esquerda.addWidget(self.texto_entrada)
         col_esquerda.addWidget(self.btn_gerar)
+
+        self.btn_abrir_protege = QPushButton("Abrir no Protégé")
+        self.btn_abrir_protege.setEnabled(False)
+        self.btn_abrir_protege.clicked.connect(self.abrir_protege_clicado)
+        col_esquerda.addWidget(self.btn_abrir_protege)
         workspace.addLayout(col_esquerda, stretch=4)
 
         col_direita = QVBoxLayout()
@@ -562,9 +547,7 @@ class OntoApp(QMainWindow):
         self.input_diretorio.setText(self.configuracoes.value("diretorio_exportacao", os.path.abspath(".")))
         
         # --- CARREGA O CAMINHO DO PROTÉGÉ ---
-        # Usa o caminho padrão do Windows como fallback caso seja a primeira vez abrindo o app
-        caminho_padrao = r"C:\Program Files\Protege-5.6.4\Protege.exe"
-        self.input_protege.setText(self.configuracoes.value("caminho_protege", caminho_padrao))
+        self.input_protege.setText(self.configuracoes.value("caminho_protege", ""))
         # ------------------------------------
 
         temp_salva = int(self.configuracoes.value("temperatura", 10))
@@ -608,6 +591,11 @@ class OntoApp(QMainWindow):
                 log_callback=lambda msg: [self.texto_log.append(msg), QApplication.processEvents()]
             )
             
+            caminho_saida = str(getattr(resultado, "path", "") or "")
+            if caminho_saida and os.path.isfile(caminho_saida):
+                self.caminho_owl_gerado = caminho_saida
+                self.btn_abrir_protege.setEnabled(True)
+
             nivel, titulo, mensagem = completion_message(resultado)
             aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
             aviso(self, titulo, mensagem)
