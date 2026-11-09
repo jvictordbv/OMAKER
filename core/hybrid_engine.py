@@ -12,15 +12,13 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass
-from pathlib import Path
 
 from core.iri import DEFAULT_URI_BASE, normalize_base, ontology_iri
-from core.paths import default_checkpoint_path
-from core.labels import (BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION,
-                         RELATION_DOMAIN, REL2ID, ROOT_CLASS)
+from core.labels import BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION, REL2ID, RELATION_DOMAIN, ROOT_CLASS
 from core.llm_client import DEFAULT_MODEL, LLMError, OllamaClient
 from core.llm_ner import extract_entities_llm, merge_entities
 from core.owl_builder import ReasonerStatus
+from core.paths import default_checkpoint_path
 from core.text_utils import to_identifier
 
 
@@ -108,7 +106,9 @@ def validate_taxonomy(raw: dict, entities) -> dict:
     """Turns the LLM answer into a safe taxonomy. Anything inconsistent falls back to the NER type."""
     base_names = set(BASE_CLASSES.values())
     base_of_type = dict(BASE_CLASSES)
-    norm = lambda s: re.sub(r"[\W_]+", "", s.lower())
+    def norm(s):
+        return re.sub(r"[\W_]+", "", s.lower())
+
     entity_keys = {norm(e.text) for e in entities}
 
     parents = {}
@@ -251,7 +251,7 @@ class HybridEngine:
             else:
                 preds, threshold = HybridEngine._relations_llm(client, pairs, temp_llm, log), 0.0
             best = {}
-            for p, (rel, conf) in zip(pairs, preds):
+            for p, (rel, conf) in zip(pairs, preds, strict=False):
                 if rel == NO_RELATION or (conf is not None and conf < threshold):
                     continue
                 key = (p["sub_name"].lower(), rel, p["obj_name"].lower())

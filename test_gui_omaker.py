@@ -1,7 +1,19 @@
 import sys
-from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
-                             QPushButton, QTextEdit, QLabel, QLineEdit, QProgressBar)
+
+from PySide6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QProgressBar,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+
 from core.worker import SynonymWorker
+
 
 class OMAKERWindow(QMainWindow):
     def __init__(self):
@@ -35,7 +47,7 @@ class OMAKERWindow(QMainWindow):
         layout.addWidget(self.lbl_status)
 
         self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 0) 
+        self.progress_bar.setRange(0, 0)
         self.progress_bar.hide()
         layout.addWidget(self.progress_bar)
 
@@ -79,7 +91,7 @@ class OMAKERWindow(QMainWindow):
             for gid, termos in grupos.items():
                 self.txt_resultado.append(f"• Grupo {gid + 1}: {', '.join(termos)}")
 
-            self.txt_resultado.append(f"\n<b> AXIOMAS INJETADOS COM SUCESSO!</b>")
+            self.txt_resultado.append("\n<b> AXIOMAS INJETADOS COM SUCESSO!</b>")
             self.txt_resultado.append(f"Arquivo salvo em: <i>{caminho_salvo}</i>")
 
     def exibir_erro(self, mensagem_erro):

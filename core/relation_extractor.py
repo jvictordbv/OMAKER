@@ -5,7 +5,7 @@ three can no longer diverge.
 """
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import torch
 import torch.nn as nn
@@ -23,7 +23,7 @@ from core.labels import (
 MAX_LENGTH = 256
 
 
-def find_span(text: str, name: str, avoid: Optional[tuple] = None) -> Optional[tuple]:
+def find_span(text: str, name: str, avoid: tuple | None = None) -> tuple | None:
     """Case-insensitive search for `name` in `text`.
 
     Returns the first occurrence that does not overlap `avoid`, or None.
@@ -145,7 +145,7 @@ class RelationExtractorPURE(nn.Module):
                 logits, valid = self._encode(chunk)
                 probs = torch.softmax(logits, dim=-1)
                 conf, pred = probs.max(dim=-1)
-                for c, p, ok in zip(conf.tolist(), pred.tolist(), valid.tolist()):
+                for c, p, ok in zip(conf.tolist(), pred.tolist(), valid.tolist(), strict=False):
                     results.append((ID2REL[p], c) if ok else (NO_RELATION, 0.0))
         finally:
             self.train(was_training)
@@ -163,7 +163,7 @@ class RelationExtractorPURE(nn.Module):
         return (sub_name, relation, obj_name), conf
 
     # ------------------------------------------------------------ persistence
-    def save(self, path: str, extra: Optional[dict] = None):
+    def save(self, path: str, extra: dict | None = None):
         torch.save(
             {
                 "state_dict": self.state_dict(),
@@ -176,7 +176,7 @@ class RelationExtractorPURE(nn.Module):
         )
 
     @classmethod
-    def load(cls, path: str, device: Optional[str] = None) -> "RelationExtractorPURE":
+    def load(cls, path: str, device: str | None = None) -> RelationExtractorPURE:
         """Loads a checkpoint written by `save`. Raises if the file is missing or incompatible."""
         ckpt = torch.load(path, map_location=device or "cpu")
         if ckpt.get("rel2id") != REL2ID or tuple(ckpt.get("entity_types", ())) != tuple(ENTITY_TYPES):

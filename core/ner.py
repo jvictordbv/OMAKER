@@ -1,8 +1,8 @@
 """Biomedical NER: raw text -> typed entities with character offsets."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
-from typing import List, Optional
 
 from core.labels import NER_MODEL_NAME
 from core.text_utils import split_sentences
@@ -16,6 +16,11 @@ NER_LABEL_MAP = {
 }
 
 
+def normalize_label(label: str) -> str:
+    """Lower-cases a model label and strips only a leading B-/I- prefix."""
+    return re.sub(r"^[bi]-", "", label.lower())
+
+
 @dataclass(frozen=True)
 class Entity:
     text: str
@@ -26,7 +31,7 @@ class Entity:
 
 
 class BiomedicalNER:
-    def __init__(self, model_name: str = NER_MODEL_NAME, min_score: float = 0.5, device: Optional[int] = None):
+    def __init__(self, model_name: str = NER_MODEL_NAME, min_score: float = 0.5, device: int | None = None):
         import torch
         from transformers import pipeline
 
@@ -50,18 +55,18 @@ class BiomedicalNER:
             end += 1
         return start, end
 
-    def extract(self, text: str) -> List[Entity]:
+    def extract(self, text: str) -> list[Entity]:
         """Runs the NER sentence by sentence (the model has a 512-token limit)
         and maps offsets back to the full text."""
         sentences = split_sentences(text)
         results = self.pipe([text[s:e] for s, e in sentences], batch_size=8)
 
-        entities: List[Entity] = []
+        entities: list[Entity] = []
         self.last_rejected = []
-        for (s_start, s_end), items in zip(sentences, results):
+        for (s_start, s_end), items in zip(sentences, results, strict=False):
             sentence = text[s_start:s_end]
             for item in items:
-                label = item["entity_group"].lower().replace("b-", "").replace("i-", "")
+                label = normalize_label(item["entity_group"])
                 etype = NER_LABEL_MAP.get(label)
                 if etype is None or item["score"] < self.min_score:
                     self.last_rejected.append((sentence[item["start"]:item["end"]], item["entity_group"], float(item["score"])))
@@ -73,7 +78,7 @@ class BiomedicalNER:
 
         # Remove overlaps, keeping the highest-scoring entity.
         entities.sort(key=lambda e: -e.score)
-        kept: List[Entity] = []
+        kept: list[Entity] = []
         for e in entities:
             if all(e.end <= k.start or e.start >= k.end for k in kept):
                 kept.append(e)

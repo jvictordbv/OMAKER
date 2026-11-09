@@ -17,6 +17,7 @@ from owlready2.base import OwlReadyInconsistentOntologyError
 from core.labels import BASE_CLASSES, RELATION_DOMAIN, ROOT_CLASS
 from core.text_utils import to_identifier
 
+
 class ReasonerStatus(enum.Enum):
     CONSISTENT = "consistent"
     INCONSISTENT = "inconsistent"
@@ -77,7 +78,7 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
             individuals[name.lower()] = ind
 
         added = 0
-        for sub, sub_type, rel, obj, obj_type, conf in triples:
+        for sub, _sub_type, rel, obj, _obj_type, conf in triples:
             s, o = individuals.get(sub.lower()), individuals.get(obj.lower())
             if s is None or o is None:
                 continue
@@ -118,7 +119,7 @@ def run_reasoner(world, log=print, java_exe: str = "") -> ReasonerStatus:
         log(f"> [HERMIT] LOGICAL INCONSISTENCY detected: {err}")
         log("> [HERMIT] The file will be saved, but it needs review.")
         return ReasonerStatus.INCONSISTENT
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001  HermiT/Java pode falhar de muitas formas; vira status UNAVAILABLE
         log(f"> [HERMIT] Could not run (verifique o Java): {e}")
         return ReasonerStatus.UNAVAILABLE
 

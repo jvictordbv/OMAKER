@@ -17,7 +17,7 @@ class SemanticEngine:
             genai.configure(api_key=api_key)
 
             instrucao_sistema = """
-            Você é um Engenheiro do Conhecimento Sênior especialista em Web Semântica e Lógica de Descrição (DL). 
+            Você é um Engenheiro do Conhecimento Sênior especialista em Web Semântica e Lógica de Descrição (DL).
             Sua tarefa é realizar a Extração de Conhecimento (Knowledge Extraction) de um texto e transformá-lo em uma ontologia formal.
 
             ### PROCESSO DE PENSAMENTO (Chain of Thought) ###
@@ -30,7 +30,7 @@ class SemanticEngine:
             1. TAXONOMIA: Nenhuma classe deve ficar "órfã". Use "Thing" como raiz máxima.
             2. NORMALIZAÇÃO: Identifique termos semanticamente equivalentes e use apenas uma etiqueta canônica (Ex: "Câncer" e "Neoplasia" -> use apenas "Cancer").
             3. INTEGRIDADE REFERENCIAL: Toda instância citada em "relacoes" DEVE existir em "instancias". Todo "verbo" em "relacoes" DEVE estar definido in "object_properties".
-            4. LÓGICA DE DESCRIÇÃO (Axiomas): 
+            4. LÓGICA DE DESCRIÇÃO (Axiomas):
             - Use 'only' (Universal) para restrições que se aplicam a todos os membros.
             - Use 'some' (Existencial) para indicar que existe pelo menos um relacionamento.
             - Use 'and'/'or' para definições de classes complexas ou uniões/interseções.
@@ -40,8 +40,8 @@ class SemanticEngine:
             {
             "classes": { "NomeClasse": "ClassePai" },
             "instancias": { "NomeInstancia": "NomeClasse" },
-            "object_properties": { 
-                "nome_propriedade": { "dominio": "ClasseA", "alcance": "ClasseB" } 
+            "object_properties": {
+                "nome_propriedade": { "dominio": "ClasseA", "alcance": "ClasseB" }
             },
             "relacoes": [
                 {"sujeito": "InstanciaA", "verbo": "propriedade", "objeto": "InstanciaB"}
@@ -52,18 +52,18 @@ class SemanticEngine:
             ]
             }
             """
-            
+
             modelo = genai.GenerativeModel(modelo_llm, system_instruction=instrucao_sistema)
-            resposta = modelo.generate_content(f"Devolva apenas o JSON:\n\n{texto}", 
+            resposta = modelo.generate_content(f"Devolva apenas o JSON:\n\n{texto}",
                                                generation_config={"response_mime_type": "application/json", "temperature": temp_llm})
-            
+
             dados = json.loads(resposta.text)
             log_callback("> [PARSER] Resposta JSON estruturada obtida com sucesso. Injetando dados no grafo...")
 
             onto_path.append(".")
-            if not uri_base.endswith(("#", "/")): 
+            if not uri_base.endswith(("#", "/")):
                 uri_base += "#"
-            
+
             uri_completa = f"{uri_base}{nome_arquivo}.owl"
             onto = get_ontology(uri_completa)
 
@@ -98,41 +98,41 @@ class SemanticEngine:
                             s_nome = rel.get("sujeito")
                             v_nome = rel.get("verbo")
                             o_nome = rel.get("objeto")
-                        else: 
+                        else:
                             continue
                         sujeito = instancias_owl.get(s_nome)
                         objeto = instancias_owl.get(o_nome)
                         if sujeito and objeto and hasattr(onto, v_nome):
                             getattr(sujeito, v_nome).append(objeto)
-                    except: 
+                    except:
                         pass
 
                 for grupo_disjunto in dados.get("disjuntos", []):
                     try:
                         classes_do_grupo = [classes_owl[c] for c in grupo_disjunto if c in classes_owl]
-                        if len(classes_do_grupo) > 1: 
+                        if len(classes_do_grupo) > 1:
                             AllDisjoint(classes_do_grupo)
-                    except: 
+                    except:
                         pass
 
                 for ax in dados.get("axiomas", []):
                     try:
                         alvo = classes_owl.get(ax.get("alvo"))
-                        if not alvo: 
+                        if not alvo:
                             continue
                         tipo = ax.get("tipo")
                         if tipo in ["only", "some"]:
                             prop = getattr(onto, ax.get("propriedade"), None)
                             alcance = classes_owl.get(ax.get("alcance"))
                             if prop and alcance:
-                                if tipo == "only": 
+                                if tipo == "only":
                                     alvo.is_a.append(prop.only(alcance))
-                                elif tipo == "some": 
+                                elif tipo == "some":
                                     alvo.is_a.append(prop.some(alcance))
-                    except: 
+                    except:
                         pass
-            
-            
+
+
                 try:
                     log_callback("\n> [HERMIT] Invocando o raciocinador para validação lógica...")
                     sync_reasoner(infer_property_values=True)
@@ -146,7 +146,7 @@ class SemanticEngine:
             # Salva o arquivo final uma única vez
             caminho_final = os.path.join(pasta_destino, f"{nome_arquivo}.owl")
             onto.save(file=caminho_final, format="rdfxml")
-            
+
             log_callback(f"\n> [SUCCESS] Grafo de Conhecimento OWL salvo com sucesso em:\n{caminho_final}")
             return caminho_final
 
@@ -162,9 +162,9 @@ class SemanticEngine:
         try:
             onto_path.append(os.path.dirname(caminho_owl))
             onto_existente = get_ontology(f"file://{caminho_owl}").load()
-            
+
             log_callback("> [FUSION] Alinhando novos axiomas...")
-           
+
             onto_existente.save(file=caminho_owl, format="rdfxml")
             log_callback("\n> [SUCCESS] Fusão concluída!")
             return True

@@ -1,38 +1,50 @@
 # ui/main_window.py
 import os
-from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                               QTextEdit, QPushButton, QLineEdit, QMessageBox, 
-                               QStackedWidget, QListWidget, QFormLayout, QFrame, 
-                               QComboBox, QSlider, QFileDialog, QApplication)
-from PySide6.QtCore import Qt, QSettings
-from PySide6.QtGui import QFont, QIcon, QPixmap
+
+from PySide6.QtCore import QSettings, Qt
+from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QFileDialog,
+    QFormLayout,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QSlider,
+    QStackedWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
 # Imports modulares das dependências locais
-import ui.recursos_rc as recursos_rc
+import ui.recursos_rc  # noqa: F401  registra os recursos Qt (ícones); não remover
 from core.hybrid_engine import HybridEngine as SemanticEngine
 from core.iri import DEFAULT_URI_BASE
 from core.protege import abrir_no_protege
-
-
-from PySide6.QtWidgets import QMessageBox # (ou PyQt6, dependendo de qual usa)
-import subprocess
 from core.worker import SynonymWorker
 from ui.messages import completion_message
-import os
+
 
 class OntoApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("OMAKER • Engenharia de Ontologias Semânticas")
-        self.resize(1180, 780) 
+        self.resize(1180, 780)
         self.setWindowIcon(QIcon(":/icone_janela.png"))
-        
+
         self.configuracoes = QSettings("MeuMestrado", "OntoGenApp")
         self.caminho_owl_gerado = ""
         self.setup_ui()
         self.carregar_configuracoes()
 
-    
+
     def abrir_protege_clicado(self):
         try:
             abrir_no_protege(self.caminho_owl_gerado,
@@ -53,10 +65,10 @@ class OntoApp(QMainWindow):
         self.menu_lateral.setFixedWidth(240)
         self.menu_lateral.addItems([
             "🏠  Início",
-            "🧠  Gerador de Ontologia", 
-            "🔄  Atualizador (Mescla)", 
+            "🧠  Gerador de Ontologia",
+            "🔄  Atualizador (Mescla)",
             "🧬 Fusão de Sinônimos (SiMHOMer)",
-            "📂  Metadados do Projeto", 
+            "📂  Metadados do Projeto",
             "⚙️  Configurações",
             "ℹ️  Sobre o OMAKER"
         ])
@@ -106,7 +118,7 @@ class OntoApp(QMainWindow):
         else:
             self.lbl_logo.setText("[ LOGO OMAKER ]")
             self.lbl_logo.setStyleSheet("font-size: 18px; font-weight: bold; color: #64748b;")
-        
+
         self.lbl_logo.setAlignment(Qt.AlignCenter)
 
         lbl_welcome = QLabel("Bem-vindo ao OMAKER\nAmbiente Inteligente de Engenharia e Mapeamento de Ontologias.")
@@ -136,20 +148,20 @@ class OntoApp(QMainWindow):
 
         col_esquerda = QVBoxLayout()
         col_esquerda.setSpacing(12)
-        
+
         lbl_nome = QLabel("Identificador da Ontologia (Nome do arquivo):")
         self.input_nome_arquivo = QLineEdit()
         self.input_nome_arquivo.setPlaceholderText("Ex: ontologia_dengue_medicina")
-        
+
         lbl_texto = QLabel("Texto Médico de Entrada (Base de Conhecimento):")
         self.texto_entrada = QTextEdit()
         self.texto_entrada.setPlaceholderText("Cole aqui artigos científicos ou diretrizes clínicas para extração semântica...")
 
-        
+
         self.btn_gerar = QPushButton("⚡  Processar Inteligência Semântica e Criar OWL")
         self.btn_gerar.setCursor(Qt.PointingHandCursor)
         self.btn_gerar.clicked.connect(self.processar_ontologia)
-        
+
 
         col_esquerda.addWidget(lbl_nome)
         col_esquerda.addWidget(self.input_nome_arquivo)
@@ -165,12 +177,12 @@ class OntoApp(QMainWindow):
 
         col_direita = QVBoxLayout()
         col_direita.setSpacing(8)
-        
+
         lbl_log = QLabel("Console de Engenharia de Conhecimento:")
         self.texto_log = QTextEdit()
         self.texto_log.setReadOnly(True)
         self.texto_log.setStyleSheet("background-color: #0f172a; color: #38bdf8; font-family: 'Consolas', monospace; font-size: 12px; border: none; padding: 12px;")
-        
+
         col_direita.addWidget(lbl_log)
         col_direita.addWidget(self.texto_log)
         workspace.addLayout(col_direita, stretch=3)
@@ -178,7 +190,7 @@ class OntoApp(QMainWindow):
         layout_geral.addLayout(workspace)
         pagina.setLayout(layout_geral)
         self.area_conteudo.addWidget(pagina)
-    
+
     def criar_pagina_atualizador(self):
         pagina = QWidget()
         layout_geral = QVBoxLayout()
@@ -198,14 +210,14 @@ class OntoApp(QMainWindow):
         card_arquivo = QFrame()
         card_arquivo.setObjectName("CardPane")
         layout_card = QVBoxLayout(card_arquivo)
-        
+
         self.lbl_arquivo_selecionado = QLabel("Nenhum arquivo base (.owl) carregado.")
         self.lbl_arquivo_selecionado.setStyleSheet("color: #64748b; font-style: italic;")
-        
+
         btn_selecionar_arquivo = QPushButton("📂  Carregar Ontologia Existente")
         btn_selecionar_arquivo.setStyleSheet("background-color: #0284c7;")
         btn_selecionar_arquivo.clicked.connect(self.selecionar_arquivo_owl)
-        
+
         layout_card.addWidget(btn_selecionar_arquivo)
         layout_card.addWidget(self.lbl_arquivo_selecionado)
         col_esquerda.addWidget(card_arquivo)
@@ -224,12 +236,12 @@ class OntoApp(QMainWindow):
 
         col_direita = QVBoxLayout()
         col_direita.setSpacing(8)
-        
+
         lbl_log = QLabel("Log do Processo de Alinhamento Semântico:")
         self.log_atualizador = QTextEdit()
         self.log_atualizador.setReadOnly(True)
         self.log_atualizador.setStyleSheet("background-color: #0f172a; color: #fbbf24; font-family: 'Consolas', monospace; font-size: 12px; border: none; padding: 12px;")
-        
+
         col_direita.addWidget(lbl_log)
         col_direita.addWidget(self.log_atualizador)
         workspace.addLayout(col_direita, stretch=3)
@@ -237,7 +249,7 @@ class OntoApp(QMainWindow):
         layout_geral.addLayout(workspace)
         pagina.setLayout(layout_geral)
         self.area_conteudo.addWidget(pagina)
-        
+
     def criar_pagina_sinonimos(self):
         pagina = QWidget()
         layout_geral = QVBoxLayout(pagina)
@@ -262,7 +274,7 @@ class OntoApp(QMainWindow):
         layout_card.addWidget(btn_sel)
         layout_card.addWidget(self.lbl_arquivo_sinonimos)
         col_esquerda.addWidget(card_arquivo)
-        
+
         # 2. Entrada de Conceitos para Agrupar
         lbl_conceitos = QLabel("Conceitos Clínicos para Análise (separados por vírgula):")
         self.input_conceitos_sinonimos = QLineEdit("doença, enfermidade, patologia, carro, automóvel")
@@ -288,7 +300,7 @@ class OntoApp(QMainWindow):
         layout_geral.addLayout(workspace)
 
         self.area_conteudo.addWidget(pagina)
-        
+
     def executar_worker_sinonimos(self):
         caminho_onto = self.caminho_owl_sinonimos
         texto = self.input_conceitos_sinonimos.text()
@@ -327,7 +339,7 @@ class OntoApp(QMainWindow):
         pagina = QWidget()
         layout = QVBoxLayout()
         layout.setContentsMargins(40, 40, 40, 40)
-        
+
         header = QLabel("Metadados do Projeto W3C")
         header.setStyleSheet("font-size: 22px; font-weight: bold; color: #0f172a; margin-bottom: 20px;")
         layout.addWidget(header)
@@ -340,11 +352,11 @@ class OntoApp(QMainWindow):
 
         self.input_autor = QLineEdit()
         self.input_uri = QLineEdit()
-        
+
         form_layout.addRow(QLabel("Nome do Pesquisador Principal:"), self.input_autor)
         form_layout.addRow(QLabel("URI Base da Ontologia (Namespace):"), self.input_uri)
         # Dentro do seu método salvar_configuracoes(self):
-        
+
         btn = QPushButton("💾  Salvar Metadados Estruturais")
         btn.clicked.connect(self.salvar_configuracoes)
         form_layout.addRow(btn)
@@ -358,7 +370,7 @@ class OntoApp(QMainWindow):
         pagina = QWidget()
         layout = QVBoxLayout()
         layout.setContentsMargins(40, 40, 40, 40)
-        
+
         header = QLabel("Configurações Avançadas do Sistema")
         header.setStyleSheet("font-size: 22px; font-weight: bold; color: #0f172a; margin-bottom: 20px;")
         layout.addWidget(header)
@@ -378,16 +390,16 @@ class OntoApp(QMainWindow):
         self.combo_modelo = QComboBox()
         self.input_novo_modelo = QLineEdit()
         self.input_novo_modelo.setPlaceholderText("Digitar ID de novo modelo...")
-        
+
         btn_add_modelo = QPushButton("➕")
         btn_add_modelo.setFixedWidth(45)
         btn_add_modelo.clicked.connect(self.adicionar_modelo_customizado)
-        
+
         layout_inputs_modelo.addWidget(self.combo_modelo, stretch=2)
         layout_inputs_modelo.addWidget(self.input_novo_modelo, stretch=3)
         layout_inputs_modelo.addWidget(btn_add_modelo)
         form_layout.addRow(QLabel("Modelo LLM de Processamento:"), layout_inputs_modelo)
-        
+
         layout_temp = QHBoxLayout()
         self.slider_temp = QSlider(Qt.Horizontal)
         self.slider_temp.setRange(0, 100)
@@ -408,7 +420,7 @@ class OntoApp(QMainWindow):
         layout_dir.addWidget(self.input_diretorio)
         layout_dir.addWidget(btn_procurar_dir)
         form_layout.addRow(QLabel("Pasta de Destino dos Arquivos OWL:"), layout_dir)
-        
+
         # --- NOVO: CAMINHO DO EXECUTÁVEL DO PROTÉGÉ ---
         layout_protege = QHBoxLayout()
         self.input_protege = QLineEdit()
@@ -420,7 +432,7 @@ class OntoApp(QMainWindow):
         layout_protege.addWidget(btn_procurar_protege)
         form_layout.addRow(QLabel("Executável do Protégé (.exe):"), layout_protege)
         # ----------------------------------------------
-        
+
         btn_salvar = QPushButton("💾  Gravar Todas as Configurações")
         btn_salvar.clicked.connect(self.salvar_configuracoes)
         form_layout.addRow(btn_salvar)
@@ -429,19 +441,19 @@ class OntoApp(QMainWindow):
         layout.addStretch()
         pagina.setLayout(layout)
         self.area_conteudo.addWidget(pagina)
-    
+
     def escolher_executavel_protege(self):
         # Abre a janela do Windows já filtrando para encontrar o executável mais facilmente
         caminho, _ = QFileDialog.getOpenFileName(
-            self, 
-            "Selecionar Executável do Protégé", 
-            "", 
+            self,
+            "Selecionar Executável do Protégé",
+            "",
             "Executáveis (*.exe);;Todos os Arquivos (*)"
         )
         if caminho:
             self.input_protege.setText(caminho)
 
-    def criar_pagina_sobre(self): 
+    def criar_pagina_sobre(self):
         pagina = QWidget()
         layout = QVBoxLayout()
         layout.setContentsMargins(40, 40, 40, 40)
@@ -460,7 +472,7 @@ class OntoApp(QMainWindow):
 
         lbl_nome_app = QLabel("OMAKER v1.0.0")
         lbl_nome_app.setStyleSheet("color: #06b6d4; font-size: 24px; font-weight: 900; letter-spacing: 1px;")
-        
+
         lbl_desc = QLabel("<b>OMAKER</b> (Ontology Mapping & Knowledge Engineering Resource) é um ambiente computacional "
                           "inteligente projetado para automatizar a modelagem e extração de ontologias formais. "
                           "O sistema otimiza o fluxo de trabalho do pesquisador ao converter bases de conhecimento textuais "
@@ -499,11 +511,13 @@ class OntoApp(QMainWindow):
     # --- MÉTODOS AUXILIARES E CHANCE DE COMPORTAMENTO DA UI ---
     def escolher_diretorio_padrao(self):
         diretorio = QFileDialog.getExistingDirectory(self, "Selecione a Pasta de Exportação")
-        if diretorio: self.input_diretorio.setText(diretorio)
-            
+        if diretorio:
+            self.input_diretorio.setText(diretorio)
+
     def adicionar_modelo_customizado(self):
         novo_modelo = self.input_novo_modelo.text().strip()
-        if not novo_modelo: return
+        if not novo_modelo:
+            return
         if self.combo_modelo.findText(novo_modelo) == -1:
             self.combo_modelo.addItem(novo_modelo)
             self.combo_modelo.setCurrentText(novo_modelo)
@@ -529,23 +543,23 @@ class OntoApp(QMainWindow):
         self.configuracoes.setValue("uri_base", self.input_uri.text().strip())
         self.configuracoes.setValue("temperatura", self.slider_temp.value())
         self.configuracoes.setValue("diretorio_exportacao", self.input_diretorio.text().strip())
-        
+
         # --- SALVANDO O CAMINHO DO PROTÉGÉ ---
         self.configuracoes.setValue("caminho_protege", self.input_protege.text().strip())
         # -------------------------------------
-        
+
         self.configuracoes.setValue("modelo", self.combo_modelo.currentText())
         lista_modelos = [self.combo_modelo.itemText(i) for i in range(self.combo_modelo.count())]
         self.configuracoes.setValue("lista_modelos_disponiveis", lista_modelos)
-        
+
         QMessageBox.information(self, "Sucesso", "Configurações persistidas localmente no sistema!")
-    
+
     def carregar_configuracoes(self):
         self.input_api.setText(self.configuracoes.value("api_key", ""))
         self.input_autor.setText(self.configuracoes.value("autor", ""))
         self.input_uri.setText(self.configuracoes.value("uri_base", "") or DEFAULT_URI_BASE)
         self.input_diretorio.setText(self.configuracoes.value("diretorio_exportacao", os.path.abspath(".")))
-        
+
         # --- CARREGA O CAMINHO DO PROTÉGÉ ---
         self.input_protege.setText(self.configuracoes.value("caminho_protege", ""))
         # ------------------------------------
@@ -553,15 +567,16 @@ class OntoApp(QMainWindow):
         temp_salva = int(self.configuracoes.value("temperatura", 10))
         self.slider_temp.setValue(temp_salva)
         self.lbl_valor_temp.setText(f"{temp_salva/100:.2f}")
-        
+
         modelos_padrao = ["qwen3:8b"]
         lista_modelos = self.configuracoes.value("lista_modelos_disponiveis", modelos_padrao)
         self.combo_modelo.clear()
         self.combo_modelo.addItems(lista_modelos)
-        
+
         modelo_salvo = self.configuracoes.value("modelo", "qwen3:8b")
         index_modelo = self.combo_modelo.findText(modelo_salvo)
-        if index_modelo >= 0: self.combo_modelo.setCurrentIndex(index_modelo)
+        if index_modelo >= 0:
+            self.combo_modelo.setCurrentIndex(index_modelo)
 
     def processar_ontologia(self):
         api_key = self.configuracoes.value("api_key", "")
@@ -590,7 +605,7 @@ class OntoApp(QMainWindow):
                 protege_exe=self.configuracoes.value("caminho_protege", ""),
                 log_callback=lambda msg: [self.texto_log.append(msg), QApplication.processEvents()]
             )
-            
+
             caminho_saida = str(getattr(resultado, "path", "") or "")
             if caminho_saida and os.path.isfile(caminho_saida):
                 self.caminho_owl_gerado = caminho_saida
@@ -601,7 +616,7 @@ class OntoApp(QMainWindow):
             aviso(self, titulo, mensagem)
             self.texto_log.append(f"\n> [INFO] Processo finalizado (raciocinador: {resultado.reasoner.value}).")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001  slot da GUI: mostra o erro ao usuário em vez de derrubar o app
             self.texto_log.append(f"\n> [CRITICAL ERROR] {str(e)}")
             QMessageBox.critical(self, "Erro", str(e))
         finally:
@@ -611,11 +626,11 @@ class OntoApp(QMainWindow):
         if not hasattr(self, 'caminho_owl_atual') or not self.caminho_owl_atual:
             QMessageBox.warning(self, "Aviso", "Selecione um arquivo .owl primeiro.")
             return
-            
+
         texto = self.texto_entrada_atualizador.toPlainText().strip()
         api_key = self.configuracoes.value("api_key", "")
-        
-        if not texto:  
+
+        if not texto:
             QMessageBox.warning(self, "Aviso", "Preencha o texto das novas evidências.")
             return
 
@@ -627,27 +642,23 @@ class OntoApp(QMainWindow):
         try:
             # --- MANTÉM O PROCESSAMENTO (O Core precisa rodar!) ---
             resultado = SemanticEngine.atualizar_ontologia(
-                caminho_owl=self.caminho_owl_atual, 
-                texto=texto, 
+                caminho_owl=self.caminho_owl_atual,
+                texto=texto,
                 api_key=api_key,
                 modelo_llm=self.combo_modelo.currentText(),
                 temp_llm=self.slider_temp.value() / 100,
                 protege_exe=self.configuracoes.value("caminho_protege", ""),
                 log_callback=lambda msg: [self.log_atualizador.append(msg), QApplication.processEvents()]
             )
-            
+
             nivel, titulo, mensagem = completion_message(resultado)
             aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
             aviso(self, titulo, mensagem)
             self.log_atualizador.append(f"\n> [INFO] Atualização gravada (raciocinador: {resultado.reasoner.value}).")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001  slot da GUI: mostra o erro ao usuário em vez de derrubar o app
             self.log_atualizador.append(f"\n> [CRITICAL ERROR] {str(e)}")
             QMessageBox.critical(self, "Erro", f"Ocorreu um erro crítico:\n{str(e)}")
-            
+
         finally:
             self.btn_atualizar.setEnabled(True)
-            
-import subprocess
-import os
-

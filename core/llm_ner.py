@@ -6,7 +6,6 @@ whole-word search; strings that do not occur are discarded, so it cannot halluci
 from __future__ import annotations
 
 import re
-from typing import List
 
 from core.ner import Entity
 from core.text_utils import split_sentences
@@ -58,7 +57,7 @@ def _chunks(text: str, max_chars: int):
         yield " ".join(chunk)
 
 
-def extract_entities_llm(client, text: str, temperature: float = 0.0, max_chars: int = 3000) -> List[Entity]:
+def extract_entities_llm(client, text: str, temperature: float = 0.0, max_chars: int = 3000) -> list[Entity]:
     proposals = {}
     for chunk in _chunks(text, max_chars):
         data = client.chat_json(ENTITY_SYSTEM, f"Text:\n{chunk}", ENTITY_SCHEMA, temperature=temperature)
@@ -67,7 +66,7 @@ def extract_entities_llm(client, text: str, temperature: float = 0.0, max_chars:
             if name and etype in ENTITY_TYPES_LLM:
                 proposals.setdefault(name.lower(), (name, etype))
 
-    entities: List[Entity] = []
+    entities: list[Entity] = []
     for name, etype in proposals.values():
         pattern = re.compile(r"(?<!\w)" + re.escape(name) + r"(?!\w)", re.IGNORECASE)
         for m in pattern.finditer(text):  # every mention, so each one can form pairs
@@ -75,10 +74,10 @@ def extract_entities_llm(client, text: str, temperature: float = 0.0, max_chars:
     return entities
 
 
-def merge_entities(*groups) -> List[Entity]:
+def merge_entities(*groups) -> list[Entity]:
     """Union of several entity lists. On overlap the longer span wins, then the higher score."""
     pool = sorted((e for g in groups for e in g), key=lambda e: (-(e.end - e.start), -e.score))
-    kept: List[Entity] = []
+    kept: list[Entity] = []
     for e in pool:
         if all(e.end <= k.start or e.start >= k.end for k in kept):
             kept.append(e)

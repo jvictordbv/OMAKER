@@ -75,7 +75,7 @@ def test_taxonomy_validation_rejects_bad_llm_output(fake_ollama, stub_ner, monke
     assert "ghost entity" not in tax["instances"]
     assert tax["disjoint"] == [["Analgesic", "Cancer"]]
     assert len(triples) == 3 and {t[2] for t in triples} == {"prevents", "treats", "causes"}
-    assert any("SKIP" in l and "tumor" in l for l in logs)   # DISEASE "treats" rejected by the domain filter
+    assert any("SKIP" in line and "tumor" in line for line in logs)   # DISEASE "treats" rejected by the domain filter
 
 
 def test_llm_entities_are_verified_in_text(fake_ollama, weak_ner):
@@ -97,8 +97,8 @@ def test_merge_both_sources(fake_ollama, weak_ner, monkeypatch):
     logs2 = []
     tax2, _triples2 = he.HybridEngine.extrair(TEXT, "qwen3:8b", 0.1, logs2.append, ner=weak_ner,
                                               client=OllamaClient("qwen3:8b", fake_ollama.host))
-    assert any("6 unique entities" in l for l in logs2), logs2
-    assert any("ignored: 'tumor'" in l for l in logs2)
+    assert any("6 unique entities" in line for line in logs2), logs2
+    assert any("ignored: 'tumor'" in line for line in logs2)
     assert set(tax2["instances"]) == {"Aspirin", "stroke", "Chemotherapy", "tumor", "nausea", "fever"}
 
 

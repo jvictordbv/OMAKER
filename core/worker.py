@@ -38,7 +38,7 @@ class SynonymWorker(QThread):
             self.progresso.emit("Synonym detection finished.")
             self.concluido.emit(grupos, "")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001  worker QThread: qualquer falha vira sinal de erro, sem derrubar a UI
             self.erro.emit(f"Synonym clustering failed: {e}")
 
 
@@ -66,6 +66,7 @@ class RelationWorker(QThread):
     def run(self):
         try:
             import os
+
             from core.ner import BiomedicalNER
             from core.ontology_integrator import build_owl_ontology
             from core.pair_generator import generate_pairs
@@ -97,7 +98,7 @@ class RelationWorker(QThread):
             predictions = model.predict(pairs)
 
             best = {}  # dedupe (subject, relation, object), keep highest confidence
-            for p, (rel, conf) in zip(pairs, predictions):
+            for p, (rel, conf) in zip(pairs, predictions, strict=False):
                 if rel == NO_RELATION or conf < self.limiar:
                     continue
                 key = (p["sub_name"].lower(), rel, p["obj_name"].lower())
@@ -117,5 +118,5 @@ class RelationWorker(QThread):
             self.progresso.emit("Done.")
             self.concluido.emit(triples, self.caminho_saida_owl)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001  worker QThread: qualquer falha vira sinal de erro, sem derrubar a UI
             self.erro.emit(f"Relation extraction failed: {e}")

@@ -79,7 +79,9 @@ def main():
     path = args.file or os.path.join(HERE, sample["file"])
     text = open(path, encoding="utf-8").read().strip()
 
-    log = lambda m: print(m)
+    def log(m):
+        print(m)
+
     taxonomy, triples = HybridEngine.extrair(text, args.model, 0.1, log)
 
     print("\n================ RESULT ================")
@@ -93,7 +95,9 @@ def main():
 
     if sample:
         gold, traps = sample["gold"], sample["traps"]
-        is_trap = lambda t: next((why for (s, o), why in traps.items() if same(t[0], s) and same(t[3], o)), None)
+        def is_trap(t):
+            return next((why for (s, o), why in traps.items() if same(t[0], s) and same(t[3], o)), None)
+
         found = list(triples)
         hit = {g for g in gold if any(matches(t, g) for t in found)}
         tp = [t for t in found if any(matches(t, g) for g in gold)]
