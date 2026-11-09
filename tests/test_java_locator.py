@@ -62,3 +62,19 @@ def test_protege_bundled_jre(tmp_path, monkeypatch):
 def test_none_when_nothing(monkeypatch):
     _no_path(monkeypatch)
     assert find_java(env={}, roots=[]) is None
+
+
+def test_missing_omaker_java_falls_through(tmp_path, monkeypatch):
+    _no_path(monkeypatch)
+    java = _exe(tmp_path, "home")
+    env = {"OMAKER_JAVA": str(tmp_path / "nao_existe.exe"), "JAVA_HOME": str(tmp_path / "home")}
+    assert find_java(env=env, roots=[]) == str(java)
+
+
+def test_java_home_without_java_falls_through(tmp_path, monkeypatch):
+    _no_path(monkeypatch)
+    (tmp_path / "home").mkdir()
+    root = tmp_path / "root"
+    java = _exe(root, "jdk-17")
+    env = {"JAVA_HOME": str(tmp_path / "home")}
+    assert find_java(env=env, roots=[root]) == str(java)
