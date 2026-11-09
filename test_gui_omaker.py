@@ -91,8 +91,8 @@ class OMAKERWindow(QMainWindow):
             for gid, termos in grupos.items():
                 self.txt_resultado.append(f"• Grupo {gid + 1}: {', '.join(termos)}")
 
-            self.txt_resultado.append("\n<b> AXIOMAS INJETADOS COM SUCESSO!</b>")
-            self.txt_resultado.append(f"Arquivo salvo em: <i>{caminho_salvo}</i>")
+            self.txt_resultado.append("\n<b>Grupos detectados (não gravados na ontologia)</b>")
+            self.txt_resultado.append("Nenhum arquivo foi gravado por este harness.")
 
     def exibir_erro(self, mensagem_erro):
         self.progress_bar.hide()

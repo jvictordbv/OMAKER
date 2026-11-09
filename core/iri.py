@@ -13,6 +13,8 @@ def normalize_base(uri_base: str) -> tuple[str, bool]:
     partes = urlparse(base)
     if partes.scheme not in ("http", "https") or not partes.netloc:
         return DEFAULT_URI_BASE, True
+    if re.search(r"\s", partes.path):
+        return DEFAULT_URI_BASE, True
     if base.endswith("#"):
         base = base[:-1] + "/"
     elif not base.endswith("/"):
@@ -23,4 +25,4 @@ def normalize_base(uri_base: str) -> tuple[str, bool]:
 def ontology_iri(uri_base: str, nome_arquivo: str) -> str:
     base, _ = normalize_base(uri_base)
     nome = _REMOVIDOS.sub("", re.sub(r"\s+", "_", nome_arquivo.strip()))
-    return f"{base}{nome}.owl"
+    return f"{base}{nome or 'ontologia'}.owl"

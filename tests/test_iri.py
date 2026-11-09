@@ -27,6 +27,14 @@ def test_reserved_chars_removed_accents_kept():
     assert ontology_iri("http://a.org/", 'a#b?c ação') == "http://a.org/abc_ação.owl"
 
 
+def test_base_with_whitespace_falls_back():
+    assert ontology_iri("http://a.org/meu dir/", "x") == "http://www.mestrado.edu/ontologias/x.owl"
+
+
+def test_name_only_reserved_chars():
+    assert ontology_iri("http://a.org/", "#?/") == "http://a.org/ontologia.owl"
+
+
 def test_construir_writes_absolute_iri(tmp_path, monkeypatch, sample_extraction):
     monkeypatch.setattr(owl_builder, "run_reasoner", lambda *a, **k: ReasonerStatus.UNAVAILABLE)
     tax, triples = sample_extraction

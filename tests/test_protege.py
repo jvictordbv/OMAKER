@@ -68,3 +68,24 @@ def test_open_button_starts_disabled(qtbot):
     win = m.OntoApp()
     qtbot.addWidget(win)
     assert win.btn_abrir_protege.isEnabled() is False
+
+
+def test_open_button_shows_warning_on_oserror(qtbot, monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    import ui.main_window as m
+
+    exe, owl = _arquivos(tmp_path)
+
+    def popen_falso(*a, **k):
+        raise OSError(193, "%1 não é um aplicativo Win32 válido")
+
+    monkeypatch.setattr(protege.subprocess, "Popen", popen_falso)
+    avisos = []
+    monkeypatch.setattr(m.QMessageBox, "warning", lambda *a, **k: avisos.append(a[2]))
+    win = m.OntoApp()
+    qtbot.addWidget(win)
+    win.configuracoes = SimpleNamespace(value=lambda chave, padrao="": exe)
+    win.caminho_owl_gerado = owl
+    win.abrir_protege_clicado()
+    assert len(avisos) == 1 and "193" in avisos[0]

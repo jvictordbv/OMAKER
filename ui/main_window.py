@@ -49,7 +49,7 @@ class OntoApp(QMainWindow):
         try:
             abrir_no_protege(self.caminho_owl_gerado,
                              self.configuracoes.value("caminho_protege", ""))
-        except FileNotFoundError as e:
+        except OSError as e:
             QMessageBox.warning(self, "Protégé", str(e))
 
     def setup_ui(self):
@@ -383,7 +383,7 @@ class OntoApp(QMainWindow):
 
         self.input_api = QLineEdit()
         self.input_api.setEchoMode(QLineEdit.EchoMode.Password)
-        self.input_api.setPlaceholderText("Cole sua AI_API_KEY do Google AI Studio...")
+        self.input_api.setPlaceholderText("Opcional; o motor local não usa chave")
         form_layout.addRow(QLabel("Chave de API (não usada pelo motor local):"), self.input_api)
 
         layout_inputs_modelo = QHBoxLayout()
@@ -545,7 +545,7 @@ class OntoApp(QMainWindow):
         self.configuracoes.setValue("diretorio_exportacao", self.input_diretorio.text().strip())
 
         # --- SALVANDO O CAMINHO DO PROTÉGÉ ---
-        self.configuracoes.setValue("caminho_protege", self.input_protege.text().strip())
+        self.configuracoes.setValue("caminho_protege", self.input_protege.text().strip().strip('"'))
         # -------------------------------------
 
         self.configuracoes.setValue("modelo", self.combo_modelo.currentText())
@@ -592,6 +592,8 @@ class OntoApp(QMainWindow):
             return
 
         self.btn_gerar.setEnabled(False)
+        self.btn_abrir_protege.setEnabled(False)
+        self.caminho_owl_gerado = ""
         self.texto_log.clear()
         self.texto_log.append("> [INIT] Inicializando ciclo de compilação semântica...")
         QApplication.processEvents()

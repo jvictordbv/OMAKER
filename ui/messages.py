@@ -17,5 +17,5 @@ def completion_message(result: OntologyResult) -> tuple[str, str, str]:
                 "O raciocinador HermiT detectou que a ontologia é inconsistente. O arquivo foi salvo, "
                 f"mas precisa de revisão.\n\n{detalhe}")
     return ("warning", "Ontologia gerada sem validação",
-            "O grafo foi gerado, mas não foi validado: o raciocinador HermiT não pôde ser executado "
-            f"(verifique se o Java está instalado).\n\n{detalhe}")
+            "O grafo foi gerado, mas não foi validado: a validação lógica (HermiT) não pôde ser "
+            f"executada. Veja o log para saber o motivo (por exemplo, Java não encontrado).\n\n{detalhe}")
