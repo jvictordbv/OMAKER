@@ -15,6 +15,7 @@ from core.hybrid_engine import HybridEngine as SemanticEngine
 from PySide6.QtWidgets import QMessageBox # (ou PyQt6, dependendo de qual usa)
 import subprocess
 from core.worker import SynonymWorker
+from ui.messages import completion_message
 import os
 
 class OntoApp(QMainWindow):
@@ -323,7 +324,10 @@ class OntoApp(QMainWindow):
     def ao_concluir_sinonimos(self, grupos, caminho_saida):
         self.btn_rodar_sinonimos.setEnabled(True)
         if grupos:
-            QMessageBox.information(self, "Sucesso", f"Axiomas injetados com sucesso!\nSalvo em: {caminho_saida}")
+            lista = "\n".join(f"- {', '.join(termos)}" for termos in grupos.values())
+            QMessageBox.information(
+                self, "Sinônimos detectados",
+                f"Grupos de sinônimos detectados (ainda não gravados na ontologia):\n\n{lista}")
 
 
 
@@ -584,21 +588,17 @@ class OntoApp(QMainWindow):
 
         try:
             # Encaminha o processamento pesado para o Core separado
-            path_gerado = SemanticEngine.gerar_ontologia(
+            resultado = SemanticEngine.gerar_ontologia(
                 texto=texto, nome_arquivo=nome_arquivo, api_key=api_key,
                 modelo_llm=modelo_llm, temp_llm=temp_llm, pasta_destino=pasta_destino,
                 uri_base=uri_base,
                 log_callback=lambda msg: [self.texto_log.append(msg), QApplication.processEvents()]
             )
             
-            # --- AVISO SIMPLES DE SUCESSO ---
-            if path_gerado:
-                QMessageBox.information(
-                    self, 
-                    "Ontologia Concluída!", 
-                    f"Grafo gerado e auditado com sucesso!\n\nArquivo salvo em: {path_gerado}"
-                )
-                self.texto_log.append(f"\n> [INFO] Processo finalizado com sucesso.")
+            nivel, titulo, mensagem = completion_message(resultado)
+            aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
+            aviso(self, titulo, mensagem)
+            self.texto_log.append(f"\n> [INFO] Processo finalizado (raciocinador: {resultado.reasoner.value}).")
 
         except Exception as e:
             self.texto_log.append(f"\n> [CRITICAL ERROR] {str(e)}")
@@ -625,24 +625,17 @@ class OntoApp(QMainWindow):
 
         try:
             # --- MANTÉM O PROCESSAMENTO (O Core precisa rodar!) ---
-            sucesso = SemanticEngine.atualizar_ontologia(
+            resultado = SemanticEngine.atualizar_ontologia(
                 caminho_owl=self.caminho_owl_atual, 
                 texto=texto, 
                 api_key=api_key,
                 log_callback=lambda msg: [self.log_atualizador.append(msg), QApplication.processEvents()]
             )
             
-            # --- AVISO SIMPLES DE SUCESSO (Protégé removido daqui) ---
-            if sucesso:
-                # Apenas avisa que deu certo e limpa o fluxo
-                QMessageBox.information(
-                    self, 
-                    "Atualização Concluída!", 
-                    "Novos axiomas mesclados e auditados pelo HermiT com sucesso!"
-                )
-                self.log_atualizador.append("\n> [INFO] Atualização gravada. Grafo pronto para o uso.")
-            else:
-                self.log_atualizador.append("\n> [ERRO] A atualização falhou no núcleo semântico. Verifique os logs acima.")
+            nivel, titulo, mensagem = completion_message(resultado)
+            aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
+            aviso(self, titulo, mensagem)
+            self.log_atualizador.append(f"\n> [INFO] Atualização gravada (raciocinador: {resultado.reasoner.value}).")
 
         except Exception as e:
             self.log_atualizador.append(f"\n> [CRITICAL ERROR] {str(e)}")

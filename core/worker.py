@@ -34,10 +34,9 @@ class SynonymWorker(QThread):
                 self.concluido.emit({}, "")
                 return
 
-            # TODO: write owl:equivalentClass axioms (ask the user to confirm groups first).
-            caminho_saida = "omaker_ontologia_enriquecida.owl"
+            # Nothing is written to the ontology yet (owl:equivalentClass axioms: phase 3).
             self.progresso.emit("Synonym detection finished.")
-            self.concluido.emit(grupos, caminho_saida)
+            self.concluido.emit(grupos, "")
 
         except Exception as e:
             self.erro.emit(f"Synonym clustering failed: {e}")

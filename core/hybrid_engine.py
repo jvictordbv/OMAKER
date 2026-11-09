@@ -11,13 +11,22 @@ from __future__ import annotations
 
 import os
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 from core.labels import (BASE_CLASSES, DEFAULT_CHECKPOINT, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION,
                          RELATION_DOMAIN, REL2ID, ROOT_CLASS)
 from core.llm_client import DEFAULT_MODEL, OllamaClient
 from core.llm_ner import extract_entities_llm, merge_entities
+from core.owl_builder import ReasonerStatus
 from core.text_utils import to_identifier
+
+
+@dataclass(frozen=True)
+class OntologyResult:
+    path: str
+    reasoner: ReasonerStatus
+    relations_added: int
 
 RELATIONS = [r for r in REL2ID if r != NO_RELATION]
 
@@ -261,19 +270,19 @@ class HybridEngine:
     # ---- same public API as the old SemanticEngine -------------------------------------
     @staticmethod
     def construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback):
-        """taxonomy + triples -> validated .owl file. Returns the saved path."""
+        """taxonomy + triples -> .owl file, plus what the reasoner said about it."""
         from core import owl_builder
 
         if not uri_base.endswith(("#", "/")):
             uri_base += "#"
         world, onto = owl_builder.new_world_ontology(f"{uri_base}{nome_arquivo}.owl")
-        owl_builder.populate(onto, taxonomy, triples, log_callback)
-        owl_builder.run_reasoner(world, log_callback, HybridEngine.JAVA_EXE)
+        added = owl_builder.populate(onto, taxonomy, triples, log_callback)
+        status = owl_builder.run_reasoner(world, log_callback, HybridEngine.JAVA_EXE)
 
         os.makedirs(pasta_destino or ".", exist_ok=True)
         caminho = owl_builder.save(onto, os.path.join(pasta_destino or ".", f"{nome_arquivo}.owl"))
         log_callback(f"\n> [SUCCESS] OWL knowledge graph saved to:\n{caminho}")
-        return caminho
+        return OntologyResult(caminho, status, added)
 
     @staticmethod
     def gerar_ontologia(texto, nome_arquivo, api_key, modelo_llm, temp_llm, pasta_destino, uri_base, log_callback):

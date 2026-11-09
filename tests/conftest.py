@@ -58,3 +58,22 @@ def stub_ner():
     def make(entities: list[Entity]):
         return SimpleNamespace(extract=lambda _text: list(entities), last_rejected=[])
     return make
+
+
+@pytest.fixture
+def sample_extraction():
+    """(taxonomy, triples) of scenario 1 of test_hybrid_engine: the validated output of
+    HybridEngine.extrair, kept as literal data so tests of the OWL stage need no LLM or NER."""
+    tax = {
+        "classes": {"Analgesic": "Drug", "Cancer": "Disease", "Weird": "BiomedicalEntity",
+                    "LoopA": "BiomedicalEntity", "LoopB": "LoopA"},
+        "instances": {"Aspirin": "Analgesic", "stroke": "Disease", "Chemotherapy": "Drug",
+                      "tumor": "Cancer", "nausea": "Symptom", "fever": "Symptom"},
+        "disjoint": [["Analgesic", "Cancer"]],
+    }
+    triples = [
+        ("Aspirin", "DRUG", "prevents", "stroke", "DISEASE", None),
+        ("Chemotherapy", "DRUG", "treats", "tumor", "DISEASE", None),
+        ("Chemotherapy", "DRUG", "causes", "nausea", "SYMPTOM", None),
+    ]
+    return tax, triples

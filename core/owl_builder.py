@@ -5,6 +5,7 @@ serves both "generate new ontology" and "update existing ontology".
 """
 from __future__ import annotations
 
+import enum
 import os
 import shutil
 import types
@@ -15,6 +16,12 @@ from owlready2.base import OwlReadyInconsistentOntologyError
 
 from core.labels import BASE_CLASSES, RELATION_DOMAIN, ROOT_CLASS
 from core.text_utils import to_identifier
+
+class ReasonerStatus(enum.Enum):
+    CONSISTENT = "consistent"
+    INCONSISTENT = "inconsistent"
+    UNAVAILABLE = "unavailable"
+
 
 def new_world_ontology(uri: str):
     world = World()
@@ -92,7 +99,7 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
     return added
 
 
-def run_reasoner(world, log=print, java_exe: str = ""):
+def run_reasoner(world, log=print, java_exe: str = "") -> ReasonerStatus:
     if java_exe and not os.path.exists(java_exe):
         log(f"> [HERMIT] OMAKER_JAVA points to a file that does not exist ({java_exe}); trying 'java' from PATH.")
         java_exe = ""
@@ -101,13 +108,14 @@ def run_reasoner(world, log=print, java_exe: str = ""):
     try:
         sync_reasoner_hermit(world, infer_property_values=True)
         log("> [HERMIT] Consistent graph, inferences materialized.")
-        return True
+        return ReasonerStatus.CONSISTENT
     except OwlReadyInconsistentOntologyError as err:
         log(f"> [HERMIT] LOGICAL INCONSISTENCY detected: {err}")
         log("> [HERMIT] The file will be saved, but it needs review.")
+        return ReasonerStatus.INCONSISTENT
     except Exception as e:
         log(f"> [HERMIT] Could not run (check Java / OMAKER_JAVA): {e}")
-    return False
+        return ReasonerStatus.UNAVAILABLE
 
 
 def save(onto, path: str):
