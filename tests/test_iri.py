@@ -42,7 +42,6 @@ def test_construir_writes_absolute_iri(tmp_path, monkeypatch, sample_extraction)
     result = HybridEngine.construir(tax, triples, "teste peste negra", str(tmp_path), "", logs.append)
     assert result.path.endswith("teste peste negra.owl")
     text = open(result.path, encoding="utf-8").read()
-    print("\n".join(text.splitlines()[:10]))
     assert 'xml:base="http://www.mestrado.edu/ontologias/teste_peste_negra.owl"' in text
     base = re.search(r'xml:base="([^"]*)"', text).group(1)
     for about in re.findall(r'rdf:about="([^"]*)"', text):
