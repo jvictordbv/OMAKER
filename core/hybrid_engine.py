@@ -30,6 +30,9 @@ class OntologyResult:
 
 RELATIONS = [r for r in REL2ID if r != NO_RELATION]
 
+# Characters of the source text sent with the taxonomy prompt (keeps the request inside the model context).
+TAXONOMY_TEXT_LIMIT = 6000
+
 TAXONOMY_SCHEMA = {
     "type": "object",
     "properties": {
@@ -262,7 +265,10 @@ class HybridEngine:
 
         log(f"> [LLM] Asking {client.model} for taxonomy (subclasses, instance typing)...")
         listing = "\n".join(f"- {e.text} ({e.type})" for e in uniq)
-        user = f"Entities:\n{listing}\n\nText:\n{texto[:6000]}"
+        if len(texto) > TAXONOMY_TEXT_LIMIT:
+            log(f"> [WARNING] Text has {len(texto)} characters; the taxonomy prompt uses only the first "
+                f"{TAXONOMY_TEXT_LIMIT}. Entities and relations still come from the whole text.")
+        user = f"Entities:\n{listing}\n\nText:\n{texto[:TAXONOMY_TEXT_LIMIT]}"
         raw = client.chat_json(TAXONOMY_SYSTEM, user, TAXONOMY_SCHEMA, temperature=temp_llm)
         taxonomy = validate_taxonomy(raw, uniq)
         log(f"> [LLM] {len(taxonomy['classes'])} extra classes, {len(taxonomy['disjoint'])} disjoint groups.")

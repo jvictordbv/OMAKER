@@ -123,3 +123,28 @@ def test_atualizar_forwards_model_and_temperature(monkeypatch, tmp_path):
     monkeypatch.setattr(owl_builder, "save", lambda onto, path: path)
     he.HybridEngine.atualizar_ontologia(str(tmp_path / "a.owl"), "txt", "", lambda m: None, modelo_llm="x:1b", temp_llm=0.3)
     assert seen == {"m": "x:1b", "t": 0.3}
+
+
+@pytest.mark.parametrize("extra, truncated", [(0, False), (300, True)])
+def test_taxonomy_text_truncation_is_logged(fake_ollama, stub_ner, monkeypatch, tmp_path, extra, truncated):
+    text = TEXT + " Filler sentence about nothing." * extra
+    ner = stub_ner([ent("Aspirin", "DRUG"), ent("stroke", "DISEASE")])
+    fake_ollama.script[:] = [
+        json.dumps({"results": [{"id": 0, "relation": "prevents"}]}),
+        json.dumps({"classes": [], "instances": [], "disjoint": []}),
+    ]
+    monkeypatch.setattr(he.HybridEngine, "ENTITY_SOURCE", "ner")
+    monkeypatch.setattr(he, "default_checkpoint_path", lambda: tmp_path / "nao-existe.pt")
+    logs = []
+    he.HybridEngine.extrair(text, "qwen3:8b", 0.1, logs.append, ner=ner,
+                            client=OllamaClient("qwen3:8b", fake_ollama.host))
+
+    prompt = fake_ollama.calls[-1]["messages"][-1]["content"]
+    warned = [line for line in logs if "[WARNING]" in line]
+    if truncated:
+        assert len(text) > he.TAXONOMY_TEXT_LIMIT
+        assert len(warned) == 1 and str(len(text)) in warned[0] and str(he.TAXONOMY_TEXT_LIMIT) in warned[0]
+        assert text[: he.TAXONOMY_TEXT_LIMIT] in prompt and text not in prompt
+    else:
+        assert warned == []
+        assert text in prompt
