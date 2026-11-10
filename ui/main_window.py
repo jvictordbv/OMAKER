@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 
 # Imports modulares das dependências locais
 import ui.recursos_rc  # noqa: F401  registra os recursos Qt (ícones); não remover
-from core.hybrid_engine import HybridEngine as SemanticEngine
+from core.hybrid_engine import HybridEngine
 from core.iri import DEFAULT_URI_BASE
 from core.protege import abrir_no_protege
 from core.worker import SynonymWorker
@@ -600,7 +600,7 @@ class OntoApp(QMainWindow):
 
         try:
             # Encaminha o processamento pesado para o Core separado
-            resultado = SemanticEngine.gerar_ontologia(
+            resultado = HybridEngine.gerar_ontologia(
                 texto=texto, nome_arquivo=nome_arquivo, api_key=api_key,
                 modelo_llm=modelo_llm, temp_llm=temp_llm, pasta_destino=pasta_destino,
                 uri_base=uri_base,
@@ -643,7 +643,7 @@ class OntoApp(QMainWindow):
 
         try:
             # --- MANTÉM O PROCESSAMENTO (O Core precisa rodar!) ---
-            resultado = SemanticEngine.atualizar_ontologia(
+            resultado = HybridEngine.atualizar_ontologia(
                 caminho_owl=self.caminho_owl_atual,
                 texto=texto,
                 api_key=api_key,

@@ -5,7 +5,6 @@
                           --> owlready2 --> HermiT --> .owl
 
 Qwen never invents entities or relations: it only organizes the entities the NER found.
-Same public methods as the old SemanticEngine, so main_window only needs an alias.
 """
 from __future__ import annotations
 
@@ -274,7 +273,7 @@ class HybridEngine:
         log(f"> [LLM] {len(taxonomy['classes'])} extra classes, {len(taxonomy['disjoint'])} disjoint groups.")
         return taxonomy, triples
 
-    # ---- same public API as the old SemanticEngine -------------------------------------
+    # ---- public API used by the GUI -----------------------------------------------------
     @staticmethod
     def construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback, protege_exe=""):
         """taxonomy + triples -> .owl file, plus what the reasoner said about it."""
