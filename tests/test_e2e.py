@@ -135,7 +135,7 @@ def test_preconditions_checked_before_running_any_system(monkeypatch, tmp_path):
 def test_results_written_after_each_system_with_metadata(monkeypatch, tmp_path):
     from omaker.evaluation import e2e
 
-    def fake_eval(name, docs, extract=None, model="m", temperature=0.0):
+    def fake_eval(name, docs, extract=None, model="m", temperature=0.0, **_):
         if name == "ner+llm":
             raise RuntimeError("Ollama caiu")
         return {"system": name, "strict": {"precision": 0, "recall": 0, "f1": 0, "tp": 0, "fp": 0, "fn": 0},
@@ -168,7 +168,7 @@ def test_resume_skips_systems_already_evaluated(monkeypatch, tmp_path):
 
     ran, fail = [], {"ner+llm"}
 
-    def fake_eval(name, docs, extract=None, model="m", temperature=0.0):
+    def fake_eval(name, docs, extract=None, model="m", temperature=0.0, **_):
         ran.append(name)
         if name in fail:
             raise RuntimeError("Ollama caiu")
@@ -194,3 +194,58 @@ def test_resume_refuses_a_different_model(monkeypatch, tmp_path):
     run = e2e.main(["--systems", "llm", "--runs-dir", str(tmp_path / "runs")])
     with pytest.raises(ValueError, match="model"):
         e2e.main(["--systems", "llm", "--model", "outro:1b", "--resume", str(run)])
+
+
+def _biored_dir(tmp_path, n_docs=3):
+    from tests.test_biored_gold import PUBTATOR
+    blocks = [PUBTATOR.replace("1|", f"{i}|").replace("\n1\t", f"\n{i}\t") for i in range(1, n_docs + 1)]
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "Test.PubTator").write_text("".join(blocks), encoding="utf-8")
+    return tmp_path
+
+
+def test_evaluate_system_scores_biored_docs(tmp_path):
+    from omaker.evaluation import biored_gold, e2e
+    docs = biored_gold.load_biored_gold(_biored_dir(tmp_path, 1))
+    r = e2e.evaluate_system("llm", docs, extract=lambda text, model: [("Cisplatin", "causes", "nephrotoxicity"),
+                                                                      ("Cisplatin", "causes", "symptom"),
+                                                                      ("Glucose", "causes", "diabetes")])
+    assert (r["strict"]["tp"], r["strict"]["fp"], r["strict"]["fn"]) == (1, 1, 1)
+    assert r["ignored"] == 1 and r["traps_hit"] == []
+
+
+def test_biored_run_resumes_per_document(monkeypatch, tmp_path):
+    from omaker.evaluation import e2e
+    data = _biored_dir(tmp_path / "data", 3)
+    seen, crash = [], {"on": True}
+
+    def fake_extract(text, model):
+        seen.append(text)
+        if crash["on"] and len(seen) == 2:
+            raise RuntimeError("Ollama caiu")
+        return [("Cisplatin", "causes", "nephrotoxicity")]
+
+    monkeypatch.setattr(e2e, "default_extract", fake_extract)
+    args = ["--systems", "llm", "--gold-biored", str(data), "--runs-dir", str(tmp_path / "runs")]
+    with pytest.raises(RuntimeError):
+        e2e.main(args)
+    (run,) = (tmp_path / "runs").iterdir()
+    assert (run / "partial-llm.json").exists()
+    crash["on"], seen[:] = False, []
+    e2e.main(args + ["--resume", str(run)])
+    assert len(seen) == 2   # o 1o documento já estava gravado
+    saved = json.loads((run / "results.json").read_text(encoding="utf-8"))
+    (res,) = saved["results"]
+    assert res["strict"]["tp"] == 3 and len(res["per_doc"]) == 3
+    assert saved["metadata"]["gold"].endswith("Test.PubTator") and saved["metadata"]["gold_kind"] == "biored"
+    assert not (run / "partial-llm.json").exists()
+
+
+def test_biored_limit_uses_first_documents(monkeypatch, tmp_path):
+    from omaker.evaluation import e2e
+    data = _biored_dir(tmp_path / "data", 3)
+    monkeypatch.setattr(e2e, "default_extract", lambda text, model: [])
+    run = e2e.main(["--systems", "llm", "--gold-biored", str(data), "--limit", "2",
+                    "--runs-dir", str(tmp_path / "runs")])
+    (res,) = json.loads((run / "results.json").read_text(encoding="utf-8"))["results"]
+    assert len(res["per_doc"]) == 2

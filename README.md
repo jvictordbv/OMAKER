@@ -146,7 +146,15 @@ Avaliação de ponta a ponta, com casamento estrito, contra os baselines:
 uv run python -m omaker.evaluation.e2e --systems llm ner+llm pure both+pure
 ```
 
-Se a avaliação cair no meio, `--resume runs/<pasta>` avalia só os sistemas que faltam, desde que o modelo, o gabarito e o checkpoint sejam os mesmos.
+Se a avaliação cair no meio, `--resume runs/<pasta>` continua do último documento gravado, desde que o modelo, o gabarito e o checkpoint sejam os mesmos.
+
+Para um gabarito maior, use o teste oficial do BioRED (100 resumos que nunca entram no treino; 164 pares químico e doença):
+
+```bash
+uv run python -m omaker.evaluation.e2e --gold-biored --model qwen3:8b-q4_K_M [--limit 10]
+```
+
+Nele, cada nome previsto é ligado aos conceitos anotados no resumo, e cada par conta um acerto só. Previsões fora do que o BioRED anota (pares doença e doença, relações de rótulo incerto como `Association`) são ignoradas; entidades que o BioRED não anotou contam como erro. O protocolo completo está em `omaker/evaluation/biored_gold.py`.
 
 O gabarito fica em `omaker/evaluation/gold/samples.json`. O LLM roda com temperatura 0 e semente fixa, e o relatório aponta frases do gabarito que estejam nos dados de treino do PURE.
 

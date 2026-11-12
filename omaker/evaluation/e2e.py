@@ -30,6 +30,7 @@ from datetime import datetime
 from pathlib import Path
 
 from omaker.domain.text import split_sentences
+from omaker.evaluation.biored_gold import BioredGoldDoc, load_biored_gold, score_doc
 from omaker.evaluation.metrics import PRF, _prf, set_prf
 from omaker.ontology.alignment import norm_term
 from omaker.paths import default_checkpoint_path, project_root
@@ -149,16 +150,47 @@ def contamination(docs) -> list[dict] | None:
     return hits
 
 
-def evaluate_system(name: str, docs, extract=None, model: str = "qwen3:8b", temperature: float = 0.0) -> dict:
+def _evaluate_biored(name, docs, extract, model, done, on_doc) -> dict:
+    tp = fp = fn = ignored = 0
+    per_doc = []
+    with system_environment(name):
+        for doc in docs:
+            preds = _predict(doc, extract, model, done, on_doc)
+            s = score_doc(doc, preds)
+            tp, fp, fn, ignored = tp + s.tp, fp + s.fp, fn + s.fn, ignored + s.ignored
+            per_doc.append({"doc": doc.id, "strict": asdict(_prf(s.tp, s.fp, s.fn)), "ignored": s.ignored,
+                            "predicted": [list(p) for p in preds]})
+    total = asdict(_prf(tp, fp, fn))
+    result = {"system": name, "strict": total, "heldout_strict": total, "lenient": total, "traps_hit": [],
+              "ignored": ignored, "per_doc": per_doc}
+    if SYSTEMS[name]["relations"] == "pure":
+        result["contamination"] = contamination(docs)
+    return result
+
+
+def _predict(doc, extract, model, done, on_doc) -> list[tuple]:
+    """Previsões de um documento; reaproveita as já gravadas (retomada) e avisa on_doc das novas."""
+    if done is not None and doc.id in done:
+        return [tuple(p) for p in done[doc.id]]
+    preds = [tuple(p) for p in extract(doc.text, model)]
+    if on_doc is not None:
+        on_doc(doc.id, preds)
+    return preds
+
+
+def evaluate_system(name: str, docs, extract=None, model: str = "qwen3:8b", temperature: float = 0.0,
+                    done: dict | None = None, on_doc=None) -> dict:
     check_preconditions([name])
     extract = extract or default_extract
+    if docs and isinstance(docs[0], BioredGoldDoc):
+        return _evaluate_biored(name, docs, extract, model, done, on_doc)
     per_doc, traps_hit = [], []
     tp = fp = fn = 0
     held = [0, 0, 0]
     lenient_preds, lenient_gold = [], []
     with system_environment(name):
         for doc in docs:
-            preds = [tuple(p) for p in extract(doc.text, model)]
+            preds = _predict(doc, extract, model, done, on_doc)
             strict = set_prf({strict_key(*g) for g in doc.triples}, {strict_key(*p) for p in preds})
             tp, fp, fn = tp + strict.tp, fp + strict.fp, fn + strict.fn
             if doc.heldout:
@@ -194,6 +226,8 @@ def _report(results: list[dict], gold_path, model) -> str:
         s, le, h = r["strict"], r["lenient"], r.get("heldout_strict", {"f1": 0.0})
         rows.append(f"| {r['system']} | {s['precision']:.2f} | {s['recall']:.2f} | {s['f1']:.2f} | {h['f1']:.2f} "
                     f"| {le['f1']:.2f} | {len(r['traps_hit'])} |")
+        if "ignored" in r:
+            notes.append(f"- {r['system']}: {r['ignored']} previsão(ões) fora do que o BioRED anota (ignoradas).")
         if "contamination" in r:
             c = r["contamination"]
             notes.append(f"- {r['system']}: contaminação não verificável (checkpoint sem textos de treino)." if c is None
@@ -204,7 +238,7 @@ def _report(results: list[dict], gold_path, model) -> str:
 
 
 # Retomar só faz sentido se o que define o resultado não mudou.
-RESUME_MUST_MATCH = ("gold_sha256", "model", "temperature", "llm_seed", "checkpoint_sha256")
+RESUME_MUST_MATCH = ("gold_sha256", "limit", "model", "temperature", "llm_seed", "checkpoint_sha256")
 
 
 def main(argv=None) -> Path:
@@ -215,11 +249,20 @@ def main(argv=None) -> Path:
     ap.add_argument("--runs-dir", default=str(project_root() / "runs"))
     ap.add_argument("--seed", type=int, default=EVAL_SEED, help="semente enviada ao Ollama")
     ap.add_argument("--resume", metavar="PASTA_DO_RUN", help="continua uma avaliação interrompida (runs/<pasta>)")
+    ap.add_argument("--gold-biored", nargs="?", const=str(project_root() / "data" / "biored"), metavar="PASTA",
+                    help="usa o teste oficial do BioRED como gabarito (padrão: data/biored)")
+    ap.add_argument("--limit", type=int, default=None, help="avalia só os N primeiros documentos")
     args = ap.parse_args(argv)
     check_preconditions(args.systems)
-    docs = load_gold(args.gold)
+    if args.gold_biored:
+        args.gold = str(Path(args.gold_biored) / "Test.PubTator")
+        docs, gold_kind = load_biored_gold(args.gold_biored, limit=args.limit), "biored"
+    else:
+        docs, gold_kind = load_gold(args.gold), "samples"
+        docs = docs[:args.limit] if args.limit else docs
     metadata = {
-        "commit": _commit(), "gold": str(args.gold), "gold_sha256": _sha256(args.gold), "model": args.model,
+        "commit": _commit(), "gold": str(args.gold), "gold_kind": gold_kind, "limit": args.limit,
+        "gold_sha256": _sha256(args.gold), "model": args.model,
         "temperature": EVAL_TEMPERATURE, "llm_seed": args.seed, "systems": args.systems,
         "checkpoint": str(default_checkpoint_path()), "checkpoint_sha256": _sha256(default_checkpoint_path()),
     }
@@ -239,6 +282,9 @@ def main(argv=None) -> Path:
         while run.exists():
             run, k = Path(f"{stem}-{k}"), k + 1
         run.mkdir(parents=True)
+        # Gravado já no início: uma queda no primeiro sistema ainda deixa o que retomar.
+        (run / "results.json").write_text(json.dumps({"metadata": metadata, "results": []}, ensure_ascii=False,
+                                                     indent=1), encoding="utf-8")
     done = {r["system"] for r in results}
     previous_seed = os.environ.get("OMAKER_LLM_SEED")
     os.environ["OMAKER_LLM_SEED"] = str(args.seed)
@@ -247,10 +293,21 @@ def main(argv=None) -> Path:
             if name in done:
                 print(f"{name}: já avaliado em {run.name}, pulando.")
                 continue
-            results.append(evaluate_system(name, docs, model=args.model, temperature=EVAL_TEMPERATURE))
+            partial_path = run / f"partial-{name.replace('+', '_')}.json"
+            partial = json.loads(partial_path.read_text(encoding="utf-8")) if partial_path.exists() else {}
+
+            def save_doc(doc_id, preds, partial=partial, partial_path=partial_path):
+                partial[doc_id] = [list(p) for p in preds]   # ponto de retomada por documento
+                tmp = partial_path.with_suffix(".part")
+                tmp.write_text(json.dumps(partial, ensure_ascii=False), encoding="utf-8")
+                tmp.replace(partial_path)
+
+            results.append(evaluate_system(name, docs, model=args.model, temperature=EVAL_TEMPERATURE,
+                                           done=partial, on_doc=save_doc))
             (run / "results.json").write_text(json.dumps({"metadata": metadata, "results": results},
                                                          ensure_ascii=False, indent=1), encoding="utf-8")
             (run / "report.md").write_text(_report(results, args.gold, args.model), encoding="utf-8")
+            partial_path.unlink(missing_ok=True)
     finally:
         if previous_seed is None:
             os.environ.pop("OMAKER_LLM_SEED", None)
