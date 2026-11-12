@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import enum
 import os
-import re
 import shutil
 import types
 from dataclasses import dataclass
@@ -18,6 +17,14 @@ from owlready2.base import OwlReadyInconsistentOntologyError
 
 from omaker.domain.labels import BASE_CLASSES, RELATION_DOMAIN, ROOT_CLASS
 from omaker.domain.text import to_identifier
+from omaker.ontology.alignment import (
+    OMAKER_NAMESPACE,
+    aligned_class,
+    build_label_index,
+    camel_to_words,
+    is_external,
+    norm_term,
+)
 
 
 class ReasonerStatus(enum.Enum):
@@ -41,15 +48,38 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
     """taxonomy: {"classes": {name: parent}, "instances": {name: class}, "disjoint": [[...]]}
     triples: (subject, subject_type, relation, object, object_type, confidence|None)
     """
+    # Ontologia externa (ex.: symp.owl): reaproveita classes-base que já existem nela, pelo rótulo, e cria o
+    # resto no namespace do OMAKER, para não inventar termos dentro do namespace alheio [#9].
+    external = is_external(onto)
+    index = build_label_index(onto) if external else {}
+    ns = onto.get_namespace(OMAKER_NAMESPACE) if external else onto
+    reused = set()
+
+    def lookup(name):
+        return onto.world[OMAKER_NAMESPACE + name] if external else onto[name]
+
     with onto:
         def get_or_make_class(name, parent):
-            existing = onto[name]
-            return existing if existing is not None else types.new_class(name, (parent,))
+            existing = lookup(name)
+            if existing is not None:
+                return existing
+            with ns:
+                return types.new_class(name, (parent,))
+
+        def base_of(cls):
+            ancestors = cls.ancestors()
+            return next((classes[b] for b in BASE_CLASSES.values() if classes[b] in ancestors), None)
 
         root = get_or_make_class(ROOT_CLASS, Thing)
         classes = {ROOT_CLASS: root}
         for base in BASE_CLASSES.values():
-            classes[base] = get_or_make_class(base, root)
+            match = index.get(norm_term(base))
+            if match is not None:
+                classes[base] = match
+                reused.add(match)
+                log(f"  [ALIGN] {base} = {match.iri}")
+            else:
+                classes[base] = get_or_make_class(base, root)
 
         pending = dict(taxonomy["classes"])
         while pending:  # parents first
@@ -59,11 +89,24 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
                 for n in ready:
                     pending[n] = ROOT_CLASS
             for n in ready:
-                classes[n] = get_or_make_class(n, classes[pending.pop(n)])
+                parent = classes[pending.pop(n)]
+                match = None
+                if external:  # subclasse proposta pelo LLM que a ontologia já tem ("Pain" é o "pain" da SYMP)
+                    base = base_of(parent)
+                    match = aligned_class(index, camel_to_words(n), base) if base is not None else None
+                if match is not None:
+                    classes[n] = match
+                    reused.add(match)
+                    log(f"  [ALIGN] {n} = {match.iri}")
+                else:
+                    classes[n] = get_or_make_class(n, parent)
 
         props = {}
         for rel, domain in RELATION_DOMAIN.items():
-            prop = onto[rel] if onto[rel] is not None else types.new_class(rel, (ObjectProperty,))
+            prop = lookup(rel)
+            if prop is None:
+                with ns:
+                    prop = types.new_class(rel, (ObjectProperty,))
             if domain and classes[domain] not in prop.domain:
                 prop.domain.append(classes[domain])
             props[rel] = prop
@@ -73,9 +116,16 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
             ident = to_identifier(name)
             if ident in classes:  # an individual must not share an IRI with a class
                 ident += "_ind"
-            ind = onto[ident]
+            ind = lookup(ident)
             if ind is None:
-                ind = classes[cls_name](ident)
+                target = classes[cls_name]
+                if external:  # a classe que a ontologia já tem para essa entidade, se houver, é mais específica
+                    base = base_of(target)
+                    match = aligned_class(index, name, base) if base is not None else None
+                    if match is not None:
+                        target = match
+                        log(f"  [ALIGN] {name} -> {match.iri}")
+                ind = target(ident, namespace=ns)
                 ind.label.append(name)
             individuals[name.lower()] = ind
 
@@ -91,12 +141,15 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
                 tag = "LLM" if conf is None else f"{conf:.0%}"
                 log(f"  [AXIOM] {sub} --[{rel}]--> {obj} ({tag})")
 
+        # Disjunções só entre classes do OMAKER: não se impõe axioma a classes de uma ontologia alheia.
         for group in taxonomy.get("disjoint", []):
-            members = [classes[c] for c in group if c in classes]
+            members = [classes[c] for c in group if c in classes and classes[c] not in reused]
             if len(members) > 1:
                 AllDisjoint(members)
         # base types never overlap
-        AllDisjoint([classes[b] for b in BASE_CLASSES.values()])
+        own_bases = [classes[b] for b in BASE_CLASSES.values() if classes[b] not in reused]
+        if len(own_bases) > 1:
+            AllDisjoint(own_bases)
 
     log(f"> [OWL] {len(classes) - 1} classes, {len(individuals)} individuals, {added} new relations.")
     return added
@@ -140,8 +193,7 @@ class EquivalenceReport:
     path: str                       # arquivo gravado
 
 
-def _norm_term(text) -> str:
-    return re.sub(r"[\s_]+", " ", str(text)).strip().casefold()
+_norm_term = norm_term
 
 
 def add_equivalences(src_path: str, groups: dict, dest_path: str, log=print) -> EquivalenceReport:
