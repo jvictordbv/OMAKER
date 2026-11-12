@@ -1,8 +1,8 @@
 """Texts shown to the user after building an ontology. Pure functions, no Qt."""
 from __future__ import annotations
 
-from core.hybrid_engine import OntologyResult
-from core.owl_builder import ReasonerStatus
+from omaker.ontology.builder import ReasonerStatus
+from omaker.pipeline.engine import OntologyResult
 
 
 def completion_message(result: OntologyResult) -> tuple[str, str, str]:

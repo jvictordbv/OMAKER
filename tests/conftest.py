@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from core.ner import Entity
+from omaker.domain.entities import Entity
 
 
 class _FakeOllama:

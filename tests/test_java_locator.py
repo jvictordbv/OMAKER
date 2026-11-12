@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from core import java_locator
-from core.java_locator import find_java
+from omaker.ontology import java as java_locator
+from omaker.ontology.java import find_java
 
 
 def _exe(base: Path, *parts: str) -> Path:

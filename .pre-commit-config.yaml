@@ -10,9 +10,9 @@ repos:
       - id: check-added-large-files
         args: [--maxkb=2048]
       - id: end-of-file-fixer
-        exclude: '(\.owl$|^ui/recursos_rc\.py$)'
+        exclude: '(\.owl$|^omaker/ui/recursos_rc\.py$)'
       - id: trailing-whitespace
-        exclude: '(\.owl$|^ui/recursos_rc\.py$)'
+        exclude: '(\.owl$|^omaker/ui/recursos_rc\.py$)'
       - id: check-merge-conflict
   - repo: local
     hooks:

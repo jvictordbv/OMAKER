@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 
-from core.labels import NER_MODEL_NAME
-from core.text_utils import split_sentences
+from omaker.domain.entities import Entity
+from omaker.domain.labels import NER_MODEL_NAME
+from omaker.domain.text import split_sentences
 
 # Maps the NER model's labels (lower-cased) to OMAKER entity types.
 # Labels not listed here are ignored. Check them against your NER model's config.
@@ -19,15 +19,6 @@ NER_LABEL_MAP = {
 def normalize_label(label: str) -> str:
     """Lower-cases a model label and strips only a leading B-/I- prefix."""
     return re.sub(r"^[bi]-", "", label.lower())
-
-
-@dataclass(frozen=True)
-class Entity:
-    text: str
-    start: int
-    end: int
-    type: str
-    score: float
 
 
 class BiomedicalNER:

@@ -2,10 +2,11 @@ import json
 
 import pytest
 
-from core import hybrid_engine as he
-from core.llm_client import OllamaClient
-from core.llm_ner import extract_entities_llm, merge_entities
-from core.ner import Entity
+from omaker.domain.entities import Entity
+from omaker.llm.client import OllamaClient
+from omaker.llm.entities import extract_entities_llm, merge_entities
+from omaker.llm.taxonomy import TAXONOMY_TEXT_LIMIT
+from omaker.pipeline import engine as he
 
 TEXT = "Aspirin prevents stroke. Chemotherapy treats the tumor but causes nausea. Aspirin and fever were listed."
 
@@ -61,7 +62,7 @@ def test_taxonomy_validation_rejects_bad_llm_output(fake_ollama, stub_ner, monke
                     ent("fever", "SYMPTOM")])
     fake_ollama.script[:] = [pairs_answer, tax_answer]
     logs = []
-    monkeypatch.setattr(he.HybridEngine, "ENTITY_SOURCE", "ner")   # entities from the NER model only
+    monkeypatch.setenv("OMAKER_ENTITIES", "ner")   # entities from the NER model only
     tax, triples = he.HybridEngine.extrair(TEXT, "qwen3:8b", 0.1, logs.append, ner=ner,
                                            client=OllamaClient("qwen3:8b", fake_ollama.host))
 
@@ -91,7 +92,7 @@ def test_llm_entities_are_verified_in_text(fake_ollama, weak_ner):
 
 
 def test_merge_both_sources(fake_ollama, weak_ner, monkeypatch):
-    monkeypatch.setattr(he.HybridEngine, "ENTITY_SOURCE", "both")
+    monkeypatch.setenv("OMAKER_ENTITIES", "both")
     fake_ollama.script[:] = [LLM_ENTITIES, json.dumps({"results": []}),
                              json.dumps({"classes": [], "instances": [], "disjoint": []})]
     logs2 = []
@@ -103,7 +104,7 @@ def test_merge_both_sources(fake_ollama, weak_ner, monkeypatch):
 
 
 def test_gemini_model_is_rejected_not_swapped(fake_ollama):
-    from core.llm_client import LLMError
+    from omaker.llm.client import LLMError
     with pytest.raises(LLMError) as e:
         he.HybridEngine._client("gemini-2.5-flash", 0.1, lambda m: None)
     assert "não é um modelo do Ollama" in str(e.value)
@@ -113,7 +114,7 @@ EMPTY_TAX = {"classes": {}, "instances": {}, "disjoint": []}
 
 
 def test_atualizar_forwards_model_and_temperature(monkeypatch, tmp_path):
-    from core import owl_builder
+    from omaker.ontology import builder as owl_builder
     seen = {}
     monkeypatch.setattr(he.HybridEngine, "extrair",
                         staticmethod(lambda texto, modelo, temp, log, **k: seen.update(m=modelo, t=temp) or (EMPTY_TAX, [])))
@@ -133,7 +134,7 @@ def test_taxonomy_text_truncation_is_logged(fake_ollama, stub_ner, monkeypatch, 
         json.dumps({"results": [{"id": 0, "relation": "prevents"}]}),
         json.dumps({"classes": [], "instances": [], "disjoint": []}),
     ]
-    monkeypatch.setattr(he.HybridEngine, "ENTITY_SOURCE", "ner")
+    monkeypatch.setenv("OMAKER_ENTITIES", "ner")
     monkeypatch.setattr(he, "default_checkpoint_path", lambda: tmp_path / "nao-existe.pt")
     logs = []
     he.HybridEngine.extrair(text, "qwen3:8b", 0.1, logs.append, ner=ner,
@@ -142,9 +143,9 @@ def test_taxonomy_text_truncation_is_logged(fake_ollama, stub_ner, monkeypatch, 
     prompt = fake_ollama.calls[-1]["messages"][-1]["content"]
     warned = [line for line in logs if "[WARNING]" in line]
     if truncated:
-        assert len(text) > he.TAXONOMY_TEXT_LIMIT
-        assert len(warned) == 1 and str(len(text)) in warned[0] and str(he.TAXONOMY_TEXT_LIMIT) in warned[0]
-        assert text[: he.TAXONOMY_TEXT_LIMIT] in prompt and text not in prompt
+        assert len(text) > TAXONOMY_TEXT_LIMIT
+        assert len(warned) == 1 and str(len(text)) in warned[0] and str(TAXONOMY_TEXT_LIMIT) in warned[0]
+        assert text[: TAXONOMY_TEXT_LIMIT] in prompt and text not in prompt
     else:
         assert warned == []
         assert text in prompt

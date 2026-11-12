@@ -30,13 +30,38 @@ uv sync --extra dev
 
 ### 3. Execução
 ```bash
-uv run python OMAKER.py
+uv run python -m omaker
 ```
+
+O comando antigo `uv run python OMAKER.py` continua funcionando. Rode os comandos a partir da pasta do repositório.
+
+Treino do classificador de relações (PURE):
+```bash
+uv run python -m omaker.relations.train
+```
+
+### Estrutura
+
+O código fica no pacote `omaker/`:
+
+- `domain/`: rótulos, tipos e utilidades de texto.
+- `nlp/`: NER biomédico, pares candidatos e detecção de sinônimos.
+- `llm/`: cliente do Ollama e extração de entidades pelo LLM.
+- `relations/`: modelo PURE (SpanBERT), treino e dados de treino.
+- `ontology/`: construção do OWL, IRI, localização do Java (HermiT) e Protégé.
+- `pipeline/`: o motor que liga as etapas, do texto ao arquivo `.owl`.
+- `ui/`: interface PySide6.
 
 ### 4. Testes
 ```bash
 uv run pytest -m "not slow and not ollama"
 ```
+
+### 5. Scripts
+
+- `uv run python scripts/try_text.py --sample 1`: roda o pipeline real num texto de amostra e compara com o gabarito (precisa do Ollama).
+- `uv run python scripts/synonyms_gui.py`: janela mínima para testar a detecção de sinônimos.
+- `uv run python scripts/ner_smoke.py`: teste rápido do NER biomédico (baixa o modelo).
 
 @mastersthesis{barbosa2026omaker,
   author       = {João Victor Ferreira Barbosa},

@@ -1,9 +1,9 @@
 """Runs the real pipeline on a text and (for the bundled samples) scores it against a gold standard.
 
 Run from the project root, with Ollama open:
-    python -m tests.try_text --sample 1           # bundled sample 1 (default) + scoring
-    python -m tests.try_text --sample 2           # held-out sample 2 + scoring
-    python -m tests.try_text --file my_text.txt   # your own text (no scoring)
+    uv run python scripts/try_text.py --sample 1           # bundled sample 1 (default) + scoring
+    uv run python scripts/try_text.py --sample 2           # held-out sample 2 + scoring
+    uv run python scripts/try_text.py --file my_text.txt   # your own text (no scoring)
 Env: OMAKER_ENTITIES=ner|llm|both   OMAKER_JAVA=<path to java.exe>
 """
 import argparse
@@ -12,9 +12,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.hybrid_engine import HybridEngine  # noqa: E402
+from omaker.pipeline.engine import HybridEngine  # noqa: E402
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tests")  # sample texts
 
 # What a careful human annotator would extract. (sub, relation, obj); names matched loosely.
 SAMPLES = {

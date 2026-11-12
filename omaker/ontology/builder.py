@@ -14,8 +14,8 @@ import owlready2
 from owlready2 import AllDisjoint, ObjectProperty, Thing, World, sync_reasoner_hermit
 from owlready2.base import OwlReadyInconsistentOntologyError
 
-from core.labels import BASE_CLASSES, RELATION_DOMAIN, ROOT_CLASS
-from core.text_utils import to_identifier
+from omaker.domain.labels import BASE_CLASSES, RELATION_DOMAIN, ROOT_CLASS
+from omaker.domain.text import to_identifier
 
 
 class ReasonerStatus(enum.Enum):

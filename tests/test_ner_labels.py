@@ -1,4 +1,4 @@
-from core.ner import normalize_label
+from omaker.nlp.ner import normalize_label
 
 
 def test_label_prefix_only_stripped_at_start():

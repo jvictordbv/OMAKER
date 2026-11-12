@@ -4,7 +4,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
 
-from core import protege
+from omaker.ontology import protege
 
 
 class FakePopen:
@@ -63,7 +63,7 @@ def test_missing_owl_raises(tmp_path, fake):
 
 
 def test_open_button_starts_disabled(qtbot):
-    import ui.main_window as m
+    import omaker.ui.main_window as m
 
     win = m.OntoApp()
     qtbot.addWidget(win)
@@ -73,7 +73,7 @@ def test_open_button_starts_disabled(qtbot):
 def test_open_button_shows_warning_on_oserror(qtbot, monkeypatch, tmp_path):
     from types import SimpleNamespace
 
-    import ui.main_window as m
+    import omaker.ui.main_window as m
 
     exe, owl = _arquivos(tmp_path)
 

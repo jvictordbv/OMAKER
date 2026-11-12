@@ -1,6 +1,6 @@
-from core.hybrid_engine import OntologyResult
-from core.owl_builder import ReasonerStatus
-from ui.messages import completion_message
+from omaker.ontology.builder import ReasonerStatus
+from omaker.pipeline.engine import OntologyResult
+from omaker.ui.messages import completion_message
 
 
 def test_completion_message_never_claims_validation_when_unavailable():

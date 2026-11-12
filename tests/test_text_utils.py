@@ -1,4 +1,4 @@
-from core.text_utils import split_sentences
+from omaker.domain.text import split_sentences
 
 
 def sentences(text):

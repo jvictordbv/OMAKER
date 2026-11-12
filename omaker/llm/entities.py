@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import re
 
-from core.ner import Entity
-from core.text_utils import split_sentences
+from omaker.domain.entities import Entity
+from omaker.domain.text import split_sentences
 
 LLM_ENTITY_SCORE = 0.75  # constant: the LLM gives no calibrated score
 ENTITY_TYPES_LLM = ["DRUG", "SYMPTOM", "DISEASE"]

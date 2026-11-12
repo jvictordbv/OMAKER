@@ -1,4 +1,4 @@
-from core import paths
+from omaker import paths
 
 
 def test_checkpoint_path_independent_of_cwd(tmp_path, monkeypatch):
@@ -14,4 +14,8 @@ def test_checkpoint_env_override(tmp_path, monkeypatch):
 
 def test_project_root_holds_entrypoint_and_resource_path():
     assert (paths.project_root() / "OMAKER.py").exists()
-    assert paths.resource_path("core", "labels.py").exists()
+    assert paths.resource_path("omaker", "domain", "labels.py").exists()
+
+
+def test_package_resource_symp_owl():
+    assert paths.package_resource("symp.owl").is_file()

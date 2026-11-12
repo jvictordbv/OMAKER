@@ -2,25 +2,33 @@
 from __future__ import annotations
 
 import json
-import os
 import re
+from typing import Protocol, runtime_checkable
 
 import requests
 
+from omaker.config import ollama_host
+
 DEFAULT_MODEL = "qwen3:8b"
-DEFAULT_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-if not DEFAULT_HOST.startswith("http"):
-    DEFAULT_HOST = "http://" + DEFAULT_HOST
 
 
 class LLMError(RuntimeError):
     pass
 
 
+@runtime_checkable
+class LLMClient(Protocol):
+    """What the pipeline needs from an LLM. OllamaClient implements it; another provider only has to match it."""
+
+    model: str
+
+    def chat_json(self, system: str, user: str, schema: dict, temperature: float = 0.1, retries: int = 2): ...
+
+
 class OllamaClient:
-    def __init__(self, model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST, num_ctx: int = 8192, timeout: int = 600):
+    def __init__(self, model: str = DEFAULT_MODEL, host: str | None = None, num_ctx: int = 8192, timeout: int = 600):
         self.model = model
-        self.host = host.rstrip("/")
+        self.host = (host or ollama_host()).rstrip("/")  # None: OLLAMA_HOST lido agora
         self.num_ctx = num_ctx   # Ollama's default (2-4k) silently truncates long prompts
         self.timeout = timeout
 
