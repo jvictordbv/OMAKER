@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from omaker.config import load_settings
+from omaker.config import checkpoint
 from omaker.domain.labels import DEFAULT_CHECKPOINT
 
 
@@ -25,4 +25,4 @@ def package_resource(name: str) -> Path:
 
 
 def default_checkpoint_path() -> Path:
-    return load_settings().checkpoint or project_root() / DEFAULT_CHECKPOINT
+    return checkpoint() or project_root() / DEFAULT_CHECKPOINT

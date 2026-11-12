@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from omaker.config import load_settings
+from omaker.config import entity_source
 from omaker.domain.labels import BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION, RELATION_DOMAIN
 from omaker.llm.client import DEFAULT_MODEL, LLMClient, LLMError, OllamaClient
 from omaker.llm.entities import extract_entities_llm, merge_entities
@@ -79,7 +79,7 @@ class HybridEngine:
         from omaker.nlp.pairs import generate_pairs
 
         # Where entities come from: "ner" (model only), "llm" (Qwen only) or "both" (merged); OMAKER_ENTITIES.
-        source = load_settings().entity_source
+        source = entity_source()
         client = client or HybridEngine._client(modelo_llm, temp_llm, log)
 
         entities = []

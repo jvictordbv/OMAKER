@@ -26,16 +26,29 @@ class Settings:
     checkpoint: Path | None
 
 
-def load_settings(env: Mapping[str, str] | None = None) -> Settings:
+def ollama_host(env: Mapping[str, str] | None = None) -> str:
     env = os.environ if env is None else env
-
     host = env.get("OLLAMA_HOST", "").strip() or DEFAULT_OLLAMA_HOST
-    if not host.startswith("http"):
-        host = "http://" + host
+    return host if host.startswith("http") else "http://" + host
 
+
+def entity_source(env: Mapping[str, str] | None = None) -> str:
+    """Validated OMAKER_ENTITIES. Checked only where entities are extracted, so a typo
+    does not break commands that never use it (training, the Ollama client)."""
+    env = os.environ if env is None else env
     source = env.get("OMAKER_ENTITIES", "both").strip().lower()
     if source not in ENTITY_SOURCES:
         raise ValueError(f"OMAKER_ENTITIES='{env.get('OMAKER_ENTITIES')}' inválido; use ner, llm ou both.")
+    return source
 
-    checkpoint = env.get("OMAKER_CHECKPOINT", "").strip()
-    return Settings(host, source, Path(checkpoint) if checkpoint else None)
+
+def checkpoint(env: Mapping[str, str] | None = None) -> Path | None:
+    env = os.environ if env is None else env
+    value = env.get("OMAKER_CHECKPOINT", "").strip()
+    return Path(value) if value else None
+
+
+def load_settings(env: Mapping[str, str] | None = None) -> Settings:
+    """All settings at once (validates every variable)."""
+    env = os.environ if env is None else env
+    return Settings(ollama_host(env), entity_source(env), checkpoint(env))

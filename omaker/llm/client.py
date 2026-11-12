@@ -7,7 +7,7 @@ from typing import Protocol, runtime_checkable
 
 import requests
 
-from omaker.config import load_settings
+from omaker.config import ollama_host
 
 DEFAULT_MODEL = "qwen3:8b"
 
@@ -28,7 +28,7 @@ class LLMClient(Protocol):
 class OllamaClient:
     def __init__(self, model: str = DEFAULT_MODEL, host: str | None = None, num_ctx: int = 8192, timeout: int = 600):
         self.model = model
-        self.host = (host or load_settings().ollama_host).rstrip("/")  # None: OLLAMA_HOST lido agora
+        self.host = (host or ollama_host()).rstrip("/")  # None: OLLAMA_HOST lido agora
         self.num_ctx = num_ctx   # Ollama's default (2-4k) silently truncates long prompts
         self.timeout = timeout
 
