@@ -3,6 +3,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
+from PySide6 import QtWidgets  # noqa: E402
 
 from omaker.ontology import protege
 
@@ -67,7 +68,7 @@ def test_open_button_starts_disabled(qtbot):
 
     win = m.OntoApp()
     qtbot.addWidget(win)
-    assert win.btn_abrir_protege.isEnabled() is False
+    assert win.pagina_gerador.btn_abrir_protege.isEnabled() is False
 
 
 def test_open_button_shows_warning_on_oserror(qtbot, monkeypatch, tmp_path):
@@ -82,10 +83,10 @@ def test_open_button_shows_warning_on_oserror(qtbot, monkeypatch, tmp_path):
 
     monkeypatch.setattr(protege.subprocess, "Popen", popen_falso)
     avisos = []
-    monkeypatch.setattr(m.QMessageBox, "warning", lambda *a, **k: avisos.append(a[2]))
+    monkeypatch.setattr(QtWidgets.QMessageBox, "warning", lambda *a, **k: avisos.append(a[2]))
     win = m.OntoApp()
     qtbot.addWidget(win)
-    win.configuracoes = SimpleNamespace(value=lambda chave, padrao="": exe)
-    win.caminho_owl_gerado = owl
-    win.abrir_protege_clicado()
+    win.pagina_gerador.settings = SimpleNamespace(caminho_protege=lambda: exe)
+    win.pagina_gerador.caminho_owl_gerado = owl
+    win.pagina_gerador.abrir_protege_clicado()
     assert len(avisos) == 1 and "193" in avisos[0]

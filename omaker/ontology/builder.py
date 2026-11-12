@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import enum
 import os
+import re
 import shutil
 import types
+from dataclasses import dataclass
 
 import owlready2
 from owlready2 import AllDisjoint, ObjectProperty, Thing, World, sync_reasoner_hermit
@@ -127,3 +129,54 @@ def run_reasoner(world, log=print, java_exe: str = "") -> ReasonerStatus:
 def save(onto, path: str):
     onto.save(file=path, format="rdfxml")
     return path
+
+
+# ----------------------------------------------------------------------------- synonyms
+@dataclass(frozen=True)
+class EquivalenceReport:
+    added: int                      # pares owl:equivalentClass gravados
+    groups_written: list            # grupos (termos achados) que geraram equivalências
+    not_found: list                 # termos sem classe correspondente na ontologia
+    path: str                       # arquivo gravado
+
+
+def _norm_term(text) -> str:
+    return re.sub(r"[\s_]+", " ", str(text)).strip().casefold()
+
+
+def add_equivalences(src_path: str, groups: dict, dest_path: str, log=print) -> EquivalenceReport:
+    """Grava owl:equivalentClass entre as classes de cada grupo de sinônimos, numa cópia (dest_path).
+
+    Cada termo casa com a classe cujo rdfs:label ou nome é igual a ele, sem diferenciar maiúsculas
+    (espaços e "_" contam como iguais). Grupos com menos de duas classes achadas são ignorados.
+    src_path nunca é alterado.
+    """
+    _world, onto = load_world_ontology(src_path)
+    index = {}
+    for cls in onto.classes():
+        for key in [cls.name, *cls.label]:
+            index.setdefault(_norm_term(key), cls)
+
+    added, written, not_found = 0, [], []
+    for terms in groups.values():
+        found = []
+        for term in terms:
+            cls = index.get(_norm_term(term))
+            if cls is None:
+                not_found.append(term)
+            elif all(cls is not c for _, c in found):
+                found.append((term, cls))
+        if len(found) < 2:
+            log(f"  [SKIP] {', '.join(terms)}: menos de duas classes encontradas na ontologia.")
+            continue
+        first = found[0][1]
+        for _, other in found[1:]:
+            if other not in first.equivalent_to:
+                first.equivalent_to.append(other)
+                added += 1
+        written.append([term for term, _ in found])
+
+    os.makedirs(os.path.dirname(os.path.abspath(dest_path)), exist_ok=True)
+    save(onto, dest_path)
+    log(f"> [SYNONYMS] {added} owl:equivalentClass gravados em {dest_path}")
+    return EquivalenceReport(added, written, not_found, dest_path)
