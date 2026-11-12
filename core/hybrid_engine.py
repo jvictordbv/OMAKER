@@ -11,13 +11,22 @@ from __future__ import annotations
 
 import os
 import re
-from pathlib import Path
+from dataclasses import dataclass
 
-from core.labels import (BASE_CLASSES, DEFAULT_CHECKPOINT, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION,
-                         RELATION_DOMAIN, REL2ID, ROOT_CLASS)
-from core.llm_client import DEFAULT_MODEL, OllamaClient
+from core.iri import DEFAULT_URI_BASE, normalize_base, ontology_iri
+from core.labels import BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION, REL2ID, RELATION_DOMAIN, ROOT_CLASS
+from core.llm_client import DEFAULT_MODEL, LLMError, OllamaClient
 from core.llm_ner import extract_entities_llm, merge_entities
+from core.owl_builder import ReasonerStatus
+from core.paths import default_checkpoint_path
 from core.text_utils import to_identifier
+
+
+@dataclass(frozen=True)
+class OntologyResult:
+    path: str
+    reasoner: ReasonerStatus
+    relations_added: int
 
 RELATIONS = [r for r in REL2ID if r != NO_RELATION]
 
@@ -97,7 +106,9 @@ def validate_taxonomy(raw: dict, entities) -> dict:
     """Turns the LLM answer into a safe taxonomy. Anything inconsistent falls back to the NER type."""
     base_names = set(BASE_CLASSES.values())
     base_of_type = dict(BASE_CLASSES)
-    norm = lambda s: re.sub(r"[\W_]+", "", s.lower())
+    def norm(s):
+        return re.sub(r"[\W_]+", "", s.lower())
+
     entity_keys = {norm(e.text) for e in entities}
 
     parents = {}
@@ -167,26 +178,24 @@ def filter_by_domain(triples, log):
 
 # ----------------------------------------------------------------------------- engine
 class HybridEngine:
-    CHECKPOINT = os.environ.get("OMAKER_CHECKPOINT", DEFAULT_CHECKPOINT)
-    JAVA_EXE = os.environ.get("OMAKER_JAVA", "")
     # Where entities come from: "ner" (model only), "llm" (Qwen only) or "both" (merged).
     ENTITY_SOURCE = os.environ.get("OMAKER_ENTITIES", "both").lower()
 
     @staticmethod
     def _client(modelo_llm, temp_llm, log):
-        model = modelo_llm if modelo_llm and not modelo_llm.lower().startswith("gemini") else DEFAULT_MODEL
-        if model != modelo_llm:
-            log(f"> [LLM] '{modelo_llm}' is not a local model; using '{model}'.")
+        model = modelo_llm or DEFAULT_MODEL
+        if model.lower().startswith("gemini"):
+            raise LLMError(f"'{model}' não é um modelo do Ollama; escolha um modelo local (ex.: {DEFAULT_MODEL}).")
         client = OllamaClient(model=model)
         client.check()
         return client
 
     @staticmethod
-    def _relations_pure(pairs, log):
+    def _relations_pure(pairs, log, checkpoint):
         from core.relation_extractor import RelationExtractorPURE
 
-        log(f"> [PURE] Loading '{HybridEngine.CHECKPOINT}'...")
-        model = RelationExtractorPURE.load(HybridEngine.CHECKPOINT)
+        log(f"> [PURE] Loading '{checkpoint}'...")
+        model = RelationExtractorPURE.load(str(checkpoint))
         return model.predict(pairs)
 
     @staticmethod
@@ -235,13 +244,14 @@ class HybridEngine:
 
         triples = []
         if pairs:
-            if Path(HybridEngine.CHECKPOINT).exists():
-                preds = HybridEngine._relations_pure(pairs, log)
+            checkpoint = default_checkpoint_path()
+            if checkpoint.exists():
+                preds = HybridEngine._relations_pure(pairs, log, checkpoint)
                 threshold = DEFAULT_CONFIDENCE_THRESHOLD
             else:
                 preds, threshold = HybridEngine._relations_llm(client, pairs, temp_llm, log), 0.0
             best = {}
-            for p, (rel, conf) in zip(pairs, preds):
+            for p, (rel, conf) in zip(pairs, preds, strict=False):
                 if rel == NO_RELATION or (conf is not None and conf < threshold):
                     continue
                 key = (p["sub_name"].lower(), rel, p["obj_name"].lower())
@@ -260,34 +270,39 @@ class HybridEngine:
 
     # ---- same public API as the old SemanticEngine -------------------------------------
     @staticmethod
-    def construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback):
-        """taxonomy + triples -> validated .owl file. Returns the saved path."""
+    def construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback, protege_exe=""):
+        """taxonomy + triples -> .owl file, plus what the reasoner said about it."""
         from core import owl_builder
+        from core.java_locator import find_java
 
-        if not uri_base.endswith(("#", "/")):
-            uri_base += "#"
-        world, onto = owl_builder.new_world_ontology(f"{uri_base}{nome_arquivo}.owl")
-        owl_builder.populate(onto, taxonomy, triples, log_callback)
-        owl_builder.run_reasoner(world, log_callback, HybridEngine.JAVA_EXE)
+        if normalize_base(uri_base)[1]:
+            log_callback(f"> [IRI] URI base vazia ou inválida; usando {DEFAULT_URI_BASE}")
+        world, onto = owl_builder.new_world_ontology(ontology_iri(uri_base, nome_arquivo))
+        added = owl_builder.populate(onto, taxonomy, triples, log_callback)
+        status = owl_builder.run_reasoner(world, log_callback, find_java(protege_exe) or "")
 
         os.makedirs(pasta_destino or ".", exist_ok=True)
         caminho = owl_builder.save(onto, os.path.join(pasta_destino or ".", f"{nome_arquivo}.owl"))
         log_callback(f"\n> [SUCCESS] OWL knowledge graph saved to:\n{caminho}")
-        return caminho
+        return OntologyResult(caminho, status, added)
 
     @staticmethod
-    def gerar_ontologia(texto, nome_arquivo, api_key, modelo_llm, temp_llm, pasta_destino, uri_base, log_callback):
+    def gerar_ontologia(texto, nome_arquivo, api_key, modelo_llm, temp_llm, pasta_destino, uri_base, log_callback,
+                        protege_exe=""):
         taxonomy, triples = HybridEngine.extrair(texto, modelo_llm, temp_llm, log_callback)
-        return HybridEngine.construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback)
+        return HybridEngine.construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback,
+                                      protege_exe=protege_exe)
 
     @staticmethod
-    def atualizar_ontologia(caminho_owl, texto, api_key, log_callback, modelo_llm=DEFAULT_MODEL, temp_llm=0.1):
+    def atualizar_ontologia(caminho_owl, texto, api_key, log_callback, modelo_llm=DEFAULT_MODEL, temp_llm=0.1,
+                            protege_exe=""):
         from core import owl_builder
+        from core.java_locator import find_java
 
         taxonomy, triples = HybridEngine.extrair(texto, modelo_llm, temp_llm, log_callback)
         world, onto = owl_builder.load_world_ontology(caminho_owl)
-        owl_builder.populate(onto, taxonomy, triples, log_callback)
-        owl_builder.run_reasoner(world, log_callback, HybridEngine.JAVA_EXE)
+        added = owl_builder.populate(onto, taxonomy, triples, log_callback)
+        status = owl_builder.run_reasoner(world, log_callback, find_java(protege_exe) or "")
         owl_builder.save(onto, caminho_owl)
         log_callback("\n> [SUCCESS] Merge finished.")
-        return True
+        return OntologyResult(caminho_owl, status, added)

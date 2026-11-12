@@ -1,7 +1,8 @@
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.cluster import AgglomerativeClustering
 from sentence_transformers import SentenceTransformer
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics.pairwise import cosine_similarity
+
 
 class SynonymDetector:
     """
@@ -17,7 +18,7 @@ class SynonymDetector:
     def agrupar_sinonimos(self, conceitos: list[str], threshold: float = 0.25) -> dict:
         """
         Recebe uma lista de palavras e agrupa automaticamente as que são sinônimas.
-        
+
         Parâmetros:
           - conceitos: Lista de termos (ex: ["fever", "pyrexia", "headache"])
           - threshold: Limiar de distância (0.25 equivale a exigir 75% de similaridade)
@@ -32,7 +33,7 @@ class SynonymDetector:
         # ETAPA B: Cálculo da Similaridade de Cosseno
         # Mede a proximidade angular entre os vetores (resultado entre -1 e 1)
         matriz_sim = cosine_similarity(vetores)
-        
+
         # Converte similaridade em distância (Distância = 1 - Similaridade)
         matriz_dist = np.maximum(0, 1 - matriz_sim)
 
@@ -48,7 +49,7 @@ class SynonymDetector:
 
         # ETAPA D: Organização dos Grupos
         grupos = {}
-        for termo, label in zip(conceitos, labels):
+        for termo, label in zip(conceitos, labels, strict=False):
             grupos.setdefault(int(label), []).append(termo)
 
         # Retorna apenas grupos que contêm 2 ou mais termos (equivalências encontradas)
@@ -59,16 +60,16 @@ class SynonymDetector:
 # ==============================================================================
 if __name__ == "__main__":
     print("=== TESTANDO O PASSO 1: DETECTOR DE SINÔNIMOS ===\n")
-    
+
     detector = SynonymDetector()
-    
+
     # Exemplo com termos médicos em inglês (como na Symptom Ontology - symp.owl)
     termos_teste = ["fever", "pyrexia", "headache", "cephalea", "cough"]
-    
+
     print(f"Analisando os termos: {termos_teste}\n")
-    
+
     grupos = detector.agrupar_sinonimos(termos_teste, threshold=0.25)
-    
+
     print("--- RESULTADO DO CLUSTERING ---")
     if grupos:
         for id_grupo, termos in grupos.items():

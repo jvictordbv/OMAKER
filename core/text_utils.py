@@ -1,12 +1,11 @@
 """Small text helpers shared by the NER and the pair generator."""
 import re
-from typing import List, Tuple
 
 # Split after . ! ? when followed by whitespace and an uppercase letter or digit.
 _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
 
 
-def split_sentences(text: str) -> List[Tuple[int, int]]:
+def split_sentences(text: str) -> list[tuple[int, int]]:
     """Returns (start, end) character offsets of each sentence."""
     spans, cursor = [], 0
     for m in _SENT_SPLIT.finditer(text):

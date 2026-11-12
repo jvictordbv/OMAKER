@@ -5,6 +5,7 @@ serves both "generate new ontology" and "update existing ontology".
 """
 from __future__ import annotations
 
+import enum
 import os
 import shutil
 import types
@@ -15,6 +16,13 @@ from owlready2.base import OwlReadyInconsistentOntologyError
 
 from core.labels import BASE_CLASSES, RELATION_DOMAIN, ROOT_CLASS
 from core.text_utils import to_identifier
+
+
+class ReasonerStatus(enum.Enum):
+    CONSISTENT = "consistent"
+    INCONSISTENT = "inconsistent"
+    UNAVAILABLE = "unavailable"
+
 
 def new_world_ontology(uri: str):
     world = World()
@@ -70,7 +78,7 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
             individuals[name.lower()] = ind
 
         added = 0
-        for sub, sub_type, rel, obj, obj_type, conf in triples:
+        for sub, _sub_type, rel, obj, _obj_type, conf in triples:
             s, o = individuals.get(sub.lower()), individuals.get(obj.lower())
             if s is None or o is None:
                 continue
@@ -92,22 +100,28 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
     return added
 
 
-def run_reasoner(world, log=print, java_exe: str = ""):
+def run_reasoner(world, log=print, java_exe: str = "") -> ReasonerStatus:
     if java_exe and not os.path.exists(java_exe):
-        log(f"> [HERMIT] OMAKER_JAVA points to a file that does not exist ({java_exe}); trying 'java' from PATH.")
+        log(f"> [HERMIT] O Java informado não existe ({java_exe}); tentando o 'java' do PATH.")
         java_exe = ""
-    owlready2.JAVA_EXE = java_exe or shutil.which("java") or "java"
+    java_exe = java_exe or shutil.which("java") or ""
+    if not java_exe:
+        log("> [HERMIT] Java não encontrado. Instale o Java 11+ ou informe o caminho do Protégé "
+            "nas Configurações (o OMAKER usa o Java que vem com ele).")
+        return ReasonerStatus.UNAVAILABLE
+    owlready2.JAVA_EXE = java_exe
     log("> [HERMIT] Running the reasoner for logical validation...")
     try:
         sync_reasoner_hermit(world, infer_property_values=True)
         log("> [HERMIT] Consistent graph, inferences materialized.")
-        return True
+        return ReasonerStatus.CONSISTENT
     except OwlReadyInconsistentOntologyError as err:
         log(f"> [HERMIT] LOGICAL INCONSISTENCY detected: {err}")
         log("> [HERMIT] The file will be saved, but it needs review.")
-    except Exception as e:
-        log(f"> [HERMIT] Could not run (check Java / OMAKER_JAVA): {e}")
-    return False
+        return ReasonerStatus.INCONSISTENT
+    except Exception as e:  # noqa: BLE001  HermiT/Java pode falhar de muitas formas; vira status UNAVAILABLE
+        log(f"> [HERMIT] Could not run (verifique o Java): {e}")
+        return ReasonerStatus.UNAVAILABLE
 
 
 def save(onto, path: str):

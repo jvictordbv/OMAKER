@@ -1,0 +1,24 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+      - id: end-of-file-fixer
+        exclude: '(\.owl$|^ui/recursos_rc\.py$)'
+      - id: trailing-whitespace
+        exclude: '(\.owl$|^ui/recursos_rc\.py$)'
+      - id: check-merge-conflict
+  - repo: local
+    hooks:
+      - id: pytest-rapido
+        name: pytest (suite rapida)
+        entry: uv run pytest -q -m "not slow and not ollama"
+        language: system
+        pass_filenames: false
+        always_run: true

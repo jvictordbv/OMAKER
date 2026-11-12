@@ -1,20 +1,21 @@
 # ui/splash.py
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QGraphicsDropShadowEffect, QApplication
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont, QColor, QPainter, QLinearGradient, QPen
+from PySide6.QtGui import QColor, QFont, QLinearGradient, QPainter, QPen
+from PySide6.QtWidgets import QApplication, QGraphicsDropShadowEffect, QLabel, QProgressBar, QVBoxLayout, QWidget
+
 
 class GlowShimmerLabel(QLabel):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
-        self._shimmer_pos = -1.0  
+        self._shimmer_pos = -1.0
         self.shimmer_timer = QTimer(self)
         self.shimmer_timer.timeout.connect(self.animar_shimmer)
-        self.shimmer_timer.start(15) 
+        self.shimmer_timer.start(15)
 
     def animar_shimmer(self):
-        self._shimmer_pos += 0.008  
-        if self._shimmer_pos > 2.5:  
-            self._shimmer_pos = -1.5 
+        self._shimmer_pos += 0.008
+        if self._shimmer_pos > 2.5:
+            self._shimmer_pos = -1.5
         self.update()
 
     def paintEvent(self, event):
@@ -22,10 +23,10 @@ class GlowShimmerLabel(QLabel):
         painter.setRenderHint(QPainter.Antialiasing)
         gradient = QLinearGradient(0, 0, self.width(), 0)
         gradient.setColorAt(max(0.0, min(1.0, self._shimmer_pos - 0.5)), QColor("#ffffff"))
-        gradient.setColorAt(max(0.0, min(1.0, self._shimmer_pos)), QColor("#0736c3")) 
+        gradient.setColorAt(max(0.0, min(1.0, self._shimmer_pos)), QColor("#0736c3"))
         gradient.setColorAt(max(0.0, min(1.0, self._shimmer_pos + 0.5)), QColor("#ffffff"))
         painter.setFont(self.font())
-        painter.setPen(QColor(0,0,0,0)) 
+        painter.setPen(QColor(0,0,0,0))
         painter.setBrush(gradient)
         rect = self.rect()
         painter.setPen(Qt.NoPen)
@@ -38,11 +39,11 @@ class GlowShimmerLabel(QLabel):
 class OperaGXSplash(QWidget):
     def __init__(self, main_window):
         super().__init__()
-        self.main_window = main_window 
+        self.main_window = main_window
         self.setWindowFlags(Qt.WindowFlags.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.resize(550, 350)
-        
+
         tela = QApplication.primaryScreen().geometry()
         self.move((tela.width() - self.width()) // 2, (tela.height() - self.height()) // 2)
         self.setup_ui()
@@ -64,10 +65,10 @@ class OperaGXSplash(QWidget):
         font.setLetterSpacing(QFont.AbsoluteSpacing, 6)
         self.lbl_titulo.setFont(font)
         self.lbl_titulo.setFixedHeight(90)
-        
+
         self.efeito_glow = QGraphicsDropShadowEffect()
         self.efeito_glow.setBlurRadius(35)
-        self.efeito_glow.setColor(QColor(6, 182, 212, 180)) 
+        self.efeito_glow.setColor(QColor(6, 182, 212, 180))
         self.efeito_glow.setOffset(0, 0)
         self.lbl_titulo.setGraphicsEffect(self.efeito_glow)
 
@@ -95,7 +96,7 @@ class OperaGXSplash(QWidget):
         self.valor_progresso = 0
         self.timer = QTimer()
         self.timer.timeout.connect(self.atualizar_carregamento)
-        self.timer.start(20) 
+        self.timer.start(20)
 
     def atualizar_carregamento(self):
         self.valor_progresso += 1
@@ -110,5 +111,5 @@ class OperaGXSplash(QWidget):
 
         if self.valor_progresso >= 100:
             self.timer.stop()
-            self.main_window.show() 
+            self.main_window.show()
             self.close()

@@ -36,7 +36,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['C:\\Project_OMAKER\\logo_omaker.png'],
+    icon=None,  # TODO Fase 6: assets/logo_omaker.ico (o .png original está só na máquina do João)
 )
 coll = COLLECT(
     exe,

@@ -1,13 +1,14 @@
 """Candidate pair generation: entities in the same sentence, filtered by type."""
 from __future__ import annotations
 
-from typing import Iterable, List
+from collections.abc import Iterable
 
 from core.labels import ALLOWED_TYPE_PAIRS
 from core.ner import Entity
 from core.text_utils import split_sentences
 
-def generate_pairs(text: str, entities: Iterable[Entity], allowed=ALLOWED_TYPE_PAIRS) -> List[dict]:
+
+def generate_pairs(text: str, entities: Iterable[Entity], allowed=ALLOWED_TYPE_PAIRS) -> list[dict]:
     """Returns sample dicts ready for RelationExtractorPURE.predict.
 
     Each sample uses the *sentence* as text and spans relative to it, so the

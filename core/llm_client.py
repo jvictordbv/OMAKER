@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 import os
 import re
-from typing import Optional
 
 import requests
 
@@ -25,17 +24,23 @@ class OllamaClient:
         self.num_ctx = num_ctx   # Ollama's default (2-4k) silently truncates long prompts
         self.timeout = timeout
 
-    def check(self):
-        """Fails early with an actionable message if Ollama or the model is missing."""
+    def installed_models(self) -> list[str]:
+        """Nomes dos modelos instalados no Ollama."""
         try:
             r = requests.get(f"{self.host}/api/tags", timeout=5)
             r.raise_for_status()
-        except requests.RequestException:
-            raise LLMError(f"Cannot reach Ollama at {self.host}. Install/start it (`ollama serve`).")
-        names = [m.get("name", "") for m in r.json().get("models", [])]
+        except requests.RequestException as err:
+            raise LLMError(f"Cannot reach Ollama at {self.host}. Install/start it (`ollama serve`).") from err
+        return [m.get("name", "") for m in r.json().get("models", [])]
+
+    def check(self):
+        """Fails early with an actionable message if Ollama or the model is missing."""
+        names = self.installed_models()
         wanted = self.model if ":" in self.model else self.model + ":"
         if not any(n == self.model or n.startswith(wanted) for n in names):
-            raise LLMError(f"Model '{self.model}' is not installed. Run: ollama pull {self.model}")
+            available = ", ".join(names) if names else "(nenhum)"
+            raise LLMError(f"Model '{self.model}' is not installed. Installed models: {available}. "
+                           f"Run: ollama pull {self.model}")
 
     def _post(self, payload: dict) -> str:
         r = requests.post(f"{self.host}/api/chat", json=payload, timeout=self.timeout)
@@ -55,7 +60,7 @@ class OllamaClient:
     def chat_json(self, system: str, user: str, schema: dict, temperature: float = 0.1, retries: int = 2):
         """Returns parsed JSON that follows `schema`. Retries with the parse error as feedback."""
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
-        last_err: Optional[Exception] = None
+        last_err: Exception | None = None
         for _ in range(retries + 1):
             content = self._post(
                 {
