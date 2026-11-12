@@ -61,7 +61,7 @@ def test_taxonomy_validation_rejects_bad_llm_output(fake_ollama, stub_ner, monke
                     ent("fever", "SYMPTOM")])
     fake_ollama.script[:] = [pairs_answer, tax_answer]
     logs = []
-    monkeypatch.setattr(he.HybridEngine, "ENTITY_SOURCE", "ner")   # entities from the NER model only
+    monkeypatch.setenv("OMAKER_ENTITIES", "ner")   # entities from the NER model only
     tax, triples = he.HybridEngine.extrair(TEXT, "qwen3:8b", 0.1, logs.append, ner=ner,
                                            client=OllamaClient("qwen3:8b", fake_ollama.host))
 
@@ -91,7 +91,7 @@ def test_llm_entities_are_verified_in_text(fake_ollama, weak_ner):
 
 
 def test_merge_both_sources(fake_ollama, weak_ner, monkeypatch):
-    monkeypatch.setattr(he.HybridEngine, "ENTITY_SOURCE", "both")
+    monkeypatch.setenv("OMAKER_ENTITIES", "both")
     fake_ollama.script[:] = [LLM_ENTITIES, json.dumps({"results": []}),
                              json.dumps({"classes": [], "instances": [], "disjoint": []})]
     logs2 = []
@@ -133,7 +133,7 @@ def test_taxonomy_text_truncation_is_logged(fake_ollama, stub_ner, monkeypatch, 
         json.dumps({"results": [{"id": 0, "relation": "prevents"}]}),
         json.dumps({"classes": [], "instances": [], "disjoint": []}),
     ]
-    monkeypatch.setattr(he.HybridEngine, "ENTITY_SOURCE", "ner")
+    monkeypatch.setenv("OMAKER_ENTITIES", "ner")
     monkeypatch.setattr(he, "default_checkpoint_path", lambda: tmp_path / "nao-existe.pt")
     logs = []
     he.HybridEngine.extrair(text, "qwen3:8b", 0.1, logs.append, ner=ner,

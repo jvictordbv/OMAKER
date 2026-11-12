@@ -2,15 +2,13 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 
 import requests
 
+from omaker.config import load_settings
+
 DEFAULT_MODEL = "qwen3:8b"
-DEFAULT_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-if not DEFAULT_HOST.startswith("http"):
-    DEFAULT_HOST = "http://" + DEFAULT_HOST
 
 
 class LLMError(RuntimeError):
@@ -18,9 +16,9 @@ class LLMError(RuntimeError):
 
 
 class OllamaClient:
-    def __init__(self, model: str = DEFAULT_MODEL, host: str = DEFAULT_HOST, num_ctx: int = 8192, timeout: int = 600):
+    def __init__(self, model: str = DEFAULT_MODEL, host: str | None = None, num_ctx: int = 8192, timeout: int = 600):
         self.model = model
-        self.host = host.rstrip("/")
+        self.host = (host or load_settings().ollama_host).rstrip("/")  # None: OLLAMA_HOST lido agora
         self.num_ctx = num_ctx   # Ollama's default (2-4k) silently truncates long prompts
         self.timeout = timeout
 

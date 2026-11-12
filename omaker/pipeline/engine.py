@@ -12,6 +12,7 @@ import os
 import re
 from dataclasses import dataclass
 
+from omaker.config import load_settings
 from omaker.domain.labels import (
     BASE_CLASSES,
     DEFAULT_CONFIDENCE_THRESHOLD,
@@ -187,9 +188,6 @@ def filter_by_domain(triples, log):
 
 # ----------------------------------------------------------------------------- engine
 class HybridEngine:
-    # Where entities come from: "ner" (model only), "llm" (Qwen only) or "both" (merged).
-    ENTITY_SOURCE = os.environ.get("OMAKER_ENTITIES", "both").lower()
-
     @staticmethod
     def _client(modelo_llm, temp_llm, log):
         model = modelo_llm or DEFAULT_MODEL
@@ -228,17 +226,19 @@ class HybridEngine:
         from omaker.nlp.ner import BiomedicalNER
         from omaker.nlp.pairs import generate_pairs
 
+        # Where entities come from: "ner" (model only), "llm" (Qwen only) or "both" (merged); OMAKER_ENTITIES.
+        source = load_settings().entity_source
         client = client or HybridEngine._client(modelo_llm, temp_llm, log)
 
         entities = []
-        if HybridEngine.ENTITY_SOURCE in ("ner", "both"):
+        if source in ("ner", "both"):
             log("> [NER] Detecting biomedical entities...")
             ner_model = ner or BiomedicalNER()
             entities = ner_model.extract(texto)
             log(f"> [NER] model found {len(entities)} mentions.")
             for word, label, score in getattr(ner_model, "last_rejected", [])[:10]:
                 log(f"  [NER] ignored: '{word}' labelled {label} ({score:.2f})")
-        if HybridEngine.ENTITY_SOURCE in ("llm", "both"):
+        if source in ("llm", "both"):
             log(f"> [LLM-NER] Asking {client.model} for entities (each one is verified in the text)...")
             llm_entities = extract_entities_llm(client, texto, temperature=min(temp_llm, 0.1))
             log(f"> [LLM-NER] {len(llm_entities)} verified mentions.")

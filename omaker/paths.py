@@ -1,10 +1,10 @@
 """Caminhos independentes do diretório corrente."""
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
+from omaker.config import load_settings
 from omaker.domain.labels import DEFAULT_CHECKPOINT
 
 
@@ -20,5 +20,4 @@ def resource_path(*parts: str) -> Path:
 
 
 def default_checkpoint_path() -> Path:
-    env = os.environ.get("OMAKER_CHECKPOINT")
-    return Path(env) if env else project_root() / DEFAULT_CHECKPOINT
+    return load_settings().checkpoint or project_root() / DEFAULT_CHECKPOINT
