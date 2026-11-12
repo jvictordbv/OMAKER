@@ -96,3 +96,77 @@ def test_load_biored_uses_official_parts(tmp_path):
 def test_load_biored_missing_file_says_how_to_get_it(tmp_path):
     with pytest.raises(FileNotFoundError, match="--download"):
         biored.load_biored(tmp_path)
+
+
+def _zip_bytes(tmp_path):
+    import zipfile
+    z = tmp_path / "src.zip"
+    with zipfile.ZipFile(z, "w") as zf:
+        for part, pmid in (("Train", "1"), ("Dev", "2"), ("Test", "3")):
+            zf.writestr(f"BioRED/{part}.PubTator", _doc(pmid))
+            zf.writestr(f"BioRED/{part}.BioC.JSON", "{}")
+        zf.writestr("../fora.txt", "não deve ser extraído")
+    return z.read_bytes()
+
+
+def test_download_extracts_only_pubtator_and_skips_when_done(tmp_path):
+    payload, calls = _zip_bytes(tmp_path), []
+
+    def fetch(url, target):
+        calls.append(url)
+        target.write_bytes(payload)
+
+    dest = tmp_path / "data"
+    biored.download(dest, fetch=fetch)
+    assert sorted(p.name for p in dest.glob("*.PubTator")) == ["Dev.PubTator", "Test.PubTator", "Train.PubTator"]
+    assert not (tmp_path / "fora.txt").exists()
+    biored.download(dest, fetch=fetch)          # segunda vez: nada a baixar
+    assert len(calls) == 1
+
+
+def test_download_interrupted_leaves_no_zip_and_retries(tmp_path):
+    payload, calls = _zip_bytes(tmp_path), []
+
+    def broken(url, target):
+        calls.append(url)
+        target.write_bytes(payload[:100])
+        raise ConnectionError("caiu")
+
+    dest = tmp_path / "data"
+    with pytest.raises(ConnectionError):
+        biored.download(dest, fetch=broken)
+    assert not (dest / "BIORED.zip").exists()   # o parcial não conta como baixado
+
+    biored.download(dest, fetch=lambda url, target: target.write_bytes(payload))
+    assert (dest / "Train.PubTator").exists()
+
+
+def test_download_reuses_existing_zip(tmp_path):
+    dest = tmp_path / "data"
+    dest.mkdir()
+    (dest / "BIORED.zip").write_bytes(_zip_bytes(tmp_path))
+    biored.download(dest, fetch=lambda url, target: pytest.fail("não devia baixar"))
+    assert (dest / "Test.PubTator").exists()
+
+
+def test_review_sample_is_balanced_csv(tmp_path):
+    import csv
+    for part, pmid in (("Train", "1"), ("Dev", "2"), ("Test", "3")):
+        (tmp_path / f"{part}.PubTator").write_text(_doc(pmid), encoding="utf-8")
+    splits = biored.load_biored(tmp_path)
+    out = biored.write_review_sample(splits.train, tmp_path / "rev.csv", n=3, seed=1)
+    with open(out, encoding="utf-8-sig", newline="") as f:
+        rows = list(csv.DictReader(f))
+    assert [r["rotulo"] for r in rows] and len(rows) == 3
+    assert {r["rotulo"] for r in rows} == {"causes", "treats", "no_relation"}
+    assert set(rows[0]) == {"frase", "quimico", "doenca", "rotulo", "correto", "observacao"}
+
+
+def test_cli_writes_splits(tmp_path):
+    from omaker.relations.data import load_splits
+    for part, pmid in (("Train", "1"), ("Dev", "2"), ("Test", "3")):
+        (tmp_path / f"{part}.PubTator").write_text(_doc(pmid), encoding="utf-8")
+    biored.main(["--dest", str(tmp_path), "--out", str(tmp_path / "splits"), "--review-sample", "2"])
+    splits = load_splits(tmp_path / "splits")
+    assert splits.manifest["official_split"] is True and len(splits.test) == 4
+    assert (tmp_path / "splits" / "revisao_mapeamento.csv").exists()

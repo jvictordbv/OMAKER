@@ -9,17 +9,27 @@ de uma frase. A conversão:
 - par com relação de outro tipo (Association e afins) é descartado; par sem relação vira no_relation.
 
 Limitação: o rótulo vem do documento, então uma frase pode citar os dois sem afirmar a relação.
+
+Uso:
+    uv run python -m omaker.relations.biored --download [--review-sample 100]
 """
 from __future__ import annotations
 
+import argparse
+import csv
 import hashlib
-from collections import Counter
+import random
+import zipfile
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
+import requests
+
 from omaker.domain.labels import NO_RELATION
 from omaker.domain.text import split_sentences
-from omaker.relations.data import PARTS, RelationExample, Splits
+from omaker.paths import project_root
+from omaker.relations.data import PARTS, RelationExample, Splits, save_splits
 
 BIORED_URL = "https://ftp.ncbi.nlm.nih.gov/pub/lu/BioRED/BIORED.zip"
 OFFICIAL_FILES = {"train": "Train.PubTator", "dev": "Dev.PubTator", "test": "Test.PubTator"}
@@ -149,3 +159,93 @@ def load_biored(directory) -> Splits:
         "counts": {p: dict(sorted(Counter(e.relation for e in parts[p]).items())) for p in PARTS},
     }
     return Splits(parts["train"], parts["dev"], parts["test"], manifest)
+
+
+# ----------------------------------------------------------------------------- download e linha de comando
+def _fetch(url: str, target: Path) -> None:
+    with requests.get(url, stream=True, timeout=60) as r:
+        r.raise_for_status()
+        with open(target, "wb") as f:
+            for chunk in r.iter_content(1 << 20):
+                f.write(chunk)
+
+
+def _extract(zip_path: Path, dest: Path) -> None:
+    """Extrai só os três PubTator, pelo nome do arquivo (nunca pelo caminho guardado no zip)."""
+    wanted = set(OFFICIAL_FILES.values())
+    with zipfile.ZipFile(zip_path) as zf:
+        for info in zf.infolist():
+            name = Path(info.filename).name
+            if name in wanted:
+                tmp = dest / (name + ".part")
+                tmp.write_bytes(zf.read(info))
+                tmp.replace(dest / name)
+
+
+def download(dest, url: str = BIORED_URL, fetch=_fetch) -> Path:
+    """Baixa e extrai o BioRED em dest. Retomável: pula o que já existe; um download parcial não conta."""
+    dest = Path(dest)
+    dest.mkdir(parents=True, exist_ok=True)
+    if all((dest / f).exists() for f in OFFICIAL_FILES.values()):
+        return dest
+    zip_path = dest / "BIORED.zip"
+    if zip_path.exists() and not zipfile.is_zipfile(zip_path):
+        zip_path.unlink()
+    if not zip_path.exists():
+        part = dest / "BIORED.zip.part"
+        try:
+            fetch(url, part)
+        except BaseException:
+            part.unlink(missing_ok=True)
+            raise
+        part.replace(zip_path)
+    _extract(zip_path, dest)
+    return dest
+
+
+def write_review_sample(examples, path, n: int = 100, seed: int = 42) -> Path:
+    """CSV para conferir o mapeamento à mão: a mesma quantidade de exemplos de cada rótulo."""
+    by_label: dict[str, list[RelationExample]] = defaultdict(list)
+    for e in examples:
+        by_label[e.relation].append(e)
+    rng = random.Random(seed)
+    labels = sorted(by_label)
+    picked: list[RelationExample] = []
+    for i, label in enumerate(labels):
+        quota = n // len(labels) + (1 if i < n % len(labels) else 0)
+        pool = list(by_label[label])
+        rng.shuffle(pool)
+        picked.extend(pool[:quota])
+    rng.shuffle(picked)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8-sig", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["frase", "quimico", "doenca", "rotulo", "correto", "observacao"])
+        for e in picked:
+            w.writerow([e.text, e.sub_name, e.obj_name, e.relation, "", ""])
+    return path
+
+
+def main(argv=None) -> Path:
+    default_dest = project_root() / "data" / "biored"
+    ap = argparse.ArgumentParser(description="Converte o BioRED para o esquema do OMAKER.")
+    ap.add_argument("--dest", default=str(default_dest), help="pasta com os arquivos PubTator")
+    ap.add_argument("--out", default="", help="pasta da divisão gerada (padrão: <dest>/splits)")
+    ap.add_argument("--download", action="store_true", help=f"baixa {BIORED_URL} se ainda não estiver em --dest")
+    ap.add_argument("--review-sample", type=int, default=0, help="grava N exemplos do treino para conferência")
+    args = ap.parse_args(argv)
+
+    dest = Path(args.dest)
+    if args.download:
+        download(dest)
+    splits = load_biored(dest)
+    out = save_splits(splits, Path(args.out) if args.out else dest / "splits")
+    if args.review_sample:
+        write_review_sample(splits.train, out / "revisao_mapeamento.csv", n=args.review_sample)
+    print(f"Divisão gravada em {out}: {splits.manifest['counts']}")
+    return out
+
+
+if __name__ == "__main__":
+    main()
