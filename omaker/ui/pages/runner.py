@@ -1,7 +1,10 @@
 """Execução do motor em segundo plano, compartilhada pelas páginas Gerador e Atualizador."""
 from PySide6.QtWidgets import QMessageBox
 
+from omaker.domain.text import looks_non_english
 from omaker.ui.workers import PipelineWorker
+
+AVISO_IDIOMA = "O texto deve estar em inglês: os modelos de entidades e de relações foram treinados em inglês."
 
 
 class PipelineRunnerMixin:
@@ -18,6 +21,17 @@ class PipelineRunnerMixin:
 
     def em_execucao(self) -> bool:
         return self.worker is not None
+
+    def _confirmar_idioma(self, texto: str) -> bool:
+        """Se o texto parece não estar em inglês, pergunta se deve seguir mesmo assim."""
+        if not looks_non_english(texto):
+            return True
+        resposta = QMessageBox.question(
+            self, "Idioma do texto",
+            "O texto parece não estar em inglês. O OMAKER processa textos em inglês; em outro idioma, "
+            "as entidades e relações podem sair erradas ou nem ser encontradas.\n\nProcessar mesmo assim?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        return resposta == QMessageBox.StandardButton.Yes
 
     def cancelar(self) -> None:
         if self.worker is not None:

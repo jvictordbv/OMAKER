@@ -35,3 +35,25 @@ def to_identifier(name: str, capitalize: bool = False) -> str:
     if ident[0].isdigit():
         ident = "_" + ident
     return ident[0].upper() + ident[1:] if capitalize else ident
+
+
+# Palavras muito comuns em português e espanhol que quase não aparecem em texto médico em inglês.
+# De fora ficam as que também são inglês ("a", "as", "do", "no", "e").
+_NON_ENGLISH_MARKERS = frozenset({
+    "de", "que", "não", "para", "com", "uma", "um", "os", "dos", "das", "da", "em", "por", "é", "são", "foi",
+    "pelo", "pela", "ao", "aos", "mas", "ou", "seu", "sua",
+    "el", "la", "los", "las", "del", "y", "con", "una", "es", "en", "su", "pero",
+})
+_WORD = re.compile(r"[^\W\d_]+")
+
+
+def looks_non_english(text: str, min_words: int = 12, threshold: float = 0.08) -> bool:
+    """Heurística: o texto parece estar em português ou espanhol? Os modelos do OMAKER esperam inglês.
+
+    Textos curtos nunca são marcados (poucas palavras não bastam para decidir).
+    """
+    words = [w.lower() for w in _WORD.findall(text)]
+    if len(words) < min_words:
+        return False
+    hits = sum(w in _NON_ENGLISH_MARKERS for w in words)
+    return hits / len(words) >= threshold

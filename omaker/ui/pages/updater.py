@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 
 from omaker.pipeline.engine import HybridEngine
 from omaker.ui.messages import completion_message
-from omaker.ui.pages.runner import PipelineRunnerMixin
+from omaker.ui.pages.runner import AVISO_IDIOMA, PipelineRunnerMixin
 
 
 class UpdaterPage(PipelineRunnerMixin, QWidget):
@@ -62,7 +62,11 @@ class UpdaterPage(PipelineRunnerMixin, QWidget):
         self.btn_atualizar.setStyleSheet("background-color: #0d9488;")
         self.btn_atualizar.clicked.connect(self.atualizar_ontologia_existente)
 
+        lbl_idioma = QLabel(AVISO_IDIOMA)
+        lbl_idioma.setWordWrap(True)
+        lbl_idioma.setStyleSheet("color: #b45309; font-size: 12px;")
         col_esquerda.addWidget(lbl_texto)
+        col_esquerda.addWidget(lbl_idioma)
         col_esquerda.addWidget(self.texto_entrada_atualizador)
         col_esquerda.addWidget(self.btn_atualizar)
 
@@ -104,7 +108,7 @@ class UpdaterPage(PipelineRunnerMixin, QWidget):
             QMessageBox.warning(self, "Aviso", "Preencha o texto das novas evidências.")
             return
 
-        if self.em_execucao():
+        if self.em_execucao() or not self._confirmar_idioma(texto):
             return
 
         self.log_atualizador.clear()
