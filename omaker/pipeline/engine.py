@@ -16,7 +16,7 @@ from omaker.domain.labels import BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_
 from omaker.llm.client import DEFAULT_MODEL, LLMClient, LLMError, OllamaClient
 from omaker.llm.entities import extract_entities_llm, merge_entities
 from omaker.llm.relations import classify_pairs
-from omaker.llm.taxonomy import ask_taxonomy
+from omaker.llm.taxonomy import ask_taxonomy, validate_taxonomy
 from omaker.ontology.builder import ReasonerStatus
 from omaker.ontology.iri import DEFAULT_URI_BASE, normalize_base, ontology_iri
 from omaker.paths import default_checkpoint_path
@@ -73,7 +73,7 @@ class HybridEngine:
         return model.predict(pairs)
 
     @staticmethod
-    def extrair(texto, modelo_llm, temp_llm, log, ner=None, client: LLMClient | None = None):
+    def extrair(texto, modelo_llm, temp_llm, log, ner=None, client: LLMClient | None = None, with_taxonomy=True):
         """text -> (taxonomy, triples). Separate from OWL building so it can be tested/reused."""
         from omaker.nlp.ner import BiomedicalNER
         from omaker.nlp.pairs import generate_pairs
@@ -121,7 +121,8 @@ class HybridEngine:
             triples = filter_by_domain(list(best.values()), log)
         log(f"> [RELATIONS] {len(triples)} triples kept.")
 
-        taxonomy = ask_taxonomy(client, uniq, texto, temp_llm, log)
+        # with_taxonomy=False (avaliação de triplas): cada entidade fica na sua classe-base, sem chamar o LLM.
+        taxonomy = ask_taxonomy(client, uniq, texto, temp_llm, log) if with_taxonomy else validate_taxonomy({}, uniq)
         return taxonomy, triples
 
     # ---- public API used by the GUI -----------------------------------------------------

@@ -8,6 +8,7 @@ datas += collect_data_files('owlready2')
 datas += [
     ('omaker/resources/symp.owl', 'omaker/resources'),
     ('omaker/relations/train_relations.json', 'omaker/relations'),
+    ('omaker/evaluation/gold/samples.json', 'omaker/evaluation/gold'),
 ]
 
 

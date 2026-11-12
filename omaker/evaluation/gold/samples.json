@@ -1,0 +1,122 @@
+{
+ "docs": [
+  {
+   "id": "amostra-1",
+   "nota": "texto de desenvolvimento",
+   "text": "Metformin is the first-line treatment for type 2 diabetes. Long-term metformin use may cause vitamin B12 deficiency. Aspirin reduces the risk of myocardial infarction in patients with cardiovascular disease, but it can cause gastric bleeding. Patients presenting with fever and cough were given paracetamol, which relieved the fever. Ibuprofen did not relieve the headache in this patient. The study also recorded smoking status and the incidence of lung cancer. Chronic alcohol consumption causes liver cirrhosis. Statins were prescribed to lower cholesterol and prevent stroke.",
+   "triples": [
+    [
+     "alcohol",
+     "causes",
+     "liver cirrhosis"
+    ],
+    [
+     "aspirin",
+     "causes",
+     "gastric bleeding"
+    ],
+    [
+     "aspirin",
+     "prevents",
+     "myocardial infarction"
+    ],
+    [
+     "metformin",
+     "causes",
+     "vitamin b12 deficiency"
+    ],
+    [
+     "metformin",
+     "treats",
+     "type 2 diabetes"
+    ],
+    [
+     "paracetamol",
+     "treats",
+     "fever"
+    ],
+    [
+     "statins",
+     "prevents",
+     "stroke"
+    ]
+   ],
+   "traps": [
+    {
+     "sub": "ibuprofen",
+     "obj": "headache",
+     "why": "negated: 'did not relieve'"
+    },
+    {
+     "sub": "paracetamol",
+     "obj": "cough",
+     "why": "only co-mentioned"
+    },
+    {
+     "sub": "aspirin",
+     "obj": "cardiovascular disease",
+     "why": "only 'patients with' the disease"
+    },
+    {
+     "sub": "statins",
+     "obj": "cholesterol",
+     "why": "lowers a lab value; cholesterol is not a disease"
+    }
+   ]
+  },
+  {
+   "id": "amostra-2",
+   "nota": "texto 2 escrito antes de olhar qualquer resultado nele (held-out)",
+   "text": "Warfarin is used to prevent stroke in patients with atrial fibrillation. Bleeding is the most common adverse effect of warfarin. Oseltamivir treats influenza when started within 48 hours of symptom onset. The patient reported headache and nausea after starting amoxicillin, although these symptoms resolved without treatment. Salbutamol relieves wheezing during asthma attacks. Insulin was not effective against her fatigue. Obesity and hypertension were documented in the clinical history. BCG prevents severe tuberculosis in children.",
+   "triples": [
+    [
+     "bcg",
+     "prevents",
+     "tuberculosis"
+    ],
+    [
+     "oseltamivir",
+     "treats",
+     "influenza"
+    ],
+    [
+     "salbutamol",
+     "treats",
+     "wheezing"
+    ],
+    [
+     "warfarin",
+     "causes",
+     "bleeding"
+    ],
+    [
+     "warfarin",
+     "prevents",
+     "stroke"
+    ]
+   ],
+   "traps": [
+    {
+     "sub": "warfarin",
+     "obj": "atrial fibrillation",
+     "why": "only 'patients with' the disease"
+    },
+    {
+     "sub": "amoxicillin",
+     "obj": "headache",
+     "why": "only temporal ('after starting')"
+    },
+    {
+     "sub": "amoxicillin",
+     "obj": "nausea",
+     "why": "only temporal ('after starting')"
+    },
+    {
+     "sub": "insulin",
+     "obj": "fatigue",
+     "why": "negated: 'was not effective'"
+    }
+   ]
+  }
+ ]
+}

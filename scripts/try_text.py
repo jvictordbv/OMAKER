@@ -12,48 +12,12 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from omaker.evaluation.e2e import GOLD_SAMPLES, load_gold  # noqa: E402
 from omaker.pipeline.engine import HybridEngine  # noqa: E402
 
-HERE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tests")  # sample texts
-
-# What a careful human annotator would extract. (sub, relation, obj); names matched loosely.
-SAMPLES = {
-    1: dict(
-        file="sample_text.txt",
-        gold={
-            ("metformin", "treats", "type 2 diabetes"),
-            ("metformin", "causes", "vitamin b12 deficiency"),
-            ("aspirin", "prevents", "myocardial infarction"),
-            ("aspirin", "causes", "gastric bleeding"),
-            ("paracetamol", "treats", "fever"),
-            ("alcohol", "causes", "liver cirrhosis"),
-            ("statins", "prevents", "stroke"),
-        },
-        # (subject, object): ANY relation between them is wrong, because the text does not state one.
-        traps={
-            ("ibuprofen", "headache"): "negated: 'did not relieve'",
-            ("paracetamol", "cough"): "only co-mentioned",
-            ("aspirin", "cardiovascular disease"): "only 'patients with' the disease",
-            ("statins", "cholesterol"): "lowers a lab value; cholesterol is not a disease",
-        },
-    ),
-    2: dict(  # held-out text: written before looking at any result on it
-        file="sample_text_2.txt",
-        gold={
-            ("warfarin", "prevents", "stroke"),
-            ("warfarin", "causes", "bleeding"),
-            ("oseltamivir", "treats", "influenza"),
-            ("salbutamol", "treats", "wheezing"),
-            ("bcg", "prevents", "tuberculosis"),
-        },
-        traps={
-            ("warfarin", "atrial fibrillation"): "only 'patients with' the disease",
-            ("amoxicillin", "headache"): "only temporal ('after starting')",
-            ("amoxicillin", "nausea"): "only temporal ('after starting')",
-            ("insulin", "fatigue"): "negated: 'was not effective'",
-        },
-    ),
-}
+# Gabarito (o que um anotador cuidadoso extrairia) e "armadilhas": omaker/evaluation/gold/samples.json.
+SAMPLES = {i: dict(text=d.text, gold=set(d.triples), traps={(s, o): why for s, o, why in d.traps})
+           for i, d in enumerate(load_gold(GOLD_SAMPLES), start=1)}
 
 
 def same(a, b):
@@ -76,8 +40,7 @@ def main():
     args = ap.parse_args()
 
     sample = SAMPLES[args.sample] if args.file is None else None
-    path = args.file or os.path.join(HERE, sample["file"])
-    text = open(path, encoding="utf-8").read().strip()
+    text = sample["text"] if sample else open(args.file, encoding="utf-8").read().strip()
 
     def log(m):
         print(m)
