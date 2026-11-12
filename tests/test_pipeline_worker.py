@@ -62,3 +62,28 @@ def test_cancel_stops_at_next_log(qtbot):
 def test_cancelled_is_an_exception():
     with pytest.raises(Cancelled):
         raise Cancelled()
+
+
+def test_cancel_not_swallowed_by_broad_except(qtbot):
+    """Um except Exception dentro do motor (ex.: run_reasoner) não pode engolir o cancelamento."""
+    started, release = threading.Event(), threading.Event()
+    swallowed = []
+
+    def func(log_callback):
+        log_callback("início")
+        started.set()
+        release.wait(5)
+        try:
+            log_callback("dentro de um try")
+        except Exception:  # noqa: BLE001  imita o except amplo do run_reasoner
+            swallowed.append("engolido")
+        return "não deveria"
+
+    w = PipelineWorker(func)
+    with qtbot.waitSignal(w.cancelado, timeout=5000):
+        w.start()
+        assert started.wait(5)
+        w.cancel()
+        release.set()
+    w.wait()
+    assert swallowed == []

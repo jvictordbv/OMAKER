@@ -178,3 +178,18 @@ def test_update_runs_off_gui_thread(win, qtbot, monkeypatch, tmp_path, boxes):
     assert "> mesclando" in page.log_atualizador.toPlainText()
     assert page.btn_atualizar.isEnabled()
     assert len(boxes["information"]) == 1
+
+
+def test_close_during_synonyms_waits_for_worker(win, qtbot, monkeypatch, boxes):
+    from omaker.ui import workers
+
+    monkeypatch.setattr(workers.SynonymWorker, "run", lambda self: time.sleep(1.0))
+    page = win.pagina_sinonimos
+    win.show()
+    page.executar_worker_sinonimos()
+    worker = page.worker
+    t0 = time.monotonic()
+    win.close()
+    assert time.monotonic() - t0 < 0.5
+    assert win.isVisible()
+    qtbot.waitUntil(lambda: worker.isFinished() and not win.isVisible(), timeout=5000)

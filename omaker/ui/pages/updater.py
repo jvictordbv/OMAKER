@@ -94,7 +94,7 @@ class UpdaterPage(PipelineRunnerMixin, QWidget):
             self.lbl_arquivo_selecionado.setText(caminho)
 
     def atualizar_ontologia_existente(self):
-        if not hasattr(self, 'caminho_owl_atual') or not self.caminho_owl_atual:
+        if not self.caminho_owl_atual:
             QMessageBox.warning(self, "Aviso", "Selecione um arquivo .owl primeiro.")
             return
 

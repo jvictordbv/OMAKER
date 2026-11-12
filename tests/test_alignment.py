@@ -129,3 +129,31 @@ def test_obsolete_classes_do_not_win_synonym_collisions(symp):
     assert index["mammitis"].iri == MAMMITIS
     populate(onto, _tax({"mammitis": "Symptom"}), [], log=lambda _: None)
     assert world[MAMMITIS] in _ind(onto, "mammitis").is_a
+
+
+def _disjoints(onto):
+    return len(list(onto.disjoint_classes()))
+
+
+def test_alldisjoint_not_repeated_on_second_update(symp):
+    _world, onto = symp
+    tax = {"classes": {"Analgesic": "Drug", "Antibiotic": "Drug"}, "instances": {"aspirin": "Analgesic"},
+           "disjoint": [["Analgesic", "Antibiotic"]]}
+    populate(onto, tax, [], log=lambda _: None)
+    before = _disjoints(onto)
+    populate(onto, tax, [], log=lambda _: None)
+    assert _disjoints(onto) == before
+
+
+def test_idempotent_after_save_and_reload(symp, tmp_path):
+    from omaker.ontology.builder import save
+
+    _world, onto = symp
+    tax = _tax({"aspirin": "Drug", "fever": "Symptom"})
+    populate(onto, tax, [], log=lambda _: None)
+    path = tmp_path / "salva.owl"
+    save(onto, str(path))
+    _w2, onto2 = load_world_ontology(str(path))
+    counts = (len(list(onto2.classes())), len(list(onto2.individuals())), _disjoints(onto2))
+    populate(onto2, tax, [], log=lambda _: None)
+    assert counts == (len(list(onto2.classes())), len(list(onto2.individuals())), _disjoints(onto2))

@@ -45,8 +45,9 @@ class SynonymWorker(QThread):
 # =====================================================================
 # 2. PIPELINE WORKER (Gerar / Atualizar fora da thread da interface)
 # =====================================================================
-class Cancelled(Exception):
-    """Levantada dentro do motor, na próxima mensagem de log, quando o usuário cancela."""
+class Cancelled(BaseException):
+    """Levantada dentro do motor, na próxima mensagem de log, quando o usuário cancela.
+    Herda de BaseException para atravessar os "except Exception" do motor (ex.: run_reasoner)."""
 
 
 class PipelineWorker(QThread):

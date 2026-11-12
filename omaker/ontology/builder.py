@@ -142,14 +142,17 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
                 log(f"  [AXIOM] {sub} --[{rel}]--> {obj} ({tag})")
 
         # Disjunções só entre classes do OMAKER: não se impõe axioma a classes de uma ontologia alheia.
-        for group in taxonomy.get("disjoint", []):
-            members = [classes[c] for c in group if c in classes and classes[c] not in reused]
-            if len(members) > 1:
+        existing = [set(d.entities) for d in onto.disjoint_classes()]
+
+        def add_disjoint(members):  # não repete o mesmo axioma a cada atualização
+            if len(members) > 1 and set(members) not in existing:
                 AllDisjoint(members)
+                existing.append(set(members))
+
+        for group in taxonomy.get("disjoint", []):
+            add_disjoint([classes[c] for c in group if c in classes and classes[c] not in reused])
         # base types never overlap
-        own_bases = [classes[b] for b in BASE_CLASSES.values() if classes[b] not in reused]
-        if len(own_bases) > 1:
-            AllDisjoint(own_bases)
+        add_disjoint([classes[b] for b in BASE_CLASSES.values() if classes[b] not in reused])
 
     log(f"> [OWL] {len(classes) - 1} classes, {len(individuals)} individuals, {added} new relations.")
     return added
@@ -228,6 +231,9 @@ def add_equivalences(src_path: str, groups: dict, dest_path: str, log=print) -> 
                 added += 1
         written.append([term for term, _ in found])
 
+    if added == 0:
+        log("> [SYNONYMS] Nenhuma equivalência nova; nenhum arquivo foi criado.")
+        return EquivalenceReport(0, written, not_found, "")
     os.makedirs(os.path.dirname(os.path.abspath(dest_path)), exist_ok=True)
     save(onto, dest_path)
     log(f"> [SYNONYMS] {added} owl:equivalentClass gravados em {dest_path}")

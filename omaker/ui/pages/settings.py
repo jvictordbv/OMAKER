@@ -20,11 +20,16 @@ from PySide6.QtWidgets import (
 from omaker.ontology.iri import DEFAULT_URI_BASE
 
 
+def default_settings() -> QSettings:
+    """As configurações do usuário (registro do Windows). Os testes trocam esta função por um .ini temporário."""
+    return QSettings("MeuMestrado", "OntoGenApp")
+
+
 class SettingsPage(QWidget):
     def __init__(self, metadados, configuracoes: QSettings | None = None):
         super().__init__()
         self.metadados = metadados
-        self.configuracoes = configuracoes if configuracoes is not None else QSettings("MeuMestrado", "OntoGenApp")
+        self.configuracoes = configuracoes if configuracoes is not None else default_settings()
         self._montar()
         self.carregar_configuracoes()
 
