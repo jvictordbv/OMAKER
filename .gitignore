@@ -17,3 +17,6 @@ try_text_result.owl
 
 # Saídas de treino e avaliação (python -m omaker.relations.train, omaker.evaluation.e2e)
 runs/
+
+# Datasets baixados (python -m omaker.relations.biored --download)
+data/

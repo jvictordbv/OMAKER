@@ -156,3 +156,41 @@ def test_llm_seed_sent_to_ollama(fake_ollama, monkeypatch):
     fake_ollama.script[:] = [json.dumps({"ok": True})]
     OllamaClient("qwen3:8b", fake_ollama.host).chat_json("s", "u", {"type": "object"})
     assert fake_ollama.calls[-1]["options"]["seed"] == 7
+
+
+def _fake_result(name):
+    return {"system": name, "strict": {"precision": 0, "recall": 0, "f1": 0, "tp": 0, "fp": 0, "fn": 0},
+            "lenient": {"f1": 0}, "traps_hit": []}
+
+
+def test_resume_skips_systems_already_evaluated(monkeypatch, tmp_path):
+    from omaker.evaluation import e2e
+
+    ran, fail = [], {"ner+llm"}
+
+    def fake_eval(name, docs, extract=None, model="m", temperature=0.0):
+        ran.append(name)
+        if name in fail:
+            raise RuntimeError("Ollama caiu")
+        return _fake_result(name)
+
+    monkeypatch.setattr(e2e, "evaluate_system", fake_eval)
+    args = ["--systems", "llm", "ner+llm", "--runs-dir", str(tmp_path / "runs")]
+    with pytest.raises(RuntimeError):
+        e2e.main(args)
+    (run,) = (tmp_path / "runs").iterdir()
+    fail.clear()
+    ran.clear()
+    assert e2e.main(args + ["--resume", str(run)]) == run
+    assert ran == ["ner+llm"]   # o llm já estava gravado
+    saved = json.loads((run / "results.json").read_text(encoding="utf-8"))
+    assert [r["system"] for r in saved["results"]] == ["llm", "ner+llm"]
+
+
+def test_resume_refuses_a_different_model(monkeypatch, tmp_path):
+    from omaker.evaluation import e2e
+
+    monkeypatch.setattr(e2e, "evaluate_system", lambda name, *a, **k: _fake_result(name))
+    run = e2e.main(["--systems", "llm", "--runs-dir", str(tmp_path / "runs")])
+    with pytest.raises(ValueError, match="model"):
+        e2e.main(["--systems", "llm", "--model", "outro:1b", "--resume", str(run)])
