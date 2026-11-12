@@ -249,3 +249,25 @@ def test_biored_limit_uses_first_documents(monkeypatch, tmp_path):
                     "--runs-dir", str(tmp_path / "runs")])
     (res,) = json.loads((run / "results.json").read_text(encoding="utf-8"))["results"]
     assert len(res["per_doc"]) == 2
+
+
+def test_llm_error_counts_as_no_prediction_and_is_recorded(tmp_path, capsys):
+    """Um documento em que o LLM falha não derruba a avaliação: conta como sem previsões e fica registrado."""
+    from omaker.evaluation import biored_gold, e2e
+    from omaker.llm.client import LLMError
+    docs = biored_gold.load_biored_gold(_biored_dir(tmp_path, 2))
+    saved, calls = {}, []
+
+    def flaky(text, model):
+        calls.append(text)
+        if len(calls) == 1:
+            raise LLMError("The model hit the output limit")
+        return [("Cisplatin", "causes", "nephrotoxicity")]
+
+    r = e2e.evaluate_system("llm", docs, extract=flaky, on_doc=lambda doc_id, preds: saved.update({doc_id: preds}))
+    assert r["llm_errors"] == 1
+    first, second = r["per_doc"]
+    assert "output limit" in first["error"] and first["predicted"] == [] and "error" not in second
+    assert r["strict"]["tp"] == 1 and r["strict"]["fn"] == 3   # 2 pares no gabarito de cada documento
+    assert first["doc"] not in saved   # não vai para o parcial: a retomada tenta de novo
+    assert "output limit" in capsys.readouterr().err

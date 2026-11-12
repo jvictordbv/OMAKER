@@ -21,7 +21,7 @@ def isolated_qsettings(tmp_path, monkeypatch):
 
 class _FakeOllama:
     def __init__(self):
-        self.script: list[str] = []   # contents returned by /api/chat, in order
+        self.script: list = []   # contents returned by /api/chat, in order (str, or dict with done_reason)
         self.calls: list[dict] = []   # request bodies received by /api/chat
         self.models: list[str] = ["qwen3:8b"]   # served by /api/tags
         self.host = ""
@@ -49,7 +49,9 @@ def fake_ollama():
         def do_POST(self):
             body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
             state.calls.append(body)
-            self._send(200, {"message": {"content": state.script.pop(0)}})
+            item = state.script.pop(0)
+            item = item if isinstance(item, dict) else {"content": item, "done_reason": "stop"}
+            self._send(200, {"message": {"content": item["content"]}, "done_reason": item["done_reason"]})
 
     srv = HTTPServer(("127.0.0.1", 0), Handler)
     thread = threading.Thread(target=srv.serve_forever, daemon=True)

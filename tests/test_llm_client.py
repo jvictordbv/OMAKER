@@ -54,3 +54,13 @@ def test_check_requires_the_exact_name_ollama_will_use(fake_ollama, wanted, inst
     else:
         with pytest.raises(LLMError, match=installed[0]):
             client.check()
+
+
+def test_output_limit_stops_a_looping_model_without_retrying(fake_ollama):
+    """O modelo em laço (repete a mesma lista) para no limite de tokens, e não em 10 min de espera."""
+    c = OllamaClient("qwen3:8b", fake_ollama.host)
+    fake_ollama.script[:] = [{"content": '{"entities": [{"text": "biopsy"}, {"text": "biopsy"}, ', "done_reason": "length"}]
+    with pytest.raises(LLMError, match="limit"):
+        c.chat_json("s", "u", {})
+    assert len(fake_ollama.calls) == 1   # repetir a mesma pergunta daria o mesmo laço
+    assert fake_ollama.calls[0]["options"]["num_predict"] == c.max_tokens > 0
