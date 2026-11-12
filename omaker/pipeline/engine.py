@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from omaker.config import entity_source
 from omaker.domain.labels import BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION, RELATION_DOMAIN
-from omaker.llm.client import DEFAULT_MODEL, LLMClient, LLMError, OllamaClient
+from omaker.llm.client import DEFAULT_MODEL, LLMClient, OllamaClient
 from omaker.llm.entities import extract_entities_llm, merge_entities
 from omaker.llm.relations import classify_pairs
 from omaker.llm.taxonomy import ask_taxonomy, validate_taxonomy
@@ -58,8 +58,6 @@ class HybridEngine:
     @staticmethod
     def _client(modelo_llm, temp_llm, log):
         model = modelo_llm or DEFAULT_MODEL
-        if model.lower().startswith("gemini"):
-            raise LLMError(f"'{model}' não é um modelo do Ollama; escolha um modelo local (ex.: {DEFAULT_MODEL}).")
         client = OllamaClient(model=model)
         client.check()
         return client
@@ -144,14 +142,14 @@ class HybridEngine:
         return OntologyResult(caminho, status, added)
 
     @staticmethod
-    def gerar_ontologia(texto, nome_arquivo, api_key, modelo_llm, temp_llm, pasta_destino, uri_base, log_callback,
+    def gerar_ontologia(texto, nome_arquivo, modelo_llm, temp_llm, pasta_destino, uri_base, log_callback,
                         protege_exe=""):
         taxonomy, triples = HybridEngine.extrair(texto, modelo_llm, temp_llm, log_callback)
         return HybridEngine.construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback,
                                       protege_exe=protege_exe)
 
     @staticmethod
-    def atualizar_ontologia(caminho_owl, texto, api_key, log_callback, modelo_llm=DEFAULT_MODEL, temp_llm=0.1,
+    def atualizar_ontologia(caminho_owl, texto, log_callback, modelo_llm=DEFAULT_MODEL, temp_llm=0.1,
                             protege_exe=""):
         from omaker.ontology import builder as owl_builder
         from omaker.ontology.java import find_java
