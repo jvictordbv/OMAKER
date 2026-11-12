@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 import omaker.ui.recursos_rc  # noqa: F401  registra os recursos Qt (ícones); não remover
 from omaker.ontology.iri import DEFAULT_URI_BASE
 from omaker.ontology.protege import abrir_no_protege
+from omaker.paths import package_resource
 from omaker.pipeline.engine import HybridEngine
 from omaker.ui.messages import completion_message
 from omaker.ui.workers import SynonymWorker
@@ -268,7 +269,7 @@ class OntoApp(QMainWindow):
         card_arquivo.setObjectName("CardPane")
         layout_card = QVBoxLayout(card_arquivo)
         self.lbl_arquivo_sinonimos = QLabel("Ontologia selecionada: symp.owl")
-        self.caminho_owl_sinonimos = "symp.owl"
+        self.caminho_owl_sinonimos = str(package_resource("symp.owl"))
         btn_sel = QPushButton("📂 Selecionar Ontologia (.owl)")
         btn_sel.clicked.connect(self.selecionar_arquivo_owl_sinonimos)
         layout_card.addWidget(btn_sel)

@@ -3,6 +3,12 @@ from PyInstaller.utils.hooks import collect_data_files
 
 datas = []
 datas += collect_data_files('owlready2')
+# Dados do pacote omaker listados à mão: collect_data_files('omaker') pula o pacote porque a pasta
+# do repositório também se chama omaker.
+datas += [
+    ('omaker/resources/symp.owl', 'omaker/resources'),
+    ('omaker/relations/train_relations.json', 'omaker/relations'),
+]
 
 
 a = Analysis(

@@ -57,6 +57,12 @@ O código fica no pacote `omaker/`:
 uv run pytest -m "not slow and not ollama"
 ```
 
+### 5. Scripts
+
+- `uv run python scripts/try_text.py --sample 1`: roda o pipeline real num texto de amostra e compara com o gabarito (precisa do Ollama).
+- `uv run python scripts/synonyms_gui.py`: janela mínima para testar a detecção de sinônimos.
+- `uv run python scripts/ner_smoke.py`: teste rápido do NER biomédico (baixa o modelo).
+
 @mastersthesis{barbosa2026omaker,
   author       = {João Victor Ferreira Barbosa},
   title        = {OMAKER: Ontology Mapping \& Knowledge Engineering Resource},

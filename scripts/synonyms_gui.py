@@ -1,6 +1,9 @@
+import os
 import sys
 
-from PySide6.QtWidgets import (
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # raiz do projeto
+
+from PySide6.QtWidgets import (  # noqa: E402
     QApplication,
     QLabel,
     QLineEdit,
@@ -12,7 +15,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from omaker.ui.workers import SynonymWorker
+from omaker.paths import package_resource  # noqa: E402
+from omaker.ui.workers import SynonymWorker  # noqa: E402
 
 
 class OMAKERWindow(QMainWindow):
@@ -28,7 +32,7 @@ class OMAKERWindow(QMainWindow):
 
         # 1. Campo de Seleção da Ontologia
         layout.addWidget(QLabel("<b>Caminho da Ontologia (.owl):</b>"))
-        self.input_onto = QLineEdit("symp.owl")
+        self.input_onto = QLineEdit(str(package_resource("symp.owl")))
         layout.addWidget(self.input_onto)
 
         # 2. Campo de Conceitos para Analisar

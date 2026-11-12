@@ -19,5 +19,10 @@ def resource_path(*parts: str) -> Path:
     return project_root().joinpath(*parts)
 
 
+def package_resource(name: str) -> Path:
+    """Arquivo de dados do pacote (omaker/resources/), no código-fonte e no executável."""
+    return Path(__file__).resolve().parent / "resources" / name
+
+
 def default_checkpoint_path() -> Path:
     return load_settings().checkpoint or project_root() / DEFAULT_CHECKPOINT
