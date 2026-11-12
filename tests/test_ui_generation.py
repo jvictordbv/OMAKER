@@ -1,3 +1,4 @@
+import inspect
 import os
 import threading
 import time
@@ -45,7 +46,10 @@ def _result(tmp_path):
 def test_generation_runs_off_gui_thread(win, qtbot, monkeypatch, tmp_path, boxes):
     seen = {}
 
+    real = HybridEngine.gerar_ontologia
+
     def fake(**kw):
+        inspect.signature(real).bind(**kw)   # a página chama com argumentos que o motor aceita
         seen["thread"] = threading.current_thread()
         kw["log_callback"]("> passo")
         return _result(tmp_path)
@@ -163,7 +167,10 @@ def test_close_during_silent_step_does_not_block_and_closes_later(win, qtbot, mo
 def test_update_runs_off_gui_thread(win, qtbot, monkeypatch, tmp_path, boxes):
     seen = {}
 
+    real = HybridEngine.atualizar_ontologia
+
     def fake(**kw):
+        inspect.signature(real).bind(**kw)
         seen["thread"] = threading.current_thread()
         kw["log_callback"]("> mesclando")
         return _result(tmp_path)

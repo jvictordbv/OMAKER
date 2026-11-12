@@ -79,7 +79,7 @@ def test_gerar_ontologia_passes_protege_exe_to_find_java(tmp_path, monkeypatch, 
     _no_java(monkeypatch)
     recebidos = _record_find_java(monkeypatch)
     monkeypatch.setattr(HybridEngine, "extrair", staticmethod(lambda *a, **k: sample_extraction))
-    result = HybridEngine.gerar_ontologia("texto", "t", "", "m", 0.1, str(tmp_path), "http://t.org/",
+    result = HybridEngine.gerar_ontologia("texto", "t", "m", 0.1, str(tmp_path), "http://t.org/",
                                           lambda m: None, protege_exe=r"X\Protege.exe")
     assert recebidos == [r"X\Protege.exe"]
     assert result.reasoner is ReasonerStatus.UNAVAILABLE
@@ -92,7 +92,7 @@ def test_atualizar_ontologia_passes_protege_exe_to_find_java(tmp_path, monkeypat
     monkeypatch.setattr(HybridEngine, "extrair", staticmethod(lambda *a, **k: (tax, triples)))
     first = HybridEngine.construir(tax, triples, "t", str(tmp_path), "http://t.org/", lambda m: None)
     recebidos.clear()
-    result = HybridEngine.atualizar_ontologia(first.path, "texto", "", lambda m: None,
+    result = HybridEngine.atualizar_ontologia(first.path, "texto", lambda m: None,
                                               protege_exe=r"X\Protege.exe")
     assert recebidos == [r"X\Protege.exe"]
     assert result.reasoner is ReasonerStatus.UNAVAILABLE
@@ -105,7 +105,7 @@ def test_atualizar_returns_ontology_result(tmp_path, monkeypatch, sample_extract
     monkeypatch.setattr(owl_builder, "run_reasoner", lambda *a, **k: ReasonerStatus.UNAVAILABLE)
     first = HybridEngine.construir(tax, triples, "t", str(tmp_path), "http://t.org/", lambda m: None)
     monkeypatch.setattr(HybridEngine, "extrair", staticmethod(lambda *a, **k: (tax, triples)))
-    result = HybridEngine.atualizar_ontologia(first.path, "texto", "", lambda m: None)
+    result = HybridEngine.atualizar_ontologia(first.path, "texto", lambda m: None)
     assert isinstance(result, OntologyResult)
     assert result.path == first.path
     assert result.reasoner is ReasonerStatus.UNAVAILABLE

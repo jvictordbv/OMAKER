@@ -96,7 +96,6 @@ class GeneratorPage(PipelineRunnerMixin, QWidget):
             QMessageBox.warning(self, "Protégé", str(e))
 
     def processar_ontologia(self):
-        api_key = self.settings.api_key()
         texto = self.texto_entrada.toPlainText().strip()
         nome_arquivo = self.input_nome_arquivo.text().strip()
         uri_base = self.settings.uri_base()
@@ -117,7 +116,7 @@ class GeneratorPage(PipelineRunnerMixin, QWidget):
         self.texto_log.append("> [INIT] Inicializando ciclo de compilação semântica...")
         self._rodar(
             HybridEngine.gerar_ontologia,
-            texto=texto, nome_arquivo=nome_arquivo, api_key=api_key,
+            texto=texto, nome_arquivo=nome_arquivo,
             modelo_llm=modelo_llm, temp_llm=temp_llm, pasta_destino=pasta_destino,
             uri_base=uri_base,
             protege_exe=self.settings.caminho_protege(),

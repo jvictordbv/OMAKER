@@ -48,11 +48,6 @@ class SettingsPage(QWidget):
         form_layout.setContentsMargins(25, 25, 25, 25)
         form_layout.setSpacing(18)
 
-        self.input_api = QLineEdit()
-        self.input_api.setEchoMode(QLineEdit.EchoMode.Password)
-        self.input_api.setPlaceholderText("Opcional; o motor local não usa chave")
-        form_layout.addRow(QLabel("Chave de API (não usada pelo motor local):"), self.input_api)
-
         layout_inputs_modelo = QHBoxLayout()
         self.combo_modelo = QComboBox()
         self.input_novo_modelo = QLineEdit()
@@ -134,7 +129,7 @@ class SettingsPage(QWidget):
             self.input_novo_modelo.clear()
 
     def salvar_configuracoes(self):
-        self.configuracoes.setValue("api_key", self.input_api.text().strip())
+        self.configuracoes.remove("api_key")   # sobra da versão com Gemini; o motor local não usa chave
         self.configuracoes.setValue("autor", self.metadados.input_autor.text().strip())
         self.configuracoes.setValue("uri_base", self.metadados.input_uri.text().strip())
         self.configuracoes.setValue("temperatura", self.slider_temp.value())
@@ -151,7 +146,6 @@ class SettingsPage(QWidget):
         QMessageBox.information(self, "Sucesso", "Configurações persistidas localmente no sistema!")
 
     def carregar_configuracoes(self):
-        self.input_api.setText(self.configuracoes.value("api_key", ""))
         self.metadados.input_autor.setText(self.configuracoes.value("autor", ""))
         self.metadados.input_uri.setText(self.configuracoes.value("uri_base", "") or DEFAULT_URI_BASE)
         self.input_diretorio.setText(self.configuracoes.value("diretorio_exportacao", os.path.abspath(".")))
@@ -166,6 +160,8 @@ class SettingsPage(QWidget):
 
         modelos_padrao = ["qwen3:8b"]
         lista_modelos = self.configuracoes.value("lista_modelos_disponiveis", modelos_padrao)
+        # Modelos do Gemini gravados por versões antigas não rodam no Ollama.
+        lista_modelos = [m for m in lista_modelos if not m.lower().startswith("gemini")] or modelos_padrao
         self.combo_modelo.clear()
         self.combo_modelo.addItems(lista_modelos)
 
@@ -175,9 +171,6 @@ class SettingsPage(QWidget):
             self.combo_modelo.setCurrentIndex(index_modelo)
 
     # ---- leitores usados pelas páginas de trabalho
-    def api_key(self) -> str:
-        return self.configuracoes.value("api_key", "")
-
     def uri_base(self) -> str:
         return self.configuracoes.value("uri_base", "") or DEFAULT_URI_BASE
 

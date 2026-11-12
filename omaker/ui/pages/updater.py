@@ -99,7 +99,6 @@ class UpdaterPage(PipelineRunnerMixin, QWidget):
             return
 
         texto = self.texto_entrada_atualizador.toPlainText().strip()
-        api_key = self.settings.api_key()
 
         if not texto:
             QMessageBox.warning(self, "Aviso", "Preencha o texto das novas evidências.")
@@ -113,7 +112,6 @@ class UpdaterPage(PipelineRunnerMixin, QWidget):
             HybridEngine.atualizar_ontologia,
             caminho_owl=self.caminho_owl_atual,
             texto=texto,
-            api_key=api_key,
             modelo_llm=self.settings.modelo(),
             temp_llm=self.settings.temperatura(),
             protege_exe=self.settings.caminho_protege(),
