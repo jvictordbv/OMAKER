@@ -53,3 +53,7 @@ def test_bad_entity_source_reported_when_generating(monkeypatch, stub_ner):
     monkeypatch.setenv("OMAKER_ENTITIES", "nerr")
     with pytest.raises(ValueError, match="OMAKER_ENTITIES"):
         HybridEngine.extrair("Aspirin prevents stroke.", "fake", 0.1, lambda _: None, ner=stub_ner([]), client=NoLLM())
+
+
+def test_empty_entity_source_defaults_to_both():
+    assert load_settings({"OMAKER_ENTITIES": "  "}).entity_source == "both"

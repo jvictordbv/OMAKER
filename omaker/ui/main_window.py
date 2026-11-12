@@ -1,4 +1,4 @@
-# ui/main_window.py
+# omaker/ui/main_window.py
 import os
 
 from PySide6.QtCore import QSettings, Qt

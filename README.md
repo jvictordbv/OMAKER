@@ -46,11 +46,21 @@ O código fica no pacote `omaker/`:
 
 - `domain/`: rótulos, tipos e utilidades de texto.
 - `nlp/`: NER biomédico, pares candidatos e detecção de sinônimos.
-- `llm/`: cliente do Ollama e extração de entidades pelo LLM.
+- `llm/`: cliente do Ollama, extração de entidades pelo LLM e os prompts de taxonomia e de relações.
 - `relations/`: modelo PURE (SpanBERT), treino e dados de treino.
 - `ontology/`: construção do OWL, IRI, localização do Java (HermiT) e Protégé.
 - `pipeline/`: o motor que liga as etapas, do texto ao arquivo `.owl`.
 - `ui/`: interface PySide6.
+- `config.py`: leitura das variáveis de ambiente.
+
+### Variáveis de ambiente (opcionais)
+
+| Variável | Padrão | Para quê |
+|---|---|---|
+| `OLLAMA_HOST` | `http://localhost:11434` | Endereço do Ollama |
+| `OMAKER_ENTITIES` | `both` | De onde vêm as entidades: `ner` (modelo), `llm` (Qwen) ou `both` |
+| `OMAKER_CHECKPOINT` | `omaker_pure.pt` na raiz | Checkpoint do classificador PURE |
+| `OMAKER_JAVA` | (procura automática) | `java.exe` usado pelo HermiT |
 
 ### 4. Testes
 ```bash
