@@ -1,4 +1,4 @@
-# ui/splash.py
+# omaker/ui/splash.py
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QColor, QFont, QLinearGradient, QPainter, QPen
 from PySide6.QtWidgets import QApplication, QGraphicsDropShadowEffect, QLabel, QProgressBar, QVBoxLayout, QWidget

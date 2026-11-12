@@ -36,7 +36,7 @@ def entity_source(env: Mapping[str, str] | None = None) -> str:
     """Validated OMAKER_ENTITIES. Checked only where entities are extracted, so a typo
     does not break commands that never use it (training, the Ollama client)."""
     env = os.environ if env is None else env
-    source = env.get("OMAKER_ENTITIES", "both").strip().lower()
+    source = env.get("OMAKER_ENTITIES", "").strip().lower() or "both"
     if source not in ENTITY_SOURCES:
         raise ValueError(f"OMAKER_ENTITIES='{env.get('OMAKER_ENTITIES')}' inválido; use ner, llm ou both.")
     return source
