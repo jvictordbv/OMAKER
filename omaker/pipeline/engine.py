@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from omaker.config import entity_source
 from omaker.domain.labels import BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION, RELATION_DOMAIN
-from omaker.llm.client import DEFAULT_MODEL, LLMClient, OllamaClient
+from omaker.llm.client import DEFAULT_MODEL, LLMClient, LLMError, OllamaClient
 from omaker.llm.entities import extract_entities_llm, merge_entities
 from omaker.llm.relations import classify_pairs
 from omaker.llm.taxonomy import ask_taxonomy, validate_taxonomy
@@ -90,7 +90,13 @@ class HybridEngine:
                 log(f"  [NER] ignored: '{word}' labelled {label} ({score:.2f})")
         if source in ("llm", "both"):
             log(f"> [LLM-NER] Asking {client.model} for entities (each one is verified in the text)...")
-            llm_entities = extract_entities_llm(client, texto, temperature=min(temp_llm, 0.1))
+            try:
+                llm_entities = extract_entities_llm(client, texto, temperature=min(temp_llm, 0.1))
+            except LLMError as err:
+                if source == "llm":
+                    raise
+                log(f"> [LLM-NER] skipped ({err}). Using the NER entities only.")
+                llm_entities = []
             log(f"> [LLM-NER] {len(llm_entities)} verified mentions.")
             entities = merge_entities(entities, llm_entities)
         uniq = unique_entities(entities)

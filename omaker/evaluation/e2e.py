@@ -24,6 +24,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -32,6 +33,7 @@ from pathlib import Path
 from omaker.domain.text import split_sentences
 from omaker.evaluation.biored_gold import BioredGoldDoc, load_biored_gold, score_doc
 from omaker.evaluation.metrics import PRF, _prf, set_prf
+from omaker.llm.client import LLMError
 from omaker.ontology.alignment import norm_term
 from omaker.paths import default_checkpoint_path, project_root
 
@@ -152,27 +154,40 @@ def contamination(docs) -> list[dict] | None:
 
 def _evaluate_biored(name, docs, extract, model, done, on_doc) -> dict:
     tp = fp = fn = ignored = 0
-    per_doc = []
+    per_doc, errors = [], {}
     with system_environment(name):
         for doc in docs:
-            preds = _predict(doc, extract, model, done, on_doc)
+            preds = _predict(doc, extract, model, done, on_doc, errors)
             s = score_doc(doc, preds)
             tp, fp, fn, ignored = tp + s.tp, fp + s.fp, fn + s.fn, ignored + s.ignored
             per_doc.append({"doc": doc.id, "strict": asdict(_prf(s.tp, s.fp, s.fn)), "ignored": s.ignored,
-                            "predicted": [list(p) for p in preds]})
+                            "predicted": [list(p) for p in preds], **_error_field(doc, errors)})
     total = asdict(_prf(tp, fp, fn))
     result = {"system": name, "strict": total, "heldout_strict": total, "lenient": total, "traps_hit": [],
-              "ignored": ignored, "per_doc": per_doc}
+              "ignored": ignored, "llm_errors": len(errors), "per_doc": per_doc}
     if SYSTEMS[name]["relations"] == "pure":
         result["contamination"] = contamination(docs)
     return result
 
 
-def _predict(doc, extract, model, done, on_doc) -> list[tuple]:
-    """Previsões de um documento; reaproveita as já gravadas (retomada) e avisa on_doc das novas."""
+def _error_field(doc, errors: dict) -> dict:
+    return {"error": errors[doc.id]} if doc.id in errors else {}
+
+
+def _predict(doc, extract, model, done, on_doc, errors: dict) -> list[tuple]:
+    """Previsões de um documento; reaproveita as já gravadas (retomada) e avisa on_doc das novas.
+
+    Se o LLM falhar (por exemplo, em laço até o limite de tokens), o documento conta como sem previsões,
+    o erro fica em `errors` e ele não vai para o parcial: a retomada tenta de novo.
+    """
     if done is not None and doc.id in done:
         return [tuple(p) for p in done[doc.id]]
-    preds = [tuple(p) for p in extract(doc.text, model)]
+    try:
+        preds = [tuple(p) for p in extract(doc.text, model)]
+    except LLMError as err:
+        errors[doc.id] = str(err)
+        print(f"[aviso] {doc.id}: {err} Contado como sem previsões.", file=sys.stderr, flush=True)
+        return []
     if on_doc is not None:
         on_doc(doc.id, preds)
     return preds
@@ -184,13 +199,13 @@ def evaluate_system(name: str, docs, extract=None, model: str = "qwen3:8b", temp
     extract = extract or default_extract
     if docs and isinstance(docs[0], BioredGoldDoc):
         return _evaluate_biored(name, docs, extract, model, done, on_doc)
-    per_doc, traps_hit = [], []
+    per_doc, traps_hit, errors = [], [], {}
     tp = fp = fn = 0
     held = [0, 0, 0]
     lenient_preds, lenient_gold = [], []
     with system_environment(name):
         for doc in docs:
-            preds = _predict(doc, extract, model, done, on_doc)
+            preds = _predict(doc, extract, model, done, on_doc, errors)
             strict = set_prf({strict_key(*g) for g in doc.triples}, {strict_key(*p) for p in preds})
             tp, fp, fn = tp + strict.tp, fp + strict.fp, fn + strict.fn
             if doc.heldout:
@@ -202,7 +217,7 @@ def evaluate_system(name: str, docs, extract=None, model: str = "qwen3:8b", temp
                 if why:
                     traps_hit.append({"doc": doc.id, "pred": list(p), "why": why})
             per_doc.append({"doc": doc.id, "strict": asdict(strict), "lenient": asdict(_lenient(doc.triples, preds)),
-                            "predicted": [list(p) for p in preds]})
+                            "predicted": [list(p) for p in preds], **_error_field(doc, errors)})
     total_strict = _prf(tp, fp, fn)
     by_doc_gold = {d.id: d.triples for d in docs}
     matched = sum(any(lenient_match(p, g) for g in by_doc_gold[d]) for d, p in lenient_preds)
@@ -212,7 +227,8 @@ def evaluate_system(name: str, docs, extract=None, model: str = "qwen3:8b", temp
     f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
     total_lenient = PRF(precision, recall, f1, hit, len(lenient_preds) - matched, len(lenient_gold) - hit)
     result = {"system": name, "strict": asdict(total_strict), "heldout_strict": asdict(_prf(*held)),
-              "lenient": asdict(total_lenient), "traps_hit": traps_hit, "per_doc": per_doc}
+              "lenient": asdict(total_lenient), "traps_hit": traps_hit, "llm_errors": len(errors),
+              "per_doc": per_doc}
     if SYSTEMS[name]["relations"] == "pure":
         result["contamination"] = contamination(docs)
     return result
@@ -228,6 +244,9 @@ def _report(results: list[dict], gold_path, model) -> str:
                     f"| {le['f1']:.2f} | {len(r['traps_hit'])} |")
         if "ignored" in r:
             notes.append(f"- {r['system']}: {r['ignored']} previsão(ões) fora do que o BioRED anota (ignoradas).")
+        if r.get("llm_errors"):
+            notes.append(f"- {r['system']}: {r['llm_errors']} documento(s) em que o LLM falhou, contados como sem "
+                         f"previsões (ver `error` em per_doc).")
         if "contamination" in r:
             c = r["contamination"]
             notes.append(f"- {r['system']}: contaminação não verificável (checkpoint sem textos de treino)." if c is None

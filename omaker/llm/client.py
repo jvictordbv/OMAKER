@@ -26,11 +26,13 @@ class LLMClient(Protocol):
 
 
 class OllamaClient:
-    def __init__(self, model: str = DEFAULT_MODEL, host: str | None = None, num_ctx: int = 8192, timeout: int = 600):
+    def __init__(self, model: str = DEFAULT_MODEL, host: str | None = None, num_ctx: int = 8192, timeout: int = 600,
+                 max_tokens: int = 4096):
         self.model = model
         self.host = (host or ollama_host()).rstrip("/")  # None: OLLAMA_HOST lido agora
         self.num_ctx = num_ctx   # Ollama's default (2-4k) silently truncates long prompts
         self.timeout = timeout
+        self.max_tokens = max_tokens   # teto da resposta: um modelo em laço para aqui, e não no timeout
 
     def installed_models(self) -> list[str]:
         """Nomes dos modelos instalados no Ollama."""
@@ -58,7 +60,12 @@ class OllamaClient:
             r = requests.post(f"{self.host}/api/chat", json=payload, timeout=self.timeout)
         if r.status_code != 200:
             raise LLMError(f"Ollama error {r.status_code}: {r.text[:300]}")
-        return r.json()["message"]["content"]
+        data = r.json()
+        if data.get("done_reason") == "length":
+            # Com temperatura 0 e semente fixa, repetir a pergunta repetiria o laço: falha já.
+            raise LLMError(f"The model hit the output limit ({self.max_tokens} tokens) without finishing "
+                           f"its answer; it is probably repeating itself.")
+        return data["message"]["content"]
 
     @staticmethod
     def _parse_json(content: str):
@@ -67,7 +74,7 @@ class OllamaClient:
         return json.loads(content)
 
     def _options(self, temperature: float) -> dict:
-        options = {"temperature": temperature, "num_ctx": self.num_ctx}
+        options = {"temperature": temperature, "num_ctx": self.num_ctx, "num_predict": self.max_tokens}
         seed = llm_seed()  # OMAKER_LLM_SEED, lido na hora: a avaliação fixa 0 para poder repetir
         if seed is not None:
             options["seed"] = seed

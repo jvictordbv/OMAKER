@@ -148,3 +148,26 @@ def test_taxonomy_text_truncation_is_logged(fake_ollama, stub_ner, monkeypatch, 
     else:
         assert warned == []
         assert text in prompt
+
+
+LOOPING = {"content": '{"entities": [{"text": "Aspirin", "type": "DRUG"}, ', "done_reason": "length"}
+
+
+def test_llm_entity_loop_falls_back_to_ner_entities(fake_ollama, weak_ner, monkeypatch):
+    monkeypatch.setenv("OMAKER_ENTITIES", "both")
+    fake_ollama.script[:] = [LOOPING, json.dumps({"results": []}),
+                             json.dumps({"classes": [], "instances": [], "disjoint": []})]
+    logs = []
+    tax, _triples = he.HybridEngine.extrair(TEXT, "qwen3:8b", 0.1, logs.append, ner=weak_ner,
+                                            client=OllamaClient("qwen3:8b", fake_ollama.host))
+    assert any("[LLM-NER]" in line and "NER entities only" in line for line in logs), logs
+    assert set(tax["instances"]) == {"Aspirin", "Chemotherapy"}
+
+
+def test_llm_entity_loop_is_an_error_when_the_llm_is_the_only_source(fake_ollama, weak_ner, monkeypatch):
+    from omaker.llm.client import LLMError
+    monkeypatch.setenv("OMAKER_ENTITIES", "llm")
+    fake_ollama.script[:] = [LOOPING]
+    with pytest.raises(LLMError):
+        he.HybridEngine.extrair(TEXT, "qwen3:8b", 0.1, lambda _m: None, ner=weak_ner,
+                                client=OllamaClient("qwen3:8b", fake_ollama.host))
