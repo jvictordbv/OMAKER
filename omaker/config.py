@@ -5,6 +5,7 @@ Variáveis reconhecidas:
 - OMAKER_ENTITIES: de onde vêm as entidades: ner, llm ou both (padrão both).
 - OMAKER_CHECKPOINT: caminho do checkpoint do PURE (padrão omaker_pure.pt na raiz do projeto).
 - OMAKER_JAVA: java.exe usado pelo HermiT; lido por omaker.ontology.java.find_java.
+- OMAKER_LLM_SEED: semente enviada ao Ollama (padrão: nenhuma); a avaliação usa 0 para reprodutibilidade.
 
 As preferências da interface (modelo, temperatura, pastas, Protégé) ficam no QSettings da GUI.
 """
@@ -46,6 +47,12 @@ def checkpoint(env: Mapping[str, str] | None = None) -> Path | None:
     env = os.environ if env is None else env
     value = env.get("OMAKER_CHECKPOINT", "").strip()
     return Path(value) if value else None
+
+
+def llm_seed(env: Mapping[str, str] | None = None) -> int | None:
+    env = os.environ if env is None else env
+    value = env.get("OMAKER_LLM_SEED", "").strip()
+    return int(value) if value else None
 
 
 def load_settings(env: Mapping[str, str] | None = None) -> Settings:

@@ -62,7 +62,8 @@
      "obj": "cholesterol",
      "why": "lowers a lab value; cholesterol is not a disease"
     }
-   ]
+   ],
+   "heldout": false
   },
   {
    "id": "amostra-2",
@@ -116,7 +117,8 @@
      "obj": "fatigue",
      "why": "negated: 'was not effective'"
     }
-   ]
+   ],
+   "heldout": true
   }
  ]
 }

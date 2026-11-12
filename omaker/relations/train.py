@@ -225,7 +225,7 @@ def run_training(config: TrainConfig, model_factory=None, device=None, install: 
         print(f"Epoch {epoch:02d}/{config.epochs} | loss {history[-1]['train_loss']:.4f} | dev micro-F1 {dev_f1:.3f}")
         if dev_f1 > best_f1:  # escolha pela VALIDAÇÃO; o teste não participa
             best_f1, best_epoch, best_dev = dev_f1, epoch, (golds, preds)
-            model.save(str(run / "model.pt"))
+            model.save(str(run / "model.pt"), extra={"train_texts": sorted({e.text for e in splits.train})})
 
     # Teste: uma única vez, com o checkpoint da melhor época.
     model.load_state_dict(torch.load(run / "model.pt", map_location=device, weights_only=True)["state_dict"])

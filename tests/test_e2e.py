@@ -81,3 +81,78 @@ def test_extrair_without_taxonomy_skips_llm_call(fake_ollama, stub_ner, monkeypa
     assert len(fake_ollama.calls) == 1
     assert [(t[0], t[2], t[3]) for t in triples] == [("Aspirin", "prevents", "stroke")]
     assert tax["instances"] == {"Aspirin": "Drug", "stroke": "Disease"}
+
+
+def test_heldout_doc_reported_separately(docs):
+    r = evaluate_system("ner+llm", docs, extract=_fake_extract)
+    assert [d.id for d in docs if d.heldout] == ["amostra-2"]
+    h = r["heldout_strict"]
+    assert (h["tp"], h["fp"], h["fn"]) == (1, 0, 4)
+
+
+def test_both_pure_system_uses_all_entities(docs, monkeypatch, tmp_path):
+    ckpt = tmp_path / "treinado.pt"
+    ckpt.write_bytes(b"x")
+    monkeypatch.setenv("OMAKER_CHECKPOINT", str(ckpt))
+    seen = []
+    evaluate_system("both+pure", docs, extract=lambda t, m: seen.append(os.environ["OMAKER_ENTITIES"]) or [])
+    assert set(seen) == {"both"}
+
+
+def test_contamination_with_pure_training_texts(docs, monkeypatch, tmp_path):
+    import torch
+
+    salbutamol = next(s for s in docs[1].text.split(". ") if "Salbutamol" in s)
+    ckpt = tmp_path / "treinado.pt"
+    torch.save({"state_dict": {}, "train_texts": [salbutamol.rstrip(".") + "."]}, ckpt)
+    monkeypatch.setenv("OMAKER_CHECKPOINT", str(ckpt))
+    r = evaluate_system("pure", docs, extract=lambda t, m: [])
+    assert r["contamination"] and r["contamination"][0]["doc"] == "amostra-2"
+    assert "Salbutamol" in r["contamination"][0]["sentence"]
+
+
+def test_no_entities_counts_as_no_prediction(monkeypatch):
+    from omaker.evaluation import e2e
+
+    def boom(*a, **k):
+        raise ValueError("No biomedical entities (drug / symptom / disease) were found in the text.")
+
+    monkeypatch.setattr(he.HybridEngine, "extrair", staticmethod(boom))
+    assert e2e.default_extract("texto sem entidades", "qwen3:8b") == []
+
+
+def test_preconditions_checked_before_running_any_system(monkeypatch, tmp_path):
+    from omaker.evaluation import e2e
+
+    monkeypatch.setenv("OMAKER_CHECKPOINT", str(tmp_path / "nao-existe.pt"))
+    ran = []
+    monkeypatch.setattr(e2e, "evaluate_system", lambda name, *a, **k: ran.append(name) or {})
+    with pytest.raises(FileNotFoundError):
+        e2e.main(["--systems", "llm", "pure", "--runs-dir", str(tmp_path / "runs")])
+    assert ran == []
+
+
+def test_results_written_after_each_system_with_metadata(monkeypatch, tmp_path):
+    from omaker.evaluation import e2e
+
+    def fake_eval(name, docs, extract=None, model="m", temperature=0.0):
+        if name == "ner+llm":
+            raise RuntimeError("Ollama caiu")
+        return {"system": name, "strict": {"precision": 0, "recall": 0, "f1": 0, "tp": 0, "fp": 0, "fn": 0},
+                "lenient": {"f1": 0}, "traps_hit": []}
+
+    monkeypatch.setattr(e2e, "evaluate_system", fake_eval)
+    with pytest.raises(RuntimeError):
+        e2e.main(["--systems", "llm", "ner+llm", "--runs-dir", str(tmp_path / "runs")])
+    (run,) = (tmp_path / "runs").iterdir()
+    saved = json.loads((run / "results.json").read_text(encoding="utf-8"))
+    assert [r["system"] for r in saved["results"]] == ["llm"]
+    meta = saved["metadata"]
+    assert {"commit", "gold_sha256", "model", "temperature", "llm_seed", "checkpoint", "checkpoint_sha256"} <= set(meta)
+
+
+def test_llm_seed_sent_to_ollama(fake_ollama, monkeypatch):
+    monkeypatch.setenv("OMAKER_LLM_SEED", "7")
+    fake_ollama.script[:] = [json.dumps({"ok": True})]
+    OllamaClient("qwen3:8b", fake_ollama.host).chat_json("s", "u", {"type": "object"})
+    assert fake_ollama.calls[-1]["options"]["seed"] == 7
