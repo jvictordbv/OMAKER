@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "Se usar este software num trabalho acadêmico, cite-o com os dados abaixo."
+title: "OMAKER: Ontology Mapping & Knowledge Engineering Resource"
+type: software
+authors:
+  - family-names: Barbosa
+    given-names: João Victor Ferreira
+    affiliation: Universidade Federal de Pernambuco (UFPE)
+repository-code: "https://github.com/jvictordbv/OMAKER"
+version: 0.2.0
+keywords:
+  - ontology engineering
+  - OWL
+  - biomedical relation extraction
+  - large language models
+preferred-citation:
+  type: thesis
+  title: "OMAKER: Ontology Mapping & Knowledge Engineering Resource"
+  authors:
+    - family-names: Barbosa
+      given-names: João Victor Ferreira
+  institution:
+    name: Universidade Federal de Pernambuco (UFPE)
+  year: 2026
+  thesis-type: "Projeto de Mestrado"

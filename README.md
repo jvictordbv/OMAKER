@@ -1,84 +1,180 @@
 # OMAKER: Ontology Mapping & Knowledge Engineering Resource
 
-> **Ambiente Inteligente para Extração Automática de Axiomas e Engenharia de Ontologias baseada em Large Language Models (LLMs)**
+[![CI](https://github.com/jvictordbv/OMAKER/actions/workflows/ci.yml/badge.svg)](https://github.com/jvictordbv/OMAKER/actions/workflows/ci.yml)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
+![Ruff](https://img.shields.io/badge/lint-ruff-261230)
 
----
+Aplicação desktop que transforma texto biomédico em uma ontologia OWL validada logicamente, combinando reconhecimento de entidades, um LLM local e um classificador de relações treinável (PURE/SpanBERT).
 
-## 🏛️ Sobre o Projeto
-O OMAKER é um ecossistema computacional projetado para mitigar o gargalo da aquisição de conhecimento na Web Semântica. Combinando reconhecimento de entidades biomédicas (NER), um LLM local (Qwen via Ollama) e extração de relações com PURE/SpanBERT, o sistema automatiza a conversão de corpus textuais complexos em ontologias formais expressas em **Lógica de Descrição (DL)**, em estrita conformidade com as diretrizes do **W3C**.
+Projeto de mestrado de João Victor Ferreira Barbosa, na Universidade Federal de Pernambuco (UFPE).
 
-### 🛠️ Arquitetura e Tecnologias
-- **Core Semântico:** Owlready2 (manipulação de grafos RDF/XML) e raciocinador HermiT para validar a consistência lógica.
-- **Processamento de Linguagem Natural:** NER biomédico, Qwen local via Ollama e PURE/SpanBERT para relações, tudo executado na máquina do usuário.
-- **Interface Gráfica (GUI):** PySide6 (Qt para Python) com arquitetura modular.
+## Sumário
 
----
+- [Sobre](#sobre)
+- [Funcionalidades](#funcionalidades)
+- [Como funciona](#como-funciona)
+- [Requisitos](#requisitos)
+- [Instalação](#instalação)
+- [Uso](#uso)
+- [Configuração](#configuração)
+- [Treino e avaliação do modelo](#treino-e-avaliação-do-modelo)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Testes e qualidade](#testes-e-qualidade)
+- [Contribuindo](#contribuindo)
+- [Como citar](#como-citar)
+- [Licença](#licença)
 
-## 🚀 Instalação e Configuração
+## Sobre
 
-### 1. Pré-requisitos
-- [uv](https://docs.astral.sh/uv/) instalado (ele baixa o Python 3.12 indicado em `.python-version`).
-- Java 11+, usado pelo raciocinador HermiT. O OMAKER procura em OMAKER_JAVA, JAVA_HOME, PATH, Program Files e no JRE que vem com o Protégé (caminho informado nas Configurações).
-- [Ollama](https://ollama.com/) em execução com o modelo configurado: `ollama pull qwen3:8b`.
+Construir ontologias formais (OWL, Lógica de Descrição) a partir de texto livre exige muito trabalho manual de engenheiros do conhecimento: é o gargalo de aquisição de conhecimento da Web Semântica. O OMAKER automatiza parte desse trabalho no domínio biomédico (fármacos, sintomas, doenças e genes). Tudo roda na máquina do usuário, sem enviar o texto a serviços externos.
 
-### 2. Clonar o Repositório e Instalar as Dependências
+## Funcionalidades
+
+- **Gerar uma ontologia** a partir de um texto:
+  - entidades e relações (`treats`, `causes`, `prevents`) extraídas;
+  - taxonomia proposta pelo LLM e validada;
+  - consistência conferida pelo raciocinador HermiT.
+- **Atualizar uma ontologia existente** com novas evidências. Em ontologias externas, como a Symptom Ontology, as entidades são alinhadas às classes que já existem, pelo rótulo e pelos sinônimos exatos, sem criar uma hierarquia paralela.
+- **Detectar sinônimos** com Sentence-BERT e gravá-los como `owl:equivalentClass` numa cópia da ontologia, depois da confirmação do usuário.
+- **Abrir o resultado no Protégé** direto da interface.
+- **Treinar e avaliar** o classificador de relações com divisão fixa dos dados, métricas com intervalo de confiança e avaliação de ponta a ponta contra baselines.
+- **Interface responsiva:** a geração roda em segundo plano e pode ser cancelada.
+
+## Como funciona
+
+1. **Entidades:** um NER biomédico (`d4data/biomedical-ner-all`) e o LLM local (Qwen3 via Ollama) propõem as menções. Cada menção do LLM precisa ser achada no texto.
+2. **Pares candidatos:** pares de entidades na mesma frase, com tipos compatíveis.
+3. **Relações:**
+   - Com um checkpoint treinado, o PURE/SpanBERT classifica cada par, e só ficam as triplas com confiança de pelo menos 0,70.
+   - Sem checkpoint, o LLM classifica.
+   - Triplas que violam o domínio da relação são descartadas.
+4. **Taxonomia:** o LLM organiza as entidades em subclasses, e a resposta é validada (sem ciclos, sem classes duplicando entidades, sem instância fora do ramo do seu tipo).
+5. **OWL:** o owlready2 monta a ontologia, sempre com IRI absoluto.
+6. **Validação lógica:** o HermiT confere a consistência. A interface só diz "validado" se o raciocinador de fato rodou.
+
+## Requisitos
+
+- [uv](https://docs.astral.sh/uv/). Ele instala o Python 3.12 indicado em `.python-version`.
+- [Ollama](https://ollama.com/) em execução, com o modelo configurado: `ollama pull qwen3:8b`.
+- Java 11 ou mais novo, para o HermiT. Se não houver Java no `PATH`, o OMAKER procura em `OMAKER_JAVA`, `JAVA_HOME`, Program Files e no JRE que vem com o Protégé (caminho informado nas Configurações).
+- [Protégé](https://protege.stanford.edu/), opcional, para abrir as ontologias geradas.
+
+Na primeira execução, os modelos do Hugging Face são baixados: SpanBERT (cerca de 410 MB), NER (cerca de 250 MB) e Sentence-BERT.
+
+## Instalação
+
 ```bash
 git clone https://github.com/jvictordbv/OMAKER.git
 cd OMAKER
 uv sync --extra dev
 ```
 
-### 3. Execução
+## Uso
+
+A partir da pasta do repositório:
+
 ```bash
 uv run python -m omaker
 ```
 
-O comando antigo `uv run python OMAKER.py` continua funcionando. Rode os comandos a partir da pasta do repositório.
+O comando `uv run python OMAKER.py` também funciona.
 
-Treino do classificador de relações (PURE):
-```bash
-uv run python -m omaker.relations.train --config configs/pure_base.toml
-```
+Na interface:
+1. Em **Configurações**, escolha o modelo do LLM, a pasta de destino e, opcionalmente, o caminho do `Protege.exe`.
+2. Em **Gerador de Ontologia**, informe o nome do arquivo, cole o texto (em inglês) e clique em processar.
+3. O log mostra cada etapa. Ao final, a mensagem diz se a ontologia foi validada, e o botão **Abrir no Protégé** fica disponível.
 
-Cada treino grava em `runs/<data>-<nome>/` a configuração usada, a divisão fixa treino/validação/teste (com manifesto e hash dos dados), as métricas (micro-F1 sem `no_relation`, com intervalo de confiança de 95%; o teste é avaliado uma única vez) e um relatório no formato de experimento. O checkpoint usado pela interface só é substituído com `--install`.
+## Configuração
 
-### Estrutura
-
-O código fica no pacote `omaker/`:
-
-- `domain/`: rótulos, tipos e utilidades de texto.
-- `nlp/`: NER biomédico, pares candidatos e detecção de sinônimos.
-- `llm/`: cliente do Ollama, extração de entidades pelo LLM e os prompts de taxonomia e de relações.
-- `relations/`: modelo PURE (SpanBERT), treino e dados de treino.
-- `ontology/`: construção do OWL, IRI, localização do Java (HermiT) e Protégé.
-- `pipeline/`: o motor que liga as etapas, do texto ao arquivo `.owl`.
-- `ui/`: interface PySide6.
-- `config.py`: leitura das variáveis de ambiente.
-
-### Variáveis de ambiente (opcionais)
+Variáveis de ambiente opcionais, lidas na hora do uso:
 
 | Variável | Padrão | Para quê |
 |---|---|---|
 | `OLLAMA_HOST` | `http://localhost:11434` | Endereço do Ollama |
-| `OMAKER_ENTITIES` | `both` | De onde vêm as entidades: `ner` (modelo), `llm` (Qwen) ou `both` |
+| `OMAKER_ENTITIES` | `both` | De onde vêm as entidades: `ner`, `llm` ou `both` |
 | `OMAKER_CHECKPOINT` | `omaker_pure.pt` na raiz | Checkpoint do classificador PURE |
+| `OMAKER_LLM_SEED` | (nenhuma) | Semente enviada ao Ollama |
 | `OMAKER_JAVA` | (procura automática) | `java.exe` usado pelo HermiT |
 
-### 4. Testes
+As preferências da interface (modelo, temperatura, pastas, Protégé) ficam salvas pelo próprio programa.
+
+## Treino e avaliação do modelo
+
+Treino do classificador de relações (PURE):
+
 ```bash
-uv run pytest -m "not slow and not ollama"
+uv run python -m omaker.relations.train --config configs/pure_base.toml
 ```
 
-### 5. Scripts
+Cada treino grava em `runs/<data>-<nome>/`:
+- a configuração usada;
+- a divisão fixa em treino, validação e teste, com manifesto e hash dos dados;
+- as métricas: micro-F1 sem `no_relation`, com intervalo de confiança de 95% (o teste é avaliado uma única vez);
+- um relatório;
+- o checkpoint.
 
-- `uv run python scripts/try_text.py --sample 1`: roda o pipeline real num texto de amostra e compara com o gabarito (precisa do Ollama).
-- `uv run python scripts/synonyms_gui.py`: janela mínima para testar a detecção de sinônimos.
-- `uv run python scripts/ner_smoke.py`: teste rápido do NER biomédico (baixa o modelo).
+O checkpoint usado pela interface só é substituído com `--install`.
 
+Avaliação de ponta a ponta, com casamento estrito, contra os baselines:
+
+```bash
+uv run python -m omaker.evaluation.e2e --systems llm ner+llm pure both+pure
+```
+
+O gabarito fica em `omaker/evaluation/gold/samples.json`. O LLM roda com temperatura 0 e semente fixa, e o relatório aponta frases do gabarito que estejam nos dados de treino do PURE.
+
+> O dataset de treino atual (`omaker/relations/train_relations.json`, 31 frases) serve para verificar o pipeline, não para tirar conclusões. A escolha do dataset de avaliação está em aberto.
+
+## Estrutura do projeto
+
+```text
+omaker/
+  domain/       rótulos, tipos de entidade, utilidades de texto
+  nlp/          NER biomédico, pares candidatos, sinônimos
+  llm/          cliente do Ollama, entidades, relações e taxonomia pelo LLM
+  relations/    modelo PURE, dados, configuração e treino
+  evaluation/   métricas e avaliação de ponta a ponta
+  ontology/     construção do OWL, alinhamento, IRI, Java/HermiT, Protégé
+  pipeline/     o motor que liga as etapas
+  ui/           interface PySide6 (uma página por arquivo em ui/pages/)
+  resources/    symp.owl (Symptom Ontology)
+  config.py     variáveis de ambiente
+configs/        configurações de treino
+scripts/        utilitários (pipeline real num texto, janela de sinônimos, teste do NER)
+tests/          suíte pytest
+```
+
+## Testes e qualidade
+
+```bash
+uv run pytest -q -m "not slow and not ollama"   # suíte rápida (a mesma do CI)
+uv run ruff check .
+```
+
+- Os testes marcados `slow` baixam modelos.
+- Os marcados `ollama` precisam do Ollama real.
+- O CI (GitHub Actions) roda o lint e a suíte rápida no Windows a cada push e pull request.
+
+## Contribuindo
+
+Contribuições são bem-vindas. Leia o [guia de contribuição](CONTRIBUTING.md): ele cobre o ambiente, o fluxo de branches e pull requests, o padrão de commits e o que um PR precisa ter. As pessoas que contribuíram estão em [CONTRIBUTORS.md](CONTRIBUTORS.md).
+
+## Como citar
+
+Se usar o OMAKER num trabalho acadêmico, cite:
+
+```bibtex
 @mastersthesis{barbosa2026omaker,
-  author       = {João Victor Ferreira Barbosa},
-  title        = {OMAKER: Ontology Mapping \& Knowledge Engineering Resource},
-  school       = {Universidade Federal de Pernambuco (UFPE)},
-  year         = {2026},
-  type         = {Projeto de Mestrado}
+  author = {João Victor Ferreira Barbosa},
+  title  = {OMAKER: Ontology Mapping \& Knowledge Engineering Resource},
+  school = {Universidade Federal de Pernambuco (UFPE)},
+  year   = {2026},
+  type   = {Projeto de Mestrado}
 }
+```
+
+O arquivo [`CITATION.cff`](CITATION.cff) traz os mesmos dados no formato lido pelo GitHub ("Cite this repository").
+
+## Licença
+
+O repositório ainda não tem uma licença definida. Até que uma seja escolhida pelo autor, os direitos de uso, cópia e distribuição do código não estão concedidos.
