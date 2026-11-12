@@ -7,7 +7,7 @@ from typing import Protocol, runtime_checkable
 
 import requests
 
-from omaker.config import ollama_host
+from omaker.config import llm_seed, ollama_host
 
 DEFAULT_MODEL = "qwen3:8b"
 
@@ -65,6 +65,13 @@ class OllamaClient:
         content = re.sub(r"^```(?:json)?\s*|\s*```$", "", content).strip()
         return json.loads(content)
 
+    def _options(self, temperature: float) -> dict:
+        options = {"temperature": temperature, "num_ctx": self.num_ctx}
+        seed = llm_seed()  # OMAKER_LLM_SEED, lido na hora: a avaliação fixa 0 para poder repetir
+        if seed is not None:
+            options["seed"] = seed
+        return options
+
     def chat_json(self, system: str, user: str, schema: dict, temperature: float = 0.1, retries: int = 2):
         """Returns parsed JSON that follows `schema`. Retries with the parse error as feedback."""
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
@@ -77,7 +84,7 @@ class OllamaClient:
                     "stream": False,
                     "think": False,       # no reasoning block mixed into the answer
                     "format": schema,     # structured output enforced by Ollama
-                    "options": {"temperature": temperature, "num_ctx": self.num_ctx},
+                    "options": self._options(temperature),
                 }
             )
             try:

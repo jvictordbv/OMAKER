@@ -37,8 +37,10 @@ O comando antigo `uv run python OMAKER.py` continua funcionando. Rode os comando
 
 Treino do classificador de relações (PURE):
 ```bash
-uv run python -m omaker.relations.train
+uv run python -m omaker.relations.train --config configs/pure_base.toml
 ```
+
+Cada treino grava em `runs/<data>-<nome>/` a configuração usada, a divisão fixa treino/validação/teste (com manifesto e hash dos dados), as métricas (micro-F1 sem `no_relation`, com intervalo de confiança de 95%; o teste é avaliado uma única vez) e um relatório no formato de experimento. O checkpoint usado pela interface só é substituído com `--install`.
 
 ### Estrutura
 

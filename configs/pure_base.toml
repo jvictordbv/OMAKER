@@ -1,0 +1,14 @@
+# Treino de referência do PURE. Uso: uv run python -m omaker.relations.train --config configs/pure_base.toml
+# Chaves aceitas: as de omaker/relations/config.py (TrainConfig). Caminhos relativos à raiz do repositório.
+[train]
+name = "pure-base"
+data_path = "omaker/relations/train_relations.json"
+seed = 42
+fractions = [0.7, 0.15, 0.15]
+epochs = 15
+lr_encoder = 2e-5
+lr_classifier = 1e-3
+weight_decay = 0.01
+batch_size = 8
+grad_accum = 1
+runs_dir = "runs"
