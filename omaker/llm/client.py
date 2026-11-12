@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Protocol, runtime_checkable
 
 import requests
 
@@ -13,6 +14,15 @@ DEFAULT_MODEL = "qwen3:8b"
 
 class LLMError(RuntimeError):
     pass
+
+
+@runtime_checkable
+class LLMClient(Protocol):
+    """What the pipeline needs from an LLM. OllamaClient implements it; another provider only has to match it."""
+
+    model: str
+
+    def chat_json(self, system: str, user: str, schema: dict, temperature: float = 0.1, retries: int = 2): ...
 
 
 class OllamaClient:

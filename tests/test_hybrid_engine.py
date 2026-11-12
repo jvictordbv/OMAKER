@@ -2,9 +2,10 @@ import json
 
 import pytest
 
+from omaker.domain.entities import Entity
 from omaker.llm.client import OllamaClient
 from omaker.llm.entities import extract_entities_llm, merge_entities
-from omaker.nlp.ner import Entity
+from omaker.llm.taxonomy import TAXONOMY_TEXT_LIMIT
 from omaker.pipeline import engine as he
 
 TEXT = "Aspirin prevents stroke. Chemotherapy treats the tumor but causes nausea. Aspirin and fever were listed."
@@ -142,9 +143,9 @@ def test_taxonomy_text_truncation_is_logged(fake_ollama, stub_ner, monkeypatch, 
     prompt = fake_ollama.calls[-1]["messages"][-1]["content"]
     warned = [line for line in logs if "[WARNING]" in line]
     if truncated:
-        assert len(text) > he.TAXONOMY_TEXT_LIMIT
-        assert len(warned) == 1 and str(len(text)) in warned[0] and str(he.TAXONOMY_TEXT_LIMIT) in warned[0]
-        assert text[: he.TAXONOMY_TEXT_LIMIT] in prompt and text not in prompt
+        assert len(text) > TAXONOMY_TEXT_LIMIT
+        assert len(warned) == 1 and str(len(text)) in warned[0] and str(TAXONOMY_TEXT_LIMIT) in warned[0]
+        assert text[: TAXONOMY_TEXT_LIMIT] in prompt and text not in prompt
     else:
         assert warned == []
         assert text in prompt

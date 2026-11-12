@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from omaker.domain.entities import Entity
 from omaker.domain.labels import ALLOWED_TYPE_PAIRS
 from omaker.domain.text import split_sentences
-from omaker.nlp.ner import Entity
 
 
 def generate_pairs(text: str, entities: Iterable[Entity], allowed=ALLOWED_TYPE_PAIRS) -> list[dict]:

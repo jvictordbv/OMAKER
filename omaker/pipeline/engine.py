@@ -9,21 +9,14 @@ Qwen never invents entities or relations: it only organizes the entities the NER
 from __future__ import annotations
 
 import os
-import re
 from dataclasses import dataclass
 
 from omaker.config import load_settings
-from omaker.domain.labels import (
-    BASE_CLASSES,
-    DEFAULT_CONFIDENCE_THRESHOLD,
-    NO_RELATION,
-    REL2ID,
-    RELATION_DOMAIN,
-    ROOT_CLASS,
-)
-from omaker.domain.text import to_identifier
-from omaker.llm.client import DEFAULT_MODEL, LLMError, OllamaClient
+from omaker.domain.labels import BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION, RELATION_DOMAIN
+from omaker.llm.client import DEFAULT_MODEL, LLMClient, LLMError, OllamaClient
 from omaker.llm.entities import extract_entities_llm, merge_entities
+from omaker.llm.relations import classify_pairs
+from omaker.llm.taxonomy import ask_taxonomy
 from omaker.ontology.builder import ReasonerStatus
 from omaker.ontology.iri import DEFAULT_URI_BASE, normalize_base, ontology_iri
 from omaker.paths import default_checkpoint_path
@@ -35,71 +28,6 @@ class OntologyResult:
     reasoner: ReasonerStatus
     relations_added: int
 
-RELATIONS = [r for r in REL2ID if r != NO_RELATION]
-
-# Characters of the source text sent with the taxonomy prompt (keeps the request inside the model context).
-TAXONOMY_TEXT_LIMIT = 6000
-
-TAXONOMY_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "classes": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {"name": {"type": "string"}, "parent": {"type": "string"}},
-                "required": ["name", "parent"],
-            },
-        },
-        "instances": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {"name": {"type": "string"}, "class": {"type": "string"}},
-                "required": ["name", "class"],
-            },
-        },
-        "disjoint": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}},
-    },
-    "required": ["classes", "instances", "disjoint"],
-}
-
-TAXONOMY_SYSTEM = f"""You are a senior knowledge engineer specialised in biomedical ontologies (OWL / Description Logic).
-You receive a text and the biomedical entities already detected in it. Organise them into a class hierarchy.
-
-Rules:
-1. Base classes already exist: {', '.join(BASE_CLASSES.values())}. Never redefine them.
-2. "classes": propose subclasses ONLY when the text or well-established medical knowledge supports them
-   (e.g. Analgesic under Drug, Infection under Disease). Every parent must be a base class or another class you define.
-   Use singular CamelCase names. Do NOT create a class for an individual entity.
-3. "instances": assign EVERY entity to its most specific class. Copy entity names EXACTLY as given. Never add new entities.
-   Apply the is-a test: every member of a subclass must truly be an instance of it. Do not group things by body
-   system or purpose unless that is genuinely what they are; if unsure, use the base class. Prefer few, well-justified
-   classes over many.
-4. "disjoint": groups of sibling classes that cannot share members. Leave empty if unsure.
-5. Do not output relations. Output only JSON matching the schema."""
-
-RELATION_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "results": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {"id": {"type": "integer"}, "relation": {"type": "string", "enum": RELATIONS + [NO_RELATION]}},
-                "required": ["id", "relation"],
-            },
-        }
-    },
-    "required": ["results"],
-}
-
-RELATION_SYSTEM = """You classify the relation between a subject and an object entity inside one sentence.
-Labels: treats (subject treats/relieves object), causes (subject causes/induces object),
-prevents (subject prevents/reduces risk of object), no_relation.
-Answer no_relation unless the sentence explicitly states the relation between THESE two entities
-(co-occurrence in the same sentence or record is not a relation). Return JSON only."""
-
 
 # ----------------------------------------------------------------------------- helpers
 def unique_entities(entities):
@@ -110,67 +38,6 @@ def unique_entities(entities):
         if key not in best or e.score > best[key].score:
             best[key] = e
     return list(best.values())
-
-
-def validate_taxonomy(raw: dict, entities) -> dict:
-    """Turns the LLM answer into a safe taxonomy. Anything inconsistent falls back to the NER type."""
-    base_names = set(BASE_CLASSES.values())
-    base_of_type = dict(BASE_CLASSES)
-    def norm(s):
-        return re.sub(r"[\W_]+", "", s.lower())
-
-    entity_keys = {norm(e.text) for e in entities}
-
-    parents = {}
-    redirect = {}  # class name -> parent, for classes that duplicate an entity name
-    for c in raw.get("classes", []):
-        name = to_identifier(str(c.get("name", "")), capitalize=True)
-        parent = to_identifier(str(c.get("parent", "")), capitalize=True) if c.get("parent") else ROOT_CLASS
-        if name in base_names or name == ROOT_CLASS or name in parents:
-            continue
-        if norm(name) in entity_keys:  # a class must not duplicate an entity ("CardiovascularDisease" vs "cardiovascular disease")
-            redirect[name] = parent
-            continue
-        parents[name] = parent
-
-    valid_parents = base_names | {ROOT_CLASS}
-    for name in list(parents):  # unknown parent -> root
-        p = redirect.get(parents[name], parents[name])
-        parents[name] = p if (p in parents or p in valid_parents) else ROOT_CLASS
-
-    def ancestors(name):
-        chain, seen = [], set()
-        while name in parents and name not in seen:
-            seen.add(name)
-            name = parents[name]
-            chain.append(name)
-        return chain
-
-    for name in list(parents):  # break cycles
-        if name in ancestors(name):
-            parents[name] = ROOT_CLASS
-
-    def root_base(cls):
-        return ([cls] + ancestors(cls))[-1]  # top of the chain: a base class or the root
-
-    instances = {}
-    raw_inst = {str(i.get("name", "")).lower(): to_identifier(str(i.get("class", "")), capitalize=True)
-                for i in raw.get("instances", [])}
-    for e in entities:
-        base = base_of_type[e.type]
-        cls = raw_inst.get(e.text.lower())
-        cls = redirect.get(cls, cls)
-        # accept the LLM class only if it exists and descends from the entity's own base type
-        instances[e.text] = cls if (cls in parents and root_base(cls) == base) else base
-
-    disjoint = []
-    for group in raw.get("disjoint", []):
-        members = [to_identifier(str(g), capitalize=True) for g in group]
-        members = [m for m in members if m in parents]
-        related = any(a in ancestors(b) or b in ancestors(a) for a in members for b in members if a != b)
-        if len(set(members)) > 1 and not related:
-            disjoint.append(sorted(set(members)))
-    return {"classes": parents, "instances": instances, "disjoint": disjoint}
 
 
 def filter_by_domain(triples, log):
@@ -206,22 +73,7 @@ class HybridEngine:
         return model.predict(pairs)
 
     @staticmethod
-    def _relations_llm(client, pairs, temp, log):
-        log("> [LLM] No trained PURE checkpoint found: classifying pairs with the LLM (no confidence scores).")
-        out = [(NO_RELATION, None)] * len(pairs)
-        for start in range(0, len(pairs), 15):
-            chunk = pairs[start:start + 15]
-            lines = [f'{start + i}. sentence: "{p["text"].strip()}" | subject: "{p["sub_name"]}" ({p["sub_type"]}) '
-                     f'| object: "{p["obj_name"]}" ({p["obj_type"]})' for i, p in enumerate(chunk)]
-            data = client.chat_json(RELATION_SYSTEM, "\n".join(lines), RELATION_SCHEMA, temperature=temp)
-            for r in data.get("results", []):
-                idx = r.get("id")
-                if isinstance(idx, int) and 0 <= idx < len(pairs) and r.get("relation") in RELATIONS:
-                    out[idx] = (r["relation"], None)
-        return out
-
-    @staticmethod
-    def extrair(texto, modelo_llm, temp_llm, log, ner=None, client=None):
+    def extrair(texto, modelo_llm, temp_llm, log, ner=None, client: LLMClient | None = None):
         """text -> (taxonomy, triples). Separate from OWL building so it can be tested/reused."""
         from omaker.nlp.ner import BiomedicalNER
         from omaker.nlp.pairs import generate_pairs
@@ -258,7 +110,7 @@ class HybridEngine:
                 preds = HybridEngine._relations_pure(pairs, log, checkpoint)
                 threshold = DEFAULT_CONFIDENCE_THRESHOLD
             else:
-                preds, threshold = HybridEngine._relations_llm(client, pairs, temp_llm, log), 0.0
+                preds, threshold = classify_pairs(client, pairs, temp_llm, log), 0.0
             best = {}
             for p, (rel, conf) in zip(pairs, preds, strict=False):
                 if rel == NO_RELATION or (conf is not None and conf < threshold):
@@ -269,15 +121,7 @@ class HybridEngine:
             triples = filter_by_domain(list(best.values()), log)
         log(f"> [RELATIONS] {len(triples)} triples kept.")
 
-        log(f"> [LLM] Asking {client.model} for taxonomy (subclasses, instance typing)...")
-        listing = "\n".join(f"- {e.text} ({e.type})" for e in uniq)
-        if len(texto) > TAXONOMY_TEXT_LIMIT:
-            log(f"> [WARNING] Text has {len(texto)} characters; the taxonomy prompt uses only the first "
-                f"{TAXONOMY_TEXT_LIMIT}. Entities and relations still come from the whole text.")
-        user = f"Entities:\n{listing}\n\nText:\n{texto[:TAXONOMY_TEXT_LIMIT]}"
-        raw = client.chat_json(TAXONOMY_SYSTEM, user, TAXONOMY_SCHEMA, temperature=temp_llm)
-        taxonomy = validate_taxonomy(raw, uniq)
-        log(f"> [LLM] {len(taxonomy['classes'])} extra classes, {len(taxonomy['disjoint'])} disjoint groups.")
+        taxonomy = ask_taxonomy(client, uniq, texto, temp_llm, log)
         return taxonomy, triples
 
     # ---- public API used by the GUI -----------------------------------------------------
