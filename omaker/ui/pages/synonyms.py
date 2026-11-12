@@ -23,6 +23,8 @@ class SynonymsPage(QWidget):
     def __init__(self, settings):
         super().__init__()
         self.settings = settings
+        self.worker = None
+        self.silencioso = False  # True quando a janela está fechando
         self._montar()
 
     def _montar(self):
@@ -96,7 +98,8 @@ class SynonymsPage(QWidget):
 
     def ao_falhar_sinonimos(self, msg: str):
         self.btn_rodar_sinonimos.setEnabled(True)
-        QMessageBox.critical(self, "Erro", msg)
+        if not self.silencioso:
+            QMessageBox.critical(self, "Erro", msg)
 
     def ao_concluir_sinonimos(self, grupos, caminho_saida):
         self.btn_rodar_sinonimos.setEnabled(True)
@@ -105,10 +108,13 @@ class SynonymsPage(QWidget):
         lista = "\n".join(f"- {', '.join(termos)}" for termos in grupos.values())
         nome = os.path.splitext(os.path.basename(self.caminho_owl_sinonimos))[0]
         destino = os.path.join(self.settings.pasta_exportacao(), f"{nome}_sinonimos.owl")
+        if self.silencioso:  # a janela está fechando: nada de perguntas
+            return
+        aviso_existente = "\n(já existe: o arquivo será substituído)" if os.path.exists(destino) else ""
         resposta = QMessageBox.question(
             self, "Gravar equivalências?",
             f"Grupos de sinônimos detectados:\n\n{lista}\n\n"
-            f"Gravar como owl:equivalentClass numa cópia da ontologia?\n{destino}\n\n"
+            f"Gravar como owl:equivalentClass numa cópia da ontologia?\n{destino}{aviso_existente}\n\n"
             "(o arquivo original não é alterado)")
         if resposta != QMessageBox.Yes:
             self.log_sinonimos.append("> Equivalências não gravadas (cancelado pelo usuário).")
@@ -119,7 +125,11 @@ class SynonymsPage(QWidget):
         except Exception as e:  # noqa: BLE001  slot da GUI: mostra o erro ao usuário em vez de derrubar o app
             QMessageBox.critical(self, "Erro", f"Não foi possível gravar as equivalências:\n{e}")
             return
-        texto = f"{relatorio.added} equivalência(s) gravada(s) em:\n{relatorio.path}"
+        if relatorio.added == 0:
+            texto = ("Nenhuma equivalência gravada: nenhum grupo tinha duas ou mais classes na ontologia. "
+                     "Nenhum arquivo foi criado.")
+        else:
+            texto = f"{relatorio.added} equivalência(s) gravada(s) em:\n{relatorio.path}"
         if relatorio.not_found:
             texto += "\n\nTermos sem classe correspondente na ontologia: " + ", ".join(relatorio.not_found)
         QMessageBox.information(self, "Equivalências gravadas", texto)

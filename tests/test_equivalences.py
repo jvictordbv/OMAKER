@@ -47,3 +47,10 @@ def test_match_ignores_case_and_underscores(base_owl, tmp_path):
     report = add_equivalences(str(base_owl), {0: ["DOENÇA", "Enfermidade"]}, str(dest), log=lambda _: None)
     assert report.added == 1
     assert _equivalents(dest, "Doenca", "Enfermidade")
+
+
+def test_no_file_when_nothing_added(base_owl, tmp_path):
+    dest = tmp_path / "nada.owl"
+    report = add_equivalences(str(base_owl), {0: ["carro", "automóvel"]}, str(dest), log=lambda _: None)
+    assert report.added == 0 and report.path == ""
+    assert not dest.exists()

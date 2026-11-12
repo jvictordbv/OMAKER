@@ -86,7 +86,9 @@ class OntoApp(QMainWindow):
         e fecha sozinha quando a thread terminar (uma chamada ao Ollama ou ao HermiT pode levar minutos).
         Sem isso, o Python encerraria com a thread ainda rodando."""
         rodando = [p for p in (self.pagina_gerador, self.pagina_atualizador) if p.worker is not None]
-        if not rodando:
+        sinonimos = self.pagina_sinonimos.worker
+        sinonimos_rodando = sinonimos is not None and sinonimos.isRunning()
+        if not rodando and not sinonimos_rodando:
             super().closeEvent(event)
             return
         event.ignore()
@@ -98,3 +100,6 @@ class OntoApp(QMainWindow):
             pagina.silencioso = True          # sem caixas de diálogo depois do pedido de fechar
             pagina.cancelar()
             pagina.worker.finished.connect(self.close)   # depois de _finalizar, que zera o worker
+        if sinonimos_rodando:                 # sem cancelamento: espera o agrupamento terminar
+            self.pagina_sinonimos.silencioso = True
+            sinonimos.finished.connect(self.close)

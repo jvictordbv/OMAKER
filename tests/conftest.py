@@ -8,6 +8,17 @@ import pytest
 from omaker.domain.entities import Entity
 
 
+@pytest.fixture(autouse=True)
+def isolated_qsettings(tmp_path, monkeypatch):
+    """Nenhum teste lê ou grava as configurações reais do usuário (registro MeuMestrado/OntoGenApp)."""
+    from PySide6.QtCore import QSettings
+
+    from omaker.ui.pages import settings
+
+    monkeypatch.setattr(settings, "default_settings",
+                        lambda: QSettings(str(tmp_path / "qsettings_teste.ini"), QSettings.IniFormat))
+
+
 class _FakeOllama:
     def __init__(self):
         self.script: list[str] = []   # contents returned by /api/chat, in order

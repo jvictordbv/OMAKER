@@ -71,3 +71,37 @@ def test_synonyms_written_after_confirmation(qtbot, monkeypatch, tmp_path):
     assert len(calls) == 1
     assert calls[0].endswith("symp_sinonimos.owl") and calls[0].startswith(str(tmp_path))
     assert "1 equivalência" in shown[0]
+
+
+def test_existing_copy_is_announced_in_question(qtbot, monkeypatch, tmp_path):
+    from omaker.ui.pages import synonyms
+
+    win, page = _synonyms_page(qtbot, tmp_path)
+    (tmp_path / "symp_sinonimos.owl").write_text("antigo", encoding="utf-8")
+    asked = []
+    monkeypatch.setattr(synonyms, "add_equivalences", lambda *a, **k: None)
+    monkeypatch.setattr(QtWidgets.QMessageBox, "question",
+                        lambda *a, **k: asked.append(a[2]) or QtWidgets.QMessageBox.No)
+    page.ao_concluir_sinonimos({0: ["a", "b"]}, "")
+    assert "substitu" in asked[0]
+
+
+def test_no_success_message_when_nothing_added(qtbot, monkeypatch, tmp_path):
+    from omaker.ontology.builder import EquivalenceReport
+    from omaker.ui.pages import synonyms
+
+    win, page = _synonyms_page(qtbot, tmp_path)
+    shown = []
+    monkeypatch.setattr(synonyms, "add_equivalences", lambda *a, **k: EquivalenceReport(0, [], ["a", "b"], ""))
+    monkeypatch.setattr(QtWidgets.QMessageBox, "question", lambda *a, **k: QtWidgets.QMessageBox.Yes)
+    monkeypatch.setattr(QtWidgets.QMessageBox, "information", lambda *a, **k: shown.append(a[2]))
+    page.ao_concluir_sinonimos({0: ["a", "b"]}, "")
+    assert "Nenhuma equivalência" in shown[0] and "gravada(s) em" not in shown[0]
+
+
+def test_default_settings_are_isolated_in_tests(qtbot):
+    from omaker.ui import main_window as m
+
+    win = m.OntoApp()
+    qtbot.addWidget(win)
+    assert win.pagina_configuracoes.configuracoes.fileName().endswith(".ini")
