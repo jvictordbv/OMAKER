@@ -1,4 +1,5 @@
 """Página Sinônimos: agrupa conceitos equivalentes com Sentence-BERT."""
+import os
 
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -13,6 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from omaker.ontology.builder import add_equivalences
 from omaker.paths import package_resource
 from omaker.ui.workers import SynonymWorker
 
@@ -55,7 +57,7 @@ class SynonymsPage(QWidget):
         col_esquerda.addWidget(self.input_conceitos_sinonimos)
 
         # 3. Botão de Execução do Worker (Passo 1 + Passo 2)
-        self.btn_rodar_sinonimos = QPushButton("🚀 Detectar Sinônimos e Injetar Equivalências")
+        self.btn_rodar_sinonimos = QPushButton("🚀 Detectar Sinônimos")
         self.btn_rodar_sinonimos.setStyleSheet("background-color: #6366f1; color: white;")
         self.btn_rodar_sinonimos.clicked.connect(self.executar_worker_sinonimos)
         col_esquerda.addWidget(self.btn_rodar_sinonimos)
@@ -98,11 +100,29 @@ class SynonymsPage(QWidget):
 
     def ao_concluir_sinonimos(self, grupos, caminho_saida):
         self.btn_rodar_sinonimos.setEnabled(True)
-        if grupos:
-            lista = "\n".join(f"- {', '.join(termos)}" for termos in grupos.values())
-            QMessageBox.information(
-                self, "Sinônimos detectados",
-                f"Grupos de sinônimos detectados (ainda não gravados na ontologia):\n\n{lista}")
+        if not grupos:
+            return
+        lista = "\n".join(f"- {', '.join(termos)}" for termos in grupos.values())
+        nome = os.path.splitext(os.path.basename(self.caminho_owl_sinonimos))[0]
+        destino = os.path.join(self.settings.pasta_exportacao(), f"{nome}_sinonimos.owl")
+        resposta = QMessageBox.question(
+            self, "Gravar equivalências?",
+            f"Grupos de sinônimos detectados:\n\n{lista}\n\n"
+            f"Gravar como owl:equivalentClass numa cópia da ontologia?\n{destino}\n\n"
+            "(o arquivo original não é alterado)")
+        if resposta != QMessageBox.Yes:
+            self.log_sinonimos.append("> Equivalências não gravadas (cancelado pelo usuário).")
+            return
+        try:
+            relatorio = add_equivalences(self.caminho_owl_sinonimos, grupos, destino,
+                                         log=lambda msg: self.log_sinonimos.append(msg))
+        except Exception as e:  # noqa: BLE001  slot da GUI: mostra o erro ao usuário em vez de derrubar o app
+            QMessageBox.critical(self, "Erro", f"Não foi possível gravar as equivalências:\n{e}")
+            return
+        texto = f"{relatorio.added} equivalência(s) gravada(s) em:\n{relatorio.path}"
+        if relatorio.not_found:
+            texto += "\n\nTermos sem classe correspondente na ontologia: " + ", ".join(relatorio.not_found)
+        QMessageBox.information(self, "Equivalências gravadas", texto)
 
     def selecionar_arquivo_owl_sinonimos(self):
         caminho, _ = QFileDialog.getOpenFileName(self, "Selecione a Ontologia", "", "Ontologia OWL (*.owl)")
