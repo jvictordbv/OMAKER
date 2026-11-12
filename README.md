@@ -80,7 +80,7 @@ uv run python -m omaker
 O comando `uv run python OMAKER.py` também funciona.
 
 Na interface:
-1. Em **Configurações**, escolha o modelo do LLM, a pasta de destino e, opcionalmente, o caminho do `Protege.exe`.
+1. Em **Configurações**, escolha o modelo do LLM (o nome exato que aparece em `ollama list`, por exemplo `qwen3:8b-q4_K_M`), a pasta de destino e, opcionalmente, o caminho do `Protege.exe`.
 2. Em **Gerador de Ontologia**, informe o nome do arquivo, cole o texto (em inglês) e clique em processar.
 3. O log mostra cada etapa. Ao final, a mensagem diz se a ontologia foi validada, e o botão **Abrir no Protégé** fica disponível.
 

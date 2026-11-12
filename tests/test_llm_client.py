@@ -38,3 +38,19 @@ def test_check_lists_installed_models(fake_ollama):
         OllamaClient("qwen3:8b", fake_ollama.host).check()
     assert "org-bench/qwen3:8b-q4_K_M" in str(e.value)
     assert OllamaClient("qwen3:8b", fake_ollama.host).installed_models() == ["org-bench/qwen3:8b-q4_K_M"]
+
+
+@pytest.mark.parametrize("wanted, installed, ok", [
+    ("qwen3:8b-q4_K_M", ["qwen3:8b-q4_K_M"], True),
+    ("qwen3", ["qwen3:latest"], True),                 # sem tag, o Ollama usa :latest
+    ("qwen3:8b", ["qwen3:8b-q4_K_M"], False),          # outra tag: o Ollama responde 404
+    ("qwen3", ["qwen3:4b"], False),                     # sem tag não vira "qualquer tag"
+])
+def test_check_requires_the_exact_name_ollama_will_use(fake_ollama, wanted, installed, ok):
+    fake_ollama.models[:] = installed
+    client = OllamaClient(wanted, fake_ollama.host)
+    if ok:
+        client.check()
+    else:
+        with pytest.raises(LLMError, match=installed[0]):
+            client.check()

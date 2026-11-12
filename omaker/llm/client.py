@@ -44,11 +44,12 @@ class OllamaClient:
     def check(self):
         """Fails early with an actionable message if Ollama or the model is missing."""
         names = self.installed_models()
-        wanted = self.model if ":" in self.model else self.model + ":"
-        if not any(n == self.model or n.startswith(wanted) for n in names):
+        # O Ollama só aceita o nome exato; sem tag, ele usa ":latest" (e não qualquer tag do modelo).
+        wanted = self.model if ":" in self.model else self.model + ":latest"
+        if wanted not in names:
             available = ", ".join(names) if names else "(nenhum)"
-            raise LLMError(f"Model '{self.model}' is not installed. Installed models: {available}. "
-                           f"Run: ollama pull {self.model}")
+            raise LLMError(f"Model '{self.model}' is not installed (the exact name is required). "
+                           f"Installed models: {available}. Run: ollama pull {self.model}")
 
     def _post(self, payload: dict) -> str:
         r = requests.post(f"{self.host}/api/chat", json=payload, timeout=self.timeout)
