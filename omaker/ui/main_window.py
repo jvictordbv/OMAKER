@@ -22,6 +22,7 @@ class OntoApp(QMainWindow):
         self.setWindowIcon(QIcon(":/icone_janela.png"))
 
         self._configuracoes = configuracoes  # None: QSettings do usuário (criado pela SettingsPage)
+        self._fechando = False
         self.setup_ui()
 
     def setup_ui(self):
@@ -81,10 +82,19 @@ class OntoApp(QMainWindow):
     def mudar_pagina(self, index): self.area_conteudo.setCurrentIndex(index)
 
     def closeEvent(self, event):  # noqa: N802  nome exigido pelo Qt
-        """Ao fechar durante uma execução: pede cancelamento e espera a thread terminar (até 30 s)."""
-        for pagina in (self.pagina_gerador, self.pagina_atualizador):
-            worker = pagina.worker
-            if worker is not None:
-                worker.cancel()
-                worker.wait(30000)
-        super().closeEvent(event)
+        """Fechar durante uma execução não bloqueia a interface: pede o cancelamento, recusa o fechamento
+        e fecha sozinha quando a thread terminar (uma chamada ao Ollama ou ao HermiT pode levar minutos).
+        Sem isso, o Python encerraria com a thread ainda rodando."""
+        rodando = [p for p in (self.pagina_gerador, self.pagina_atualizador) if p.worker is not None]
+        if not rodando:
+            super().closeEvent(event)
+            return
+        event.ignore()
+        if self._fechando:
+            return
+        self._fechando = True
+        self.setWindowTitle("OMAKER • Cancelando... a janela fecha ao fim da etapa atual")
+        for pagina in rodando:
+            pagina.silencioso = True          # sem caixas de diálogo depois do pedido de fechar
+            pagina.cancelar()
+            pagina.worker.finished.connect(self.close)   # depois de _finalizar, que zera o worker

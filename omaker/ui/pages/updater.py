@@ -131,6 +131,7 @@ class UpdaterPage(PipelineRunnerMixin, QWidget):
 
     def _ao_concluir(self, resultado):
         nivel, titulo, mensagem = completion_message(resultado)
-        aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
-        aviso(self, titulo, mensagem)
+        if not self.silencioso:
+            aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
+            aviso(self, titulo, mensagem)
         self.log_atualizador.append(f"\n> [INFO] Atualização gravada (raciocinador: {resultado.reasoner.value}).")

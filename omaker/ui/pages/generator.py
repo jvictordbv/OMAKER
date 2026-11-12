@@ -140,6 +140,7 @@ class GeneratorPage(PipelineRunnerMixin, QWidget):
             self.btn_abrir_protege.setEnabled(True)
 
         nivel, titulo, mensagem = completion_message(resultado)
-        aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
-        aviso(self, titulo, mensagem)
+        if not self.silencioso:
+            aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
+            aviso(self, titulo, mensagem)
         self.texto_log.append(f"\n> [INFO] Processo finalizado (raciocinador: {resultado.reasoner.value}).")

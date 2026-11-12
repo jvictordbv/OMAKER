@@ -8,11 +8,12 @@ class PipelineRunnerMixin:
     """Mixin para QWidget. A página define btn_cancelar, _log_widget(), _run_button(), _ao_concluir(resultado)
     e MSG_CANCELADO.
 
-    Os sinais do worker vão para métodos ligados ao próprio widget, então os slots rodam na thread da
-    interface (um lambda solto rodaria na thread do worker e tocaria widgets fora dela).
+    Os sinais do worker vão para métodos ligados ao próprio widget, que vive na thread da interface;
+    assim os slots rodam nela e nunca tocam widgets a partir da thread do worker.
     """
 
     worker: PipelineWorker | None = None
+    silencioso = False   # True quando a janela está fechando: nenhuma caixa de diálogo
     MSG_CANCELADO = "> [CANCELADO] Interrompido pelo usuário."
 
     def em_execucao(self) -> bool:
@@ -37,11 +38,13 @@ class PipelineRunnerMixin:
 
     def _ao_falhar(self, msg: str) -> None:
         self._log_widget().append(f"\n> [CRITICAL ERROR] {msg}")
-        QMessageBox.critical(self, "Erro", msg)
+        if not self.silencioso:
+            QMessageBox.critical(self, "Erro", msg)
 
     def _ao_cancelar(self) -> None:
         self._log_widget().append(f"\n{self.MSG_CANCELADO}")
-        QMessageBox.information(self, "Cancelado", "A operação foi cancelada.")
+        if not self.silencioso:
+            QMessageBox.information(self, "Cancelado", "A operação foi cancelada.")
 
     def _finalizar(self) -> None:
         self._run_button().setEnabled(True)

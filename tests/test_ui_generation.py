@@ -124,11 +124,40 @@ def test_close_during_run_waits_for_worker(win, qtbot, monkeypatch, boxes):
     monkeypatch.setattr(HybridEngine, "gerar_ontologia", _looping)
     page = win.pagina_gerador
     _fill_generator(page)
+    win.show()
     page.btn_gerar.click()
     qtbot.waitUntil(lambda: "> trabalhando" in page.texto_log.toPlainText(), timeout=5000)
     worker = page.worker
     win.close()
-    assert worker.isFinished()
+    qtbot.waitUntil(lambda: worker.isFinished() and not win.isVisible(), timeout=5000)
+    assert boxes == {"information": [], "warning": [], "critical": []}
+
+
+def test_close_during_silent_step_does_not_block_and_closes_later(win, qtbot, monkeypatch, boxes):
+    """Uma chamada ao Ollama ou ao HermiT não loga nada por muito tempo: fechar não pode travar a
+    janela, nem encerrar com a thread rodando, nem deixar uma caixa "Cancelado" aberta."""
+    started = threading.Event()
+
+    def silent(**kw):
+        kw["log_callback"]("> chamando o LLM")
+        started.set()
+        time.sleep(1.5)                       # etapa longa, sem log
+        kw["log_callback"]("> resposta")       # aqui o cancelamento é atendido
+        raise AssertionError("o cancelamento não chegou")
+
+    monkeypatch.setattr(HybridEngine, "gerar_ontologia", silent)
+    page = win.pagina_gerador
+    _fill_generator(page)
+    win.show()
+    page.btn_gerar.click()
+    assert started.wait(5)
+    worker = page.worker
+    t0 = time.monotonic()
+    win.close()
+    assert time.monotonic() - t0 < 0.5        # não bloqueia a interface
+    assert win.isVisible()                     # fecha só quando a etapa terminar
+    qtbot.waitUntil(lambda: worker.isFinished() and not win.isVisible(), timeout=5000)
+    assert boxes == {"information": [], "warning": [], "critical": []}
 
 
 def test_update_runs_off_gui_thread(win, qtbot, monkeypatch, tmp_path, boxes):
