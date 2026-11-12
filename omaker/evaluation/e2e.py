@@ -203,6 +203,10 @@ def _report(results: list[dict], gold_path, model) -> str:
                       f"Gabarito: `{gold_path}`. Modelo do LLM: `{model}`.", "", *rows, "", *notes, ""])
 
 
+# Retomar só faz sentido se o que define o resultado não mudou.
+RESUME_MUST_MATCH = ("gold_sha256", "model", "temperature", "llm_seed", "checkpoint_sha256")
+
+
 def main(argv=None) -> Path:
     ap = argparse.ArgumentParser(description="Avaliação de ponta a ponta com casamento estrito.")
     ap.add_argument("--systems", nargs="+", default=list(SYSTEMS), choices=list(SYSTEMS))
@@ -210,24 +214,39 @@ def main(argv=None) -> Path:
     ap.add_argument("--model", default="qwen3:8b")
     ap.add_argument("--runs-dir", default=str(project_root() / "runs"))
     ap.add_argument("--seed", type=int, default=EVAL_SEED, help="semente enviada ao Ollama")
+    ap.add_argument("--resume", metavar="PASTA_DO_RUN", help="continua uma avaliação interrompida (runs/<pasta>)")
     args = ap.parse_args(argv)
     check_preconditions(args.systems)
     docs = load_gold(args.gold)
-    stem = Path(args.runs_dir) / f"{datetime.now():%Y%m%d-%H%M%S}-e2e"
-    run, k = stem, 2
-    while run.exists():
-        run, k = Path(f"{stem}-{k}"), k + 1
-    run.mkdir(parents=True)
     metadata = {
         "commit": _commit(), "gold": str(args.gold), "gold_sha256": _sha256(args.gold), "model": args.model,
         "temperature": EVAL_TEMPERATURE, "llm_seed": args.seed, "systems": args.systems,
         "checkpoint": str(default_checkpoint_path()), "checkpoint_sha256": _sha256(default_checkpoint_path()),
     }
     results = []
+    if args.resume:
+        run = Path(args.resume)
+        saved = json.loads((run / "results.json").read_text(encoding="utf-8"))
+        for key in RESUME_MUST_MATCH:
+            if saved["metadata"].get(key) != metadata[key]:
+                raise ValueError(f"não dá para retomar {run}: '{key}' mudou "
+                                 f"({saved['metadata'].get(key)!r} para {metadata[key]!r})")
+        results = saved["results"]
+        metadata = {**saved["metadata"], "systems": list(dict.fromkeys(saved["metadata"]["systems"] + args.systems))}
+    else:
+        stem = Path(args.runs_dir) / f"{datetime.now():%Y%m%d-%H%M%S}-e2e"
+        run, k = stem, 2
+        while run.exists():
+            run, k = Path(f"{stem}-{k}"), k + 1
+        run.mkdir(parents=True)
+    done = {r["system"] for r in results}
     previous_seed = os.environ.get("OMAKER_LLM_SEED")
     os.environ["OMAKER_LLM_SEED"] = str(args.seed)
     try:
         for name in args.systems:  # grava depois de cada sistema: uma falha não perde os anteriores
+            if name in done:
+                print(f"{name}: já avaliado em {run.name}, pulando.")
+                continue
             results.append(evaluate_system(name, docs, model=args.model, temperature=EVAL_TEMPERATURE))
             (run / "results.json").write_text(json.dumps({"metadata": metadata, "results": results},
                                                          ensure_ascii=False, indent=1), encoding="utf-8")

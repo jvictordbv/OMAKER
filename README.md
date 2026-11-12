@@ -115,11 +115,38 @@ Cada treino grava em `runs/<data>-<nome>/`:
 
 O checkpoint usado pela interface só é substituído com `--install`.
 
+Se o treino cair (falta de energia, Ctrl+C), retome de onde parou:
+
+```bash
+uv run python -m omaker.relations.train --resume runs/<pasta-do-treino>
+```
+
+O treino grava um ponto de retomada (`last.pt`) a cada 50 passos (`save_every_steps` na configuração) e no fim de cada época. A retomada refaz a mesma ordem dos lotes e chega ao mesmo resultado de um treino sem queda. O `last.pt` é apagado quando o treino termina.
+
+### Treino com o BioRED
+
+O [BioRED](https://ftp.ncbi.nlm.nih.gov/pub/lu/BioRED/) (600 resumos do PubMed, com a divisão oficial em treino, validação e teste) é convertido para o esquema do OMAKER:
+
+- químico vira `DRUG`, doença vira `DISEASE`;
+- `Positive_Correlation` vira `causes`, `Negative_Correlation` vira `treats`;
+- cada par químico e doença na mesma frase vira um exemplo; pares com outro tipo de relação (como `Association`) ficam de fora, e pares sem relação viram `no_relation`.
+
+O BioRED anota as relações por resumo, não por frase, então parte dos rótulos é ruído. Para medir isso, o comando grava uma amostra para conferência manual (`revisao_mapeamento.csv`).
+
+```bash
+uv run python -m omaker.relations.biored --download --review-sample 100
+uv run python -m omaker.relations.train --config configs/pure_biored.toml
+```
+
+O download vai para `data/biored/` (fora do git) e não é refeito se os arquivos já existirem.
+
 Avaliação de ponta a ponta, com casamento estrito, contra os baselines:
 
 ```bash
 uv run python -m omaker.evaluation.e2e --systems llm ner+llm pure both+pure
 ```
+
+Se a avaliação cair no meio, `--resume runs/<pasta>` avalia só os sistemas que faltam, desde que o modelo, o gabarito e o checkpoint sejam os mesmos.
 
 O gabarito fica em `omaker/evaluation/gold/samples.json`. O LLM roda com temperatura 0 e semente fixa, e o relatório aponta frases do gabarito que estejam nos dados de treino do PURE.
 

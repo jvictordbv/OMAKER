@@ -34,7 +34,8 @@ class FakeModel(nn.Module):
 
 
 def _config(tmp_path, **kw):
-    return TrainConfig(name="teste", data_path=str(DATA_PATH), runs_dir=str(tmp_path / "runs"), epochs=2, **kw)
+    kw = {"epochs": 2, **kw}
+    return TrainConfig(name="teste", data_path=str(DATA_PATH), runs_dir=str(tmp_path / "runs"), **kw)
 
 
 def test_load_config_reads_toml_and_rejects_unknown_key(tmp_path):
@@ -92,3 +93,66 @@ def test_existing_splits_are_reused(tmp_path):
 def test_real_spanbert_one_epoch(tmp_path):
     run = run_training(_config(tmp_path, epochs=1))
     assert (run / "metrics.json").exists()
+
+
+class CrashingModel(FakeModel):
+    """Cai no meio do treino, depois de `crash_after` passos de treino (simula queda de energia)."""
+
+    crash_after = 0
+    calls = 0
+
+    def forward(self, samples):
+        if self.training:
+            CrashingModel.calls += 1
+            if CrashingModel.calls > CrashingModel.crash_after:
+                raise KeyboardInterrupt("queda simulada")
+        return super().forward(samples)
+
+
+def _crash_then_resume(tmp_path, crash_after, **kw):
+    from omaker.relations.train import resume_training
+    CrashingModel.calls, CrashingModel.crash_after = 0, crash_after
+    cfg = _config(tmp_path, epochs=3, batch_size=2, **kw)
+    with pytest.raises(KeyboardInterrupt):
+        run_training(cfg, model_factory=CrashingModel)
+    (run,) = (tmp_path / "runs").iterdir()
+    assert (run / "last.pt").exists() and not (run / "metrics.json").exists()
+    return resume_training(run, model_factory=FakeModel)
+
+
+@pytest.mark.parametrize("crash_after", [3, 13, 21])   # meio da 1a época, meio da 2a, fim de época
+def test_resume_after_crash_matches_uninterrupted_run(tmp_path, crash_after):
+    reference = run_training(_config(tmp_path / "ref", epochs=3, batch_size=2, save_every_steps=2),
+                             model_factory=FakeModel)
+    resumed = _crash_then_resume(tmp_path / "crash", crash_after, save_every_steps=2)
+    a = json.loads((reference / "metrics.json").read_text("utf-8"))
+    b = json.loads((resumed / "metrics.json").read_text("utf-8"))
+    assert a["history"] == b["history"]
+    assert a["test"] == b["test"] and a["best_epoch"] == b["best_epoch"]
+    assert not (resumed / "last.pt").exists()   # terminado: o ponto de retomada é apagado
+
+
+def test_resume_of_finished_run_does_nothing(tmp_path):
+    from omaker.relations.train import resume_training
+    run = run_training(_config(tmp_path), model_factory=FakeModel)
+    before = (run / "metrics.json").read_text("utf-8")
+    assert resume_training(run, model_factory=FakeModel) == run
+    assert (run / "metrics.json").read_text("utf-8") == before
+
+
+def test_resume_without_checkpoint_fails_clearly(tmp_path):
+    from omaker.relations.train import resume_training
+    (tmp_path / "vazio").mkdir()
+    with pytest.raises(FileNotFoundError, match="last.pt"):
+        resume_training(tmp_path / "vazio", model_factory=FakeModel)
+
+
+def test_missing_splits_dir_fails_clearly(tmp_path):
+    with pytest.raises(FileNotFoundError, match="omaker.relations.biored"):
+        run_training(_config(tmp_path, splits_dir=str(tmp_path / "nao-existe")), model_factory=FakeModel)
+
+
+def test_biored_config_is_valid():
+    from omaker.paths import project_root
+    cfg = load_config(project_root() / "configs" / "pure_biored.toml")
+    assert cfg.splits_dir == "data/biored/splits" and cfg.save_every_steps == 50

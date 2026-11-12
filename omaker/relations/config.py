@@ -25,6 +25,7 @@ class TrainConfig:
     batch_size: int = 8
     grad_accum: int = 1
     runs_dir: str = "runs"
+    save_every_steps: int = 50      # ponto de retomada (last.pt) a cada N passos, além do fim de cada época
 
 
 def load_config(path) -> TrainConfig:

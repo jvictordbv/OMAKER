@@ -1,0 +1,17 @@
+# PURE treinado com o BioRED (decisão D5), divisão oficial Train / Dev / Test.
+# Antes, gere os dados: uv run python -m omaker.relations.biored --download
+# Uso: uv run python -m omaker.relations.train --config configs/pure_biored.toml
+# Se cair: uv run python -m omaker.relations.train --resume runs/<pasta>
+[train]
+name = "pure-biored"
+data_path = "data/biored"
+splits_dir = "data/biored/splits"
+seed = 42
+epochs = 5
+lr_encoder = 2e-5
+lr_classifier = 1e-3
+weight_decay = 0.01
+batch_size = 8
+grad_accum = 1
+runs_dir = "runs"
+save_every_steps = 50
