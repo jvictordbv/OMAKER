@@ -1,0 +1,39 @@
+"""Alinhamento com ontologias externas (por exemplo a Symptom Ontology).
+
+Ao atualizar uma ontologia que não foi gerada pelo OMAKER, as classes-base do OMAKER (Drug, Disease,
+Symptom) que já existem nela, pelo rótulo, são reaproveitadas; o que falta é criado num namespace
+próprio, em vez de dentro do namespace da ontologia alheia.
+"""
+from __future__ import annotations
+
+import re
+
+from omaker.domain.labels import ROOT_CLASS
+
+OMAKER_NAMESPACE = "http://www.mestrado.edu/ontologias/omaker#"
+EXACT_SYNONYM = "http://www.geneontology.org/formats/oboInOwl#hasExactSynonym"
+
+
+def norm_term(text) -> str:
+    """Minúsculas, com espaços e "_" tratados como iguais."""
+    return re.sub(r"[\s_]+", " ", str(text)).strip().casefold()
+
+
+def build_label_index(onto) -> dict:
+    """Termo normalizado para classe: rótulos primeiro, depois sinônimos exatos, depois nomes.
+    Classes criadas pelo OMAKER (OMAKER_NAMESPACE) ficam de fora."""
+    classes = [c for c in onto.classes() if not c.iri.startswith(OMAKER_NAMESPACE)]
+    synonym = onto.world[EXACT_SYNONYM]
+    index: dict = {}
+    for keys_of in (lambda c: c.label,
+                    lambda c: synonym[c] if synonym is not None else [],
+                    lambda c: [c.name]):
+        for cls in classes:
+            for key in keys_of(cls):
+                index.setdefault(norm_term(key), cls)
+    return index
+
+
+def is_external(onto) -> bool:
+    """Tem classes e não foi gerada pelo OMAKER (não tem a classe raiz no próprio namespace)."""
+    return onto[ROOT_CLASS] is None and next(iter(onto.classes()), None) is not None
