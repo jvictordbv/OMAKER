@@ -2,8 +2,8 @@ import pytest
 import torch
 from transformers import BertConfig, BertModel, BertTokenizerFast
 
-from core.labels import MODEL_NAME, REL2ID
-from core.relation_extractor import RelationExtractorPURE
+from omaker.domain.labels import MODEL_NAME, REL2ID
+from omaker.relations.model import RelationExtractorPURE
 
 SAMPLE_TEXT = "aspirin prevents stroke ."
 

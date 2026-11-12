@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.ner import BiomedicalNER
+from omaker.nlp.ner import BiomedicalNER
 
 ner = BiomedicalNER()
 print(ner.pipe.model.config.id2label)

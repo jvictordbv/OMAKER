@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from core.worker import SynonymWorker
+from omaker.ui.workers import SynonymWorker
 
 
 class OMAKERWindow(QMainWindow):

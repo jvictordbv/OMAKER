@@ -30,8 +30,27 @@ uv sync --extra dev
 
 ### 3. Execução
 ```bash
-uv run python OMAKER.py
+uv run python -m omaker
 ```
+
+O comando antigo `uv run python OMAKER.py` continua funcionando. Rode os comandos a partir da pasta do repositório.
+
+Treino do classificador de relações (PURE):
+```bash
+uv run python -m omaker.relations.train
+```
+
+### Estrutura
+
+O código fica no pacote `omaker/`:
+
+- `domain/`: rótulos, tipos e utilidades de texto.
+- `nlp/`: NER biomédico, pares candidatos e detecção de sinônimos.
+- `llm/`: cliente do Ollama e extração de entidades pelo LLM.
+- `relations/`: modelo PURE (SpanBERT), treino e dados de treino.
+- `ontology/`: construção do OWL, IRI, localização do Java (HermiT) e Protégé.
+- `pipeline/`: o motor que liga as etapas, do texto ao arquivo `.owl`.
+- `ui/`: interface PySide6.
 
 ### 4. Testes
 ```bash

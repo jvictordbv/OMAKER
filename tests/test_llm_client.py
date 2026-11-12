@@ -1,6 +1,6 @@
 import pytest
 
-from core.llm_client import LLMError, OllamaClient
+from omaker.llm.client import LLMError, OllamaClient
 
 
 def test_parses_think_block_and_fenced_json(fake_ollama):

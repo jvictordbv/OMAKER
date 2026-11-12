@@ -5,14 +5,14 @@ import os
 import sys
 from pathlib import Path
 
-from core.labels import DEFAULT_CHECKPOINT
+from omaker.domain.labels import DEFAULT_CHECKPOINT
 
 
 def project_root() -> Path:
     """Pasta que contém OMAKER.py (num executável PyInstaller, a pasta de recursos)."""
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return Path(sys._MEIPASS)
-    return Path(__file__).resolve().parent.parent
+    return Path(__file__).resolve().parents[1]
 
 
 def resource_path(*parts: str) -> Path:

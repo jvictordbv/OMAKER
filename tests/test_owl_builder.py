@@ -1,8 +1,8 @@
 import os
 
-from core import owl_builder
-from core.hybrid_engine import HybridEngine
-from core.owl_builder import ReasonerStatus
+from omaker.ontology import builder as owl_builder
+from omaker.ontology.builder import ReasonerStatus
+from omaker.pipeline.engine import HybridEngine
 
 
 def _raise(exc):
@@ -50,7 +50,7 @@ def test_run_reasoner_inconsistent(tmp_path, monkeypatch):
 
 def _record_find_java(monkeypatch):
     """Replaces find_java (looked up at call time by HybridEngine) with a recorder returning None."""
-    from core import java_locator
+    from omaker.ontology import java as java_locator
 
     recebidos = []
 
@@ -99,7 +99,7 @@ def test_atualizar_ontologia_passes_protege_exe_to_find_java(tmp_path, monkeypat
 
 
 def test_atualizar_returns_ontology_result(tmp_path, monkeypatch, sample_extraction):
-    from core.hybrid_engine import OntologyResult
+    from omaker.pipeline.engine import OntologyResult
 
     tax, triples = sample_extraction
     monkeypatch.setattr(owl_builder, "run_reasoner", lambda *a, **k: ReasonerStatus.UNAVAILABLE)

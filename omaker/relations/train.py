@@ -1,6 +1,6 @@
 """End-to-end fine-tuning of the PURE relation extractor.
 
-Run from the project root:  python -m core.train
+Run from the project root:  python -m omaker.relations.train
 """
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from transformers import get_linear_schedule_with_warmup
 
-from core.labels import ID2REL, MODEL_NAME, REL2ID
-from core.paths import default_checkpoint_path
-from core.relation_extractor import RelationExtractorPURE, find_span
+from omaker.domain.labels import ID2REL, MODEL_NAME, REL2ID
+from omaker.paths import default_checkpoint_path
+from omaker.relations.model import RelationExtractorPURE, find_span
 
 DATA_PATH = Path(__file__).parent / "train_relations.json"
 

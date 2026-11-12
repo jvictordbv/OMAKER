@@ -19,7 +19,7 @@ class SynonymWorker(QThread):
 
     def run(self):
         try:
-            from core.synonym_detector import SynonymDetector
+            from omaker.nlp.synonyms import SynonymDetector
 
             self.progresso.emit("Loading embedding model (Sentence-BERT)...")
             detector = SynonymDetector()

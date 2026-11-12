@@ -2,10 +2,10 @@ import json
 
 import pytest
 
-from core import hybrid_engine as he
-from core.llm_client import OllamaClient
-from core.llm_ner import extract_entities_llm, merge_entities
-from core.ner import Entity
+from omaker.llm.client import OllamaClient
+from omaker.llm.entities import extract_entities_llm, merge_entities
+from omaker.nlp.ner import Entity
+from omaker.pipeline import engine as he
 
 TEXT = "Aspirin prevents stroke. Chemotherapy treats the tumor but causes nausea. Aspirin and fever were listed."
 
@@ -103,7 +103,7 @@ def test_merge_both_sources(fake_ollama, weak_ner, monkeypatch):
 
 
 def test_gemini_model_is_rejected_not_swapped(fake_ollama):
-    from core.llm_client import LLMError
+    from omaker.llm.client import LLMError
     with pytest.raises(LLMError) as e:
         he.HybridEngine._client("gemini-2.5-flash", 0.1, lambda m: None)
     assert "não é um modelo do Ollama" in str(e.value)
@@ -113,7 +113,7 @@ EMPTY_TAX = {"classes": {}, "instances": {}, "disjoint": []}
 
 
 def test_atualizar_forwards_model_and_temperature(monkeypatch, tmp_path):
-    from core import owl_builder
+    from omaker.ontology import builder as owl_builder
     seen = {}
     monkeypatch.setattr(he.HybridEngine, "extrair",
                         staticmethod(lambda texto, modelo, temp, log, **k: seen.update(m=modelo, t=temp) or (EMPTY_TAX, [])))

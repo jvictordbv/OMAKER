@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 from transformers import AutoModel, AutoTokenizer
 
-from core.labels import (
+from omaker.domain.labels import (
     ENTITY_TYPES,
     ID2REL,
     MODEL_NAME,
@@ -180,7 +180,7 @@ class RelationExtractorPURE(nn.Module):
         """Loads a checkpoint written by `save`. Raises if the file is missing or incompatible."""
         ckpt = torch.load(path, map_location=device or "cpu")
         if ckpt.get("rel2id") != REL2ID or tuple(ckpt.get("entity_types", ())) != tuple(ENTITY_TYPES):
-            raise ValueError("Checkpoint labels/markers differ from core/labels.py. Retrain the model.")
+            raise ValueError("Checkpoint labels/markers differ from omaker/domain/labels.py. Retrain the model.")
         model = cls(model_name=ckpt["model_name"], num_relations=len(REL2ID))
         model.load_state_dict(ckpt["state_dict"])
         model.to(device or ("cuda" if torch.cuda.is_available() else "cpu"))

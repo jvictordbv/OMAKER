@@ -1,10 +1,10 @@
 import re
 from urllib.parse import urljoin
 
-from core import owl_builder
-from core.hybrid_engine import HybridEngine
-from core.iri import ontology_iri
-from core.owl_builder import ReasonerStatus
+from omaker.ontology import builder as owl_builder
+from omaker.ontology.builder import ReasonerStatus
+from omaker.ontology.iri import ontology_iri
+from omaker.pipeline.engine import HybridEngine
 
 
 def test_empty_base_falls_back_to_default():

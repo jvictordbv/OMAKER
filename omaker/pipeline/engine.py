@@ -12,13 +12,20 @@ import os
 import re
 from dataclasses import dataclass
 
-from core.iri import DEFAULT_URI_BASE, normalize_base, ontology_iri
-from core.labels import BASE_CLASSES, DEFAULT_CONFIDENCE_THRESHOLD, NO_RELATION, REL2ID, RELATION_DOMAIN, ROOT_CLASS
-from core.llm_client import DEFAULT_MODEL, LLMError, OllamaClient
-from core.llm_ner import extract_entities_llm, merge_entities
-from core.owl_builder import ReasonerStatus
-from core.paths import default_checkpoint_path
-from core.text_utils import to_identifier
+from omaker.domain.labels import (
+    BASE_CLASSES,
+    DEFAULT_CONFIDENCE_THRESHOLD,
+    NO_RELATION,
+    REL2ID,
+    RELATION_DOMAIN,
+    ROOT_CLASS,
+)
+from omaker.domain.text import to_identifier
+from omaker.llm.client import DEFAULT_MODEL, LLMError, OllamaClient
+from omaker.llm.entities import extract_entities_llm, merge_entities
+from omaker.ontology.builder import ReasonerStatus
+from omaker.ontology.iri import DEFAULT_URI_BASE, normalize_base, ontology_iri
+from omaker.paths import default_checkpoint_path
 
 
 @dataclass(frozen=True)
@@ -194,7 +201,7 @@ class HybridEngine:
 
     @staticmethod
     def _relations_pure(pairs, log, checkpoint):
-        from core.relation_extractor import RelationExtractorPURE
+        from omaker.relations.model import RelationExtractorPURE
 
         log(f"> [PURE] Loading '{checkpoint}'...")
         model = RelationExtractorPURE.load(str(checkpoint))
@@ -218,8 +225,8 @@ class HybridEngine:
     @staticmethod
     def extrair(texto, modelo_llm, temp_llm, log, ner=None, client=None):
         """text -> (taxonomy, triples). Separate from OWL building so it can be tested/reused."""
-        from core.ner import BiomedicalNER
-        from core.pair_generator import generate_pairs
+        from omaker.nlp.ner import BiomedicalNER
+        from omaker.nlp.pairs import generate_pairs
 
         client = client or HybridEngine._client(modelo_llm, temp_llm, log)
 
@@ -277,8 +284,8 @@ class HybridEngine:
     @staticmethod
     def construir(taxonomy, triples, nome_arquivo, pasta_destino, uri_base, log_callback, protege_exe=""):
         """taxonomy + triples -> .owl file, plus what the reasoner said about it."""
-        from core import owl_builder
-        from core.java_locator import find_java
+        from omaker.ontology import builder as owl_builder
+        from omaker.ontology.java import find_java
 
         if normalize_base(uri_base)[1]:
             log_callback(f"> [IRI] URI base vazia ou inválida; usando {DEFAULT_URI_BASE}")
@@ -301,8 +308,8 @@ class HybridEngine:
     @staticmethod
     def atualizar_ontologia(caminho_owl, texto, api_key, log_callback, modelo_llm=DEFAULT_MODEL, temp_llm=0.1,
                             protege_exe=""):
-        from core import owl_builder
-        from core.java_locator import find_java
+        from omaker.ontology import builder as owl_builder
+        from omaker.ontology.java import find_java
 
         taxonomy, triples = HybridEngine.extrair(texto, modelo_llm, temp_llm, log_callback)
         world, onto = owl_builder.load_world_ontology(caminho_owl)

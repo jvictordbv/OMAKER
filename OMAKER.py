@@ -1,18 +1,7 @@
-# OMAKER.py
+# OMAKER.py: atalho para `python -m omaker` (usado pelo OMAKER.spec e por quem já roda `python OMAKER.py`).
 import sys
 
-from PySide6.QtWidgets import QApplication
-
-from ui.main_window import OntoApp
-from ui.splash import OperaGXSplash
+from omaker.__main__ import main
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-
-    janela_sistema = OntoApp()
-
-    splash = OperaGXSplash(janela_sistema)
-    splash.show()
-
-    sys.exit(app.exec())
+    sys.exit(main())

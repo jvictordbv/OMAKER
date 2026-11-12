@@ -4,8 +4,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from core.labels import NER_MODEL_NAME
-from core.text_utils import split_sentences
+from omaker.domain.labels import NER_MODEL_NAME
+from omaker.domain.text import split_sentences
 
 # Maps the NER model's labels (lower-cased) to OMAKER entity types.
 # Labels not listed here are ignored. Check them against your NER model's config.
