@@ -79,3 +79,12 @@ class OntoApp(QMainWindow):
         """)
 
     def mudar_pagina(self, index): self.area_conteudo.setCurrentIndex(index)
+
+    def closeEvent(self, event):  # noqa: N802  nome exigido pelo Qt
+        """Ao fechar durante uma execução: pede cancelamento e espera a thread terminar (até 30 s)."""
+        for pagina in (self.pagina_gerador, self.pagina_atualizador):
+            worker = pagina.worker
+            if worker is not None:
+                worker.cancel()
+                worker.wait(30000)
+        super().closeEvent(event)

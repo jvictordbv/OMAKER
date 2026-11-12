@@ -1,7 +1,6 @@
 """Página Atualizador: novas evidências mescladas numa ontologia existente."""
 
 from PySide6.QtWidgets import (
-    QApplication,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -15,9 +14,10 @@ from PySide6.QtWidgets import (
 
 from omaker.pipeline.engine import HybridEngine
 from omaker.ui.messages import completion_message
+from omaker.ui.pages.runner import PipelineRunnerMixin
 
 
-class UpdaterPage(QWidget):
+class UpdaterPage(PipelineRunnerMixin, QWidget):
     def __init__(self, settings):
         super().__init__()
         self.settings = settings
@@ -65,6 +65,11 @@ class UpdaterPage(QWidget):
         col_esquerda.addWidget(lbl_texto)
         col_esquerda.addWidget(self.texto_entrada_atualizador)
         col_esquerda.addWidget(self.btn_atualizar)
+
+        self.btn_cancelar = QPushButton("Cancelar")
+        self.btn_cancelar.setEnabled(False)
+        self.btn_cancelar.clicked.connect(self.cancelar)
+        col_esquerda.addWidget(self.btn_cancelar)
         workspace.addLayout(col_esquerda, stretch=4)
 
         col_direita = QVBoxLayout()
@@ -100,31 +105,32 @@ class UpdaterPage(QWidget):
             QMessageBox.warning(self, "Aviso", "Preencha o texto das novas evidências.")
             return
 
-        # Prepara a interface para o processamento
-        self.btn_atualizar.setEnabled(False)
+        if self.em_execucao():
+            return
+
         self.log_atualizador.clear()
-        QApplication.processEvents()
+        self._rodar(
+            HybridEngine.atualizar_ontologia,
+            caminho_owl=self.caminho_owl_atual,
+            texto=texto,
+            api_key=api_key,
+            modelo_llm=self.settings.modelo(),
+            temp_llm=self.settings.temperatura(),
+            protege_exe=self.settings.caminho_protege(),
+        )
 
-        try:
-            # --- MANTÉM O PROCESSAMENTO (O Core precisa rodar!) ---
-            resultado = HybridEngine.atualizar_ontologia(
-                caminho_owl=self.caminho_owl_atual,
-                texto=texto,
-                api_key=api_key,
-                modelo_llm=self.settings.modelo(),
-                temp_llm=self.settings.temperatura(),
-                protege_exe=self.settings.caminho_protege(),
-                log_callback=lambda msg: [self.log_atualizador.append(msg), QApplication.processEvents()]
-            )
+    # ---- execução em segundo plano (PipelineRunnerMixin)
+    MSG_CANCELADO = ("> [CANCELADO] Atualização interrompida pelo usuário. Se a gravação já tinha ocorrido, "
+                     "a ontologia foi alterada; confira o arquivo.")
 
-            nivel, titulo, mensagem = completion_message(resultado)
-            aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
-            aviso(self, titulo, mensagem)
-            self.log_atualizador.append(f"\n> [INFO] Atualização gravada (raciocinador: {resultado.reasoner.value}).")
+    def _log_widget(self):
+        return self.log_atualizador
 
-        except Exception as e:  # noqa: BLE001  slot da GUI: mostra o erro ao usuário em vez de derrubar o app
-            self.log_atualizador.append(f"\n> [CRITICAL ERROR] {str(e)}")
-            QMessageBox.critical(self, "Erro", f"Ocorreu um erro crítico:\n{str(e)}")
+    def _run_button(self):
+        return self.btn_atualizar
 
-        finally:
-            self.btn_atualizar.setEnabled(True)
+    def _ao_concluir(self, resultado):
+        nivel, titulo, mensagem = completion_message(resultado)
+        aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
+        aviso(self, titulo, mensagem)
+        self.log_atualizador.append(f"\n> [INFO] Atualização gravada (raciocinador: {resultado.reasoner.value}).")

@@ -3,7 +3,6 @@ import os
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QApplication,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -17,9 +16,10 @@ from PySide6.QtWidgets import (
 from omaker.ontology.protege import abrir_no_protege
 from omaker.pipeline.engine import HybridEngine
 from omaker.ui.messages import completion_message
+from omaker.ui.pages.runner import PipelineRunnerMixin
 
 
-class GeneratorPage(QWidget):
+class GeneratorPage(PipelineRunnerMixin, QWidget):
     def __init__(self, settings):
         super().__init__()
         self.settings = settings
@@ -62,6 +62,11 @@ class GeneratorPage(QWidget):
         col_esquerda.addWidget(self.texto_entrada)
         col_esquerda.addWidget(self.btn_gerar)
 
+        self.btn_cancelar = QPushButton("Cancelar")
+        self.btn_cancelar.setEnabled(False)
+        self.btn_cancelar.clicked.connect(self.cancelar)
+        col_esquerda.addWidget(self.btn_cancelar)
+
         self.btn_abrir_protege = QPushButton("Abrir no Protégé")
         self.btn_abrir_protege.setEnabled(False)
         self.btn_abrir_protege.clicked.connect(self.abrir_protege_clicado)
@@ -103,35 +108,38 @@ class GeneratorPage(QWidget):
             QMessageBox.warning(self, "Erro", "Campos obrigatórios ausentes: Texto ou Nome do Arquivo.")
             return
 
-        self.btn_gerar.setEnabled(False)
+        if self.em_execucao():
+            return
+
         self.btn_abrir_protege.setEnabled(False)
         self.caminho_owl_gerado = ""
         self.texto_log.clear()
         self.texto_log.append("> [INIT] Inicializando ciclo de compilação semântica...")
-        QApplication.processEvents()
+        self._rodar(
+            HybridEngine.gerar_ontologia,
+            texto=texto, nome_arquivo=nome_arquivo, api_key=api_key,
+            modelo_llm=modelo_llm, temp_llm=temp_llm, pasta_destino=pasta_destino,
+            uri_base=uri_base,
+            protege_exe=self.settings.caminho_protege(),
+        )
 
-        try:
-            # Encaminha o processamento pesado para o Core separado
-            resultado = HybridEngine.gerar_ontologia(
-                texto=texto, nome_arquivo=nome_arquivo, api_key=api_key,
-                modelo_llm=modelo_llm, temp_llm=temp_llm, pasta_destino=pasta_destino,
-                uri_base=uri_base,
-                protege_exe=self.settings.caminho_protege(),
-                log_callback=lambda msg: [self.texto_log.append(msg), QApplication.processEvents()]
-            )
+    # ---- execução em segundo plano (PipelineRunnerMixin)
+    MSG_CANCELADO = ("> [CANCELADO] Geração interrompida pelo usuário. As etapas já concluídas não são desfeitas; "
+                     "confira a pasta de destino antes de usar algum arquivo.")
 
-            caminho_saida = str(getattr(resultado, "path", "") or "")
-            if caminho_saida and os.path.isfile(caminho_saida):
-                self.caminho_owl_gerado = caminho_saida
-                self.btn_abrir_protege.setEnabled(True)
+    def _log_widget(self):
+        return self.texto_log
 
-            nivel, titulo, mensagem = completion_message(resultado)
-            aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
-            aviso(self, titulo, mensagem)
-            self.texto_log.append(f"\n> [INFO] Processo finalizado (raciocinador: {resultado.reasoner.value}).")
+    def _run_button(self):
+        return self.btn_gerar
 
-        except Exception as e:  # noqa: BLE001  slot da GUI: mostra o erro ao usuário em vez de derrubar o app
-            self.texto_log.append(f"\n> [CRITICAL ERROR] {str(e)}")
-            QMessageBox.critical(self, "Erro", str(e))
-        finally:
-            self.btn_gerar.setEnabled(True)
+    def _ao_concluir(self, resultado):
+        caminho_saida = str(getattr(resultado, "path", "") or "")
+        if caminho_saida and os.path.isfile(caminho_saida):
+            self.caminho_owl_gerado = caminho_saida
+            self.btn_abrir_protege.setEnabled(True)
+
+        nivel, titulo, mensagem = completion_message(resultado)
+        aviso = QMessageBox.information if nivel == "info" else QMessageBox.warning
+        aviso(self, titulo, mensagem)
+        self.texto_log.append(f"\n> [INFO] Processo finalizado (raciocinador: {resultado.reasoner.value}).")
