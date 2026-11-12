@@ -6,6 +6,10 @@ authors:
   - family-names: Barbosa
     given-names: João Victor Ferreira
     affiliation: Universidade Federal de Pernambuco (UFPE)
+  - family-names: Santos
+    given-names: Gustavo Souto Silva de Barros
+    affiliation: Universidade de Pernambuco (UPE)
+    orcid: "https://orcid.org/0009-0004-9329-4956"
 repository-code: "https://github.com/jvictordbv/OMAKER"
 version: 0.2.0
 keywords:

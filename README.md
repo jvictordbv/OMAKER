@@ -200,7 +200,18 @@ Se usar o OMAKER num trabalho acadêmico, cite:
 }
 ```
 
-O arquivo [`CITATION.cff`](CITATION.cff) traz os mesmos dados no formato lido pelo GitHub ("Cite this repository").
+Para citar o software em si:
+
+```bibtex
+@software{barbosa2026omakersoftware,
+  author = {João Victor Ferreira Barbosa and Gustavo Souto Silva de Barros Santos},
+  title  = {OMAKER: Ontology Mapping \& Knowledge Engineering Resource},
+  url    = {https://github.com/jvictordbv/OMAKER},
+  year   = {2026}
+}
+```
+
+O arquivo [`CITATION.cff`](CITATION.cff) traz as duas citações no formato lido pelo GitHub ("Cite this repository").
 
 ## Licença
 
