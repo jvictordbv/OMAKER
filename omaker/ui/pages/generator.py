@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 from omaker.ontology.protege import abrir_no_protege
 from omaker.pipeline.engine import HybridEngine
 from omaker.ui.messages import completion_message
-from omaker.ui.pages.runner import PipelineRunnerMixin
+from omaker.ui.pages.runner import AVISO_IDIOMA, PipelineRunnerMixin
 
 
 class GeneratorPage(PipelineRunnerMixin, QWidget):
@@ -48,7 +48,10 @@ class GeneratorPage(PipelineRunnerMixin, QWidget):
 
         lbl_texto = QLabel("Texto Médico de Entrada (Base de Conhecimento):")
         self.texto_entrada = QTextEdit()
-        self.texto_entrada.setPlaceholderText("Cole aqui artigos científicos ou diretrizes clínicas para extração semântica...")
+        self.texto_entrada.setPlaceholderText("Cole aqui um texto em inglês: artigos científicos ou diretrizes clínicas...")
+        lbl_idioma = QLabel(AVISO_IDIOMA)
+        lbl_idioma.setWordWrap(True)
+        lbl_idioma.setStyleSheet("color: #b45309; font-size: 12px;")
 
 
         self.btn_gerar = QPushButton("⚡  Processar Inteligência Semântica e Criar OWL")
@@ -59,6 +62,7 @@ class GeneratorPage(PipelineRunnerMixin, QWidget):
         col_esquerda.addWidget(lbl_nome)
         col_esquerda.addWidget(self.input_nome_arquivo)
         col_esquerda.addWidget(lbl_texto)
+        col_esquerda.addWidget(lbl_idioma)
         col_esquerda.addWidget(self.texto_entrada)
         col_esquerda.addWidget(self.btn_gerar)
 
@@ -107,7 +111,7 @@ class GeneratorPage(PipelineRunnerMixin, QWidget):
             QMessageBox.warning(self, "Erro", "Campos obrigatórios ausentes: Texto ou Nome do Arquivo.")
             return
 
-        if self.em_execucao():
+        if self.em_execucao() or not self._confirmar_idioma(texto):
             return
 
         self.btn_abrir_protege.setEnabled(False)

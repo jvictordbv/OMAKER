@@ -200,3 +200,62 @@ def test_close_during_synonyms_waits_for_worker(win, qtbot, monkeypatch, boxes):
     assert time.monotonic() - t0 < 0.5
     assert win.isVisible()
     qtbot.waitUntil(lambda: worker.isFinished() and not win.isVisible(), timeout=5000)
+
+
+PT_TEXT = ("A aspirina reduz o risco de infarto do miocárdio em pacientes com doença cardiovascular, "
+           "mas pode causar sangramento gástrico em pacientes que não usam protetor.")
+
+
+@pytest.fixture
+def question(monkeypatch):
+    """Registra as perguntas e responde com o valor de question.answer."""
+    from PySide6.QtWidgets import QMessageBox
+
+    class Q:
+        asked = []
+        answer = QMessageBox.StandardButton.No
+
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: Q.asked.append(a[1:3]) or Q.answer)
+    return Q
+
+
+def test_pages_say_the_text_must_be_in_english(win):
+    from PySide6.QtWidgets import QLabel
+    for page in (win.pagina_gerador, win.pagina_atualizador):
+        assert any("inglês" in lbl.text() for lbl in page.findChildren(QLabel))
+
+
+def test_non_english_text_asks_before_generating(win, qtbot, monkeypatch, tmp_path, boxes, question):
+    from PySide6.QtWidgets import QMessageBox
+    calls = []
+    monkeypatch.setattr(HybridEngine, "gerar_ontologia", lambda **kw: calls.append(kw) or _result(tmp_path))
+    page = win.pagina_gerador
+    _fill_generator(page)
+    page.texto_entrada.setPlainText(PT_TEXT)
+    page.btn_gerar.click()
+    assert len(question.asked) == 1 and "inglês" in question.asked[0][1]
+    assert calls == [] and not page.em_execucao()
+
+    question.answer = QMessageBox.StandardButton.Yes
+    page.btn_gerar.click()
+    qtbot.waitUntil(lambda: not page.em_execucao(), timeout=5000)
+    assert len(calls) == 1
+
+
+def test_english_text_is_not_questioned(win, qtbot, monkeypatch, tmp_path, boxes, question):
+    monkeypatch.setattr(HybridEngine, "gerar_ontologia", lambda **kw: _result(tmp_path))
+    page = win.pagina_gerador
+    _fill_generator(page)
+    page.btn_gerar.click()
+    qtbot.waitUntil(lambda: not page.em_execucao(), timeout=5000)
+    assert question.asked == []
+
+
+def test_non_english_text_asks_before_updating(win, monkeypatch, tmp_path, boxes, question):
+    calls = []
+    monkeypatch.setattr(HybridEngine, "atualizar_ontologia", lambda **kw: calls.append(kw) or _result(tmp_path))
+    page = win.pagina_atualizador
+    page.caminho_owl_atual = str(tmp_path / "base.owl")
+    page.texto_entrada_atualizador.setPlainText(PT_TEXT)
+    page.btn_atualizar.click()
+    assert len(question.asked) == 1 and calls == []
