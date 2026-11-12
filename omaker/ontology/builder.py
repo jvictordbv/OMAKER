@@ -17,7 +17,14 @@ from owlready2.base import OwlReadyInconsistentOntologyError
 
 from omaker.domain.labels import BASE_CLASSES, RELATION_DOMAIN, ROOT_CLASS
 from omaker.domain.text import to_identifier
-from omaker.ontology.alignment import OMAKER_NAMESPACE, aligned_class, build_label_index, is_external, norm_term
+from omaker.ontology.alignment import (
+    OMAKER_NAMESPACE,
+    aligned_class,
+    build_label_index,
+    camel_to_words,
+    is_external,
+    norm_term,
+)
 
 
 class ReasonerStatus(enum.Enum):
@@ -59,6 +66,10 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
             with ns:
                 return types.new_class(name, (parent,))
 
+        def base_of(cls):
+            ancestors = cls.ancestors()
+            return next((classes[b] for b in BASE_CLASSES.values() if classes[b] in ancestors), None)
+
         root = get_or_make_class(ROOT_CLASS, Thing)
         classes = {ROOT_CLASS: root}
         for base in BASE_CLASSES.values():
@@ -78,7 +89,17 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
                 for n in ready:
                     pending[n] = ROOT_CLASS
             for n in ready:
-                classes[n] = get_or_make_class(n, classes[pending.pop(n)])
+                parent = classes[pending.pop(n)]
+                match = None
+                if external:  # subclasse proposta pelo LLM que a ontologia já tem ("Pain" é o "pain" da SYMP)
+                    base = base_of(parent)
+                    match = aligned_class(index, camel_to_words(n), base) if base is not None else None
+                if match is not None:
+                    classes[n] = match
+                    reused.add(match)
+                    log(f"  [ALIGN] {n} = {match.iri}")
+                else:
+                    classes[n] = get_or_make_class(n, parent)
 
         props = {}
         for rel, domain in RELATION_DOMAIN.items():
@@ -99,7 +120,7 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
             if ind is None:
                 target = classes[cls_name]
                 if external:  # a classe que a ontologia já tem para essa entidade, se houver, é mais específica
-                    base = next((classes[b] for b in BASE_CLASSES.values() if classes[b] in target.ancestors()), None)
+                    base = base_of(target)
                     match = aligned_class(index, name, base) if base is not None else None
                     if match is not None:
                         target = match

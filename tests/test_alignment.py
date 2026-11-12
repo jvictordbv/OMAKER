@@ -107,3 +107,25 @@ def test_new_ontology_unchanged():
     populate(onto, _tax({"nausea": "Symptom", "aspirin": "Drug"}), [], log=logs.append)
     assert not any("[ALIGN]" in line for line in logs)
     assert _ind(onto, "nausea").is_a[0].name == "Symptom"
+
+
+PAIN, MAMMITIS = OBO + "SYMP_0000099", OBO + "SYMP_0020053"
+
+
+def test_taxonomy_subclass_reuses_existing_class(symp):
+    """O LLM propõe Pain sob Symptom: deve ser o "pain" da SYMP, não uma cópia omaker#Pain."""
+    world, onto = symp
+    tax = {"classes": {"Pain": "Symptom", "BackPain": "Pain"}, "instances": {"aspirin": "Drug"}, "disjoint": [["Pain", "Fever"]]}
+    populate(onto, tax, [], log=lambda _: None)
+    assert onto.search_one(iri=OMAKER_NAMESPACE + "Pain") is None
+    assert onto.search_one(iri=OMAKER_NAMESPACE + "BackPain") is None      # "back pain" é sinônimo de backache
+    for group in onto.disjoint_classes():
+        assert world[PAIN] not in group.entities
+
+
+def test_obsolete_classes_do_not_win_synonym_collisions(symp):
+    world, onto = symp
+    index = build_label_index(onto)
+    assert index["mammitis"].iri == MAMMITIS
+    populate(onto, _tax({"mammitis": "Symptom"}), [], log=lambda _: None)
+    assert world[MAMMITIS] in _ind(onto, "mammitis").is_a

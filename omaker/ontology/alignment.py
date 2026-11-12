@@ -19,10 +19,20 @@ def norm_term(text) -> str:
     return re.sub(r"[\s_]+", " ", str(text)).strip().casefold()
 
 
+def camel_to_words(name: str) -> str:
+    """Nome de classe CamelCase em palavras ("BackPain" vira "Back Pain"), para casar com rótulos."""
+    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", name)
+
+
+def _deprecated(cls) -> bool:
+    return any(str(v).strip().lower() == "true" for v in getattr(cls, "deprecated", []))
+
+
 def build_label_index(onto) -> dict:
     """Termo normalizado para classe: rótulos primeiro, depois sinônimos exatos, depois nomes.
-    Classes criadas pelo OMAKER (OMAKER_NAMESPACE) ficam de fora."""
-    classes = [c for c in onto.classes() if not c.iri.startswith(OMAKER_NAMESPACE)]
+    Ficam de fora as classes criadas pelo OMAKER (OMAKER_NAMESPACE) e as obsoletas (owl:deprecated),
+    que na SYMP compartilham sinônimos com as classes em uso ("mammitis", "apoplexy")."""
+    classes = [c for c in onto.classes() if not c.iri.startswith(OMAKER_NAMESPACE) and not _deprecated(c)]
     synonym = onto.world[EXACT_SYNONYM]
     index: dict = {}
     for keys_of in (lambda c: c.label,
