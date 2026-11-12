@@ -79,3 +79,31 @@ def test_unrelated_external_ontology_gets_omaker_bases(tmp_path):
 def test_new_ontology_is_not_external():
     _world, onto = new_world_ontology("http://www.mestrado.edu/ontologias/nova.owl")
     assert not is_external(onto)
+
+
+def test_instance_typed_by_label(symp):
+    world, onto = symp
+    populate(onto, _tax({"nausea": "Symptom"}), [], log=lambda _: None)
+    assert world[NAUSEA] in _ind(onto, "nausea").is_a
+
+
+def test_instance_typed_by_exact_synonym(symp):
+    world, onto = symp
+    populate(onto, _tax({"back pain": "Symptom"}), [], log=lambda _: None)
+    assert world[BACKACHE] in _ind(onto, "back pain").is_a
+
+
+def test_match_outside_entity_branch_is_ignored(symp):
+    world, onto = symp
+    populate(onto, _tax({"nausea": "Drug"}), [], log=lambda _: None)
+    cls = _ind(onto, "nausea").is_a[0]
+    assert cls.iri == OMAKER_NAMESPACE + "Drug"
+    assert world[NAUSEA] not in _ind(onto, "nausea").is_a
+
+
+def test_new_ontology_unchanged():
+    _world, onto = new_world_ontology("http://www.mestrado.edu/ontologias/nova.owl")
+    logs = []
+    populate(onto, _tax({"nausea": "Symptom", "aspirin": "Drug"}), [], log=logs.append)
+    assert not any("[ALIGN]" in line for line in logs)
+    assert _ind(onto, "nausea").is_a[0].name == "Symptom"

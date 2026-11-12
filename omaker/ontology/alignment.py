@@ -37,3 +37,12 @@ def build_label_index(onto) -> dict:
 def is_external(onto) -> bool:
     """Tem classes e não foi gerada pelo OMAKER (não tem a classe raiz no próprio namespace)."""
     return onto[ROOT_CLASS] is None and next(iter(onto.classes()), None) is not None
+
+
+def aligned_class(index: dict, entity_text: str, base_cls):
+    """Classe existente para a entidade (rótulo, sinônimo exato ou nome), desde que esteja no ramo do tipo
+    dela (base_cls ou uma descendente). Fora do ramo, None: um DRUG não vira instância de um sintoma."""
+    cls = index.get(norm_term(entity_text))
+    if cls is None:
+        return None
+    return cls if (cls is base_cls or base_cls in cls.ancestors()) else None

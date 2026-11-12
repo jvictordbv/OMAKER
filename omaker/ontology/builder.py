@@ -17,7 +17,7 @@ from owlready2.base import OwlReadyInconsistentOntologyError
 
 from omaker.domain.labels import BASE_CLASSES, RELATION_DOMAIN, ROOT_CLASS
 from omaker.domain.text import to_identifier
-from omaker.ontology.alignment import OMAKER_NAMESPACE, build_label_index, is_external, norm_term
+from omaker.ontology.alignment import OMAKER_NAMESPACE, aligned_class, build_label_index, is_external, norm_term
 
 
 class ReasonerStatus(enum.Enum):
@@ -97,7 +97,14 @@ def populate(onto, taxonomy: dict, triples: list, log=print):
                 ident += "_ind"
             ind = lookup(ident)
             if ind is None:
-                ind = classes[cls_name](ident, namespace=ns)
+                target = classes[cls_name]
+                if external:  # a classe que a ontologia já tem para essa entidade, se houver, é mais específica
+                    base = next((classes[b] for b in BASE_CLASSES.values() if classes[b] in target.ancestors()), None)
+                    match = aligned_class(index, name, base) if base is not None else None
+                    if match is not None:
+                        target = match
+                        log(f"  [ALIGN] {name} -> {match.iri}")
+                ind = target(ident, namespace=ns)
                 ind.label.append(name)
             individuals[name.lower()] = ind
 
