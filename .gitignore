@@ -14,3 +14,6 @@ omaker_ontologia_enriquecida.owl
 omaker_teste_com_ml.owl
 teste_real.owl
 try_text_result.owl
+
+# Saídas de treino e avaliação (python -m omaker.relations.train, omaker.evaluation.e2e)
+runs/
