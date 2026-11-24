@@ -39,7 +39,8 @@ def export(run, out) -> dict:
     if calibration.is_file():
         files.append(Path(shutil.copyfile(calibration, out / f"{NAME}.calibration.json")))
     sums = {f.name: _sha256(f) for f in files}
-    (out / "SHA256SUMS").write_text("".join(f"{h}  {n}\n" for n, h in sums.items()), encoding="utf-8")
+    (out / "SHA256SUMS").write_text("".join(f"{h}  {n}\n" for n, h in sums.items()), encoding="utf-8",
+                                    newline="\n")   # formato do sha256sum, também no Windows
     return {"checkpoint": target, "sha256": sums[target.name], "files": sums}
 
 

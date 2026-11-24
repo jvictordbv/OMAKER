@@ -124,6 +124,7 @@ def test_export_strips_training_texts(tmp_path):
     assert (tmp_path / "dist" / "omaker_pure.calibration.json").is_file()
     assert out["sha256"] == hashlib.sha256(out["checkpoint"].read_bytes()).hexdigest()
     assert out["sha256"] in (tmp_path / "dist" / "SHA256SUMS").read_text(encoding="utf-8")
+    assert b"\r" not in (tmp_path / "dist" / "SHA256SUMS").read_bytes()   # sha256sum -c lê no Linux
 
 
 def test_published_hashes_are_filled_in():
