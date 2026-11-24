@@ -193,3 +193,18 @@ def test_pure_uses_the_calibrated_threshold(fake_ollama, stub_ner, monkeypatch, 
 
     assert run(None) == []                                   # sem calibração: 0,6 < 0,70
     assert run(0.5) == [("Aspirin", "prevents", "stroke")]   # calibrado: 0,6 >= 0,5
+
+
+def test_missing_checkpoint_is_downloaded_before_falling_back_to_the_llm(fake_ollama, stub_ner, monkeypatch,
+                                                                         tmp_path):
+    from omaker.relations import download
+    monkeypatch.setenv("OMAKER_ENTITIES", "ner")
+    monkeypatch.setattr(he, "default_checkpoint_path", lambda: tmp_path / "omaker_pure.pt")
+    asked = []
+    monkeypatch.setattr(download, "ensure_pure_checkpoint", lambda dest, log: asked.append(dest) or False)
+    fake_ollama.script[:] = [json.dumps({"results": [{"id": 0, "relation": "prevents"}]})]
+    ner = stub_ner([ent("Aspirin", "DRUG"), ent("stroke", "DISEASE")])
+    _tax, triples = he.HybridEngine.extrair(TEXT, "qwen3:8b", 0.1, lambda _m: None, ner=ner, with_taxonomy=False,
+                                            client=OllamaClient("qwen3:8b", fake_ollama.host))
+    assert asked == [tmp_path / "omaker_pure.pt"]                                          # tentou baixar
+    assert [(t[0], t[2], t[3]) for t in triples] == [("Aspirin", "prevents", "stroke")]   # e caiu no LLM

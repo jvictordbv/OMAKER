@@ -59,7 +59,7 @@ Construir ontologias formais (OWL, Lógica de Descrição) a partir de texto liv
 - Java 11 ou mais novo, para o HermiT. Se não houver Java no `PATH`, o OMAKER procura em `OMAKER_JAVA`, `JAVA_HOME`, Program Files e no JRE que vem com o Protégé (caminho informado nas Configurações).
 - [Protégé](https://protege.stanford.edu/), opcional, para abrir as ontologias geradas.
 
-Na primeira execução, os modelos do Hugging Face são baixados: SpanBERT (cerca de 410 MB), NER (cerca de 250 MB) e Sentence-BERT.
+Na primeira execução, os modelos do Hugging Face são baixados: SpanBERT (cerca de 410 MB), NER (cerca de 250 MB) e Sentence-BERT. O classificador de relações treinado com o BioRED (cerca de 440 MB) é baixado da [Release `pure-biored-v1`](https://github.com/jvictordbv/OMAKER/releases/tag/pure-biored-v1) na primeira vez que o pipeline precisa dele; o download continua de onde parou se cair, e o arquivo é conferido pelo sha256. Para baixar antes: `uv run python -m omaker.relations.download`. Sem o modelo (por exemplo, sem internet), as relações são classificadas pelo LLM.
 
 ## Instalação
 
@@ -92,7 +92,8 @@ Variáveis de ambiente opcionais, lidas na hora do uso:
 |---|---|---|
 | `OLLAMA_HOST` | `http://localhost:11434` | Endereço do Ollama |
 | `OMAKER_ENTITIES` | `both` | De onde vêm as entidades: `ner`, `llm` ou `both` |
-| `OMAKER_CHECKPOINT` | `omaker_pure.pt` na raiz | Checkpoint do classificador PURE |
+| `OMAKER_CHECKPOINT` | `omaker_pure.pt` na raiz (no `.exe`, `%LOCALAPPDATA%\OMAKER\models`) | Checkpoint do classificador PURE |
+| `OMAKER_NO_DOWNLOAD` | (desligado) | `1` impede o download automático do checkpoint |
 | `OMAKER_LLM_SEED` | (nenhuma) | Semente enviada ao Ollama |
 | `OMAKER_JAVA` | (procura automática) | `java.exe` usado pelo HermiT |
 
@@ -157,6 +158,24 @@ uv run python -m omaker.evaluation.e2e --gold-biored --model qwen3:8b-q4_K_M [--
 Nele, cada nome previsto é ligado aos conceitos anotados no resumo, e cada par conta um acerto só. Previsões fora do que o BioRED anota (pares doença e doença, relações de rótulo incerto como `Association`) são ignoradas; entidades que o BioRED não anotou contam como erro. O protocolo completo está em `omaker/evaluation/biored_gold.py`.
 
 O gabarito fica em `omaker/evaluation/gold/samples.json`. O LLM roda com temperatura 0 e semente fixa, e o relatório aponta frases do gabarito que estejam nos dados de treino do PURE.
+
+### Calibração e publicação do modelo
+
+A confiança do PURE é calibrada na validação (temperature scaling) e o limite de confiança é escolhido também na validação:
+
+```bash
+uv run python -m omaker.relations.calibration --run runs/<pasta-do-treino>
+```
+
+O resultado fica em `model.calibration.json`, ao lado do checkpoint, e é lido sozinho pelo pipeline.
+
+Para publicar um checkpoint numa Release do GitHub:
+
+```bash
+uv run python -m omaker.relations.release --run runs/<pasta-do-treino> --out dist/modelo
+```
+
+O arquivo publicado não leva as frases de treino (texto de resumos do PubMed), só os hashes delas, que bastam para a verificação de contaminação. Depois de publicar, atualize os sha256 em `omaker/relations/download.py`.
 
 > O dataset de treino atual (`omaker/relations/train_relations.json`, 31 frases) serve para verificar o pipeline, não para tirar conclusões. A escolha do dataset de avaliação está em aberto.
 

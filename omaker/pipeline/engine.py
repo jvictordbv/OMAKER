@@ -116,6 +116,10 @@ class HybridEngine:
         triples = []
         if pairs:
             checkpoint = default_checkpoint_path()
+            if not checkpoint.exists():
+                from omaker.relations import download
+
+                download.ensure_pure_checkpoint(checkpoint, log)
             if checkpoint.exists():
                 preds, threshold = HybridEngine._relations_pure(pairs, log, checkpoint)
             else:

@@ -39,6 +39,7 @@ from omaker.relations.data import (
     save_splits,
     sha256_of,
     split_examples,
+    text_fingerprint,
 )
 from omaker.relations.model import find_span
 
@@ -307,7 +308,8 @@ def _train(run: Path, config: TrainConfig, splits: Splits, model_factory, device
         print(f"Epoch {epoch:02d}/{config.epochs} | loss {history[-1]['train_loss']:.4f} | dev micro-F1 {dev_f1:.3f}")
         if dev_f1 > best_f1:  # escolha pela VALIDAÇÃO; o teste não participa
             best_f1, best_epoch, best_dev = dev_f1, epoch, (golds, preds)
-            model.save(str(run / "model.pt"), extra={"train_texts": sorted({e.text for e in splits.train})})
+            model.save(str(run / "model.pt"),
+                       extra={"train_text_hashes": sorted({text_fingerprint(e.text) for e in splits.train})})
         resume_point(epoch + 1, 0, 0.0)
 
     # Teste: uma única vez, com o checkpoint da melhor época.
