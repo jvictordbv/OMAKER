@@ -24,3 +24,9 @@ def test_version_matches_pyproject():
 
 def test_spec_is_valid_python():
     ast.parse((ROOT / "OMAKER.spec").read_text(encoding="utf-8"))
+
+
+def test_license_ships_with_the_executable():
+    spec = (ROOT / "OMAKER.spec").read_text(encoding="utf-8")
+    assert "('LICENSE', '.')" in spec and (ROOT / "LICENSE").is_file()
+    assert 'license = "AGPL-3.0-only"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
