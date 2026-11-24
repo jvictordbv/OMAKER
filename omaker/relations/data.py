@@ -120,3 +120,10 @@ def load_splits(directory) -> Splits:
     parts = {p: load_examples(directory / f"{p}.json") for p in PARTS}
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
     return Splits(parts["train"], parts["dev"], parts["test"], manifest)
+
+
+def text_fingerprint(text: str) -> str:
+    """sha256 da frase normalizada: identifica uma frase de treino sem guardar o texto dela."""
+    from omaker.ontology.alignment import norm_term
+
+    return hashlib.sha256(norm_term(text).encode("utf-8")).hexdigest()

@@ -1,6 +1,7 @@
 """Caminhos independentes do diretório corrente."""
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -24,5 +25,16 @@ def package_resource(name: str) -> Path:
     return Path(__file__).resolve().parent / "resources" / name
 
 
+def user_data_dir() -> Path:
+    """Pasta gravável do usuário para os modelos baixados (%LOCALAPPDATA%\\OMAKER no Windows)."""
+    base = os.environ.get("LOCALAPPDATA") or str(Path.home() / ".local" / "share")
+    return Path(base) / "OMAKER"
+
+
 def default_checkpoint_path() -> Path:
-    return checkpoint() or project_root() / DEFAULT_CHECKPOINT
+    """OMAKER_CHECKPOINT; no .exe, a pasta do usuário (a do programa é temporária); senão, a raiz do projeto."""
+    if checkpoint():
+        return checkpoint()
+    if getattr(sys, "frozen", False):
+        return user_data_dir() / "models" / DEFAULT_CHECKPOINT
+    return project_root() / DEFAULT_CHECKPOINT

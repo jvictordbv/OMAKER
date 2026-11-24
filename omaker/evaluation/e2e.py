@@ -139,15 +139,21 @@ def contamination(docs) -> list[dict] | None:
         ckpt = torch.load(default_checkpoint_path(), map_location="cpu", weights_only=True)
     except Exception:  # noqa: BLE001  arquivo que não é um checkpoint legível: contaminação não verificável
         return None
-    texts = ckpt.get("train_texts") if isinstance(ckpt, dict) else None
-    if texts is None:
+    from omaker.relations.data import text_fingerprint
+
+    if not isinstance(ckpt, dict):
         return None
-    seen = {norm_term(t) for t in texts}
+    if ckpt.get("train_text_hashes") is not None:   # checkpoint publicado: só os hashes das frases
+        seen = set(ckpt["train_text_hashes"])
+    elif ckpt.get("train_texts") is not None:        # checkpoints antigos guardavam o texto
+        seen = {text_fingerprint(t) for t in ckpt["train_texts"]}
+    else:
+        return None
     hits = []
     for doc in docs:
         for start, end in split_sentences(doc.text):
             sentence = doc.text[start:end].strip()
-            if norm_term(sentence) in seen:
+            if text_fingerprint(sentence) in seen:
                 hits.append({"doc": doc.id, "sentence": sentence})
     return hits
 

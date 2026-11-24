@@ -19,3 +19,12 @@ def test_project_root_holds_entrypoint_and_resource_path():
 
 def test_package_resource_symp_owl():
     assert paths.package_resource("symp.owl").is_file()
+
+
+def test_frozen_app_keeps_the_checkpoint_in_the_user_folder(tmp_path, monkeypatch):
+    """No .exe, a pasta do programa é temporária ou protegida: o modelo baixado vai para a pasta do usuário."""
+    import sys
+    monkeypatch.delenv("OMAKER_CHECKPOINT", raising=False)
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    assert paths.default_checkpoint_path() == tmp_path / "OMAKER" / "models" / "omaker_pure.pt"

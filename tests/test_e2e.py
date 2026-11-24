@@ -271,3 +271,16 @@ def test_llm_error_counts_as_no_prediction_and_is_recorded(tmp_path, capsys):
     assert r["strict"]["tp"] == 1 and r["strict"]["fn"] == 3   # 2 pares no gabarito de cada documento
     assert first["doc"] not in saved   # não vai para o parcial: a retomada tenta de novo
     assert "output limit" in capsys.readouterr().err
+
+
+def test_contamination_with_hashed_training_texts(docs, monkeypatch, tmp_path):
+    """O checkpoint publicado guarda só os hashes das frases de treino, e a verificação continua."""
+    import torch
+
+    from omaker.relations.data import text_fingerprint
+    salbutamol = next(s for s in docs[1].text.split(". ") if "Salbutamol" in s)
+    ckpt = tmp_path / "publicado.pt"
+    torch.save({"state_dict": {}, "train_text_hashes": [text_fingerprint(salbutamol.rstrip(".") + ".")]}, ckpt)
+    monkeypatch.setenv("OMAKER_CHECKPOINT", str(ckpt))
+    r = evaluate_system("pure", docs, extract=lambda t, m: [])
+    assert r["contamination"] and r["contamination"][0]["doc"] == "amostra-2"

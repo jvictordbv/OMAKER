@@ -3,7 +3,9 @@
 Variáveis reconhecidas:
 - OLLAMA_HOST: endereço do Ollama (padrão http://localhost:11434; sem esquema, recebe http://).
 - OMAKER_ENTITIES: de onde vêm as entidades: ner, llm ou both (padrão both).
-- OMAKER_CHECKPOINT: caminho do checkpoint do PURE (padrão omaker_pure.pt na raiz do projeto).
+- OMAKER_CHECKPOINT: caminho do checkpoint do PURE (padrão omaker_pure.pt na raiz do projeto; no .exe,
+  %LOCALAPPDATA%\\OMAKER\\models).
+- OMAKER_NO_DOWNLOAD: 1 desliga o download automático do checkpoint publicado (omaker/relations/download.py).
 - OMAKER_JAVA: java.exe usado pelo HermiT; lido por omaker.ontology.java.find_java.
 - OMAKER_LLM_SEED: semente enviada ao Ollama (padrão: nenhuma); a avaliação usa 0 para reprodutibilidade.
 

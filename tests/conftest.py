@@ -9,6 +9,12 @@ from omaker.domain.entities import Entity
 
 
 @pytest.fixture(autouse=True)
+def no_model_download(monkeypatch):
+    """Nenhum teste baixa o checkpoint do PURE da internet (os de download usam sessões falsas)."""
+    monkeypatch.setenv("OMAKER_NO_DOWNLOAD", "1")
+
+
+@pytest.fixture(autouse=True)
 def isolated_qsettings(tmp_path, monkeypatch):
     """Nenhum teste lê ou grava as configurações reais do usuário (registro MeuMestrado/OntoGenApp)."""
     from PySide6.QtCore import QSettings
