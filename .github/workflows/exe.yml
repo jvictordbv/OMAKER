@@ -1,0 +1,74 @@
+name: Executavel
+
+# Monta o .exe leve (os modelos sao baixados na primeira execucao) e confere que ele abre.
+# Roda a mao (Actions > Executavel > Run workflow), em PRs que mexem no empacotamento e em tags v*.
+# Numa tag v*, o .zip vai para a Release da tag (job separado, o unico com permissao de escrita).
+# As actions ficam fixadas pelo SHA do commit; o comentario diz a versao.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths:
+      - "OMAKER.spec"
+      - "OMAKER.py"
+      - "omaker/__main__.py"
+      - "omaker/self_check.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/exe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  exe:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      - name: Instalar dependencias
+        run: uv sync --extra dev
+      - name: Montar com o PyInstaller
+        run: uv run pyinstaller OMAKER.spec --noconfirm
+      - name: Conferir o executavel (--self-check)
+        shell: pwsh
+        run: |
+          $out = Join-Path $PWD "self-check.txt"
+          $p = Start-Process -FilePath "dist\OMAKER\OMAKER.exe" -ArgumentList "--self-check", "`"$out`"" -Wait -PassThru
+          if (Test-Path $out) { Get-Content $out } else { Write-Host "self-check.txt nao foi gravado" }
+          if ($p.ExitCode -ne 0) { exit 1 }
+      - name: Tamanho
+        shell: pwsh
+        run: |
+          $mb = (Get-ChildItem dist\OMAKER -Recurse -File | Measure-Object Length -Sum).Sum / 1MB
+          Write-Host ("dist\OMAKER: {0:N0} MB" -f $mb)
+      - name: Compactar
+        shell: pwsh
+        run: 7z a -tzip -mx=5 OMAKER-windows.zip .\dist\OMAKER
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: OMAKER-windows
+          path: OMAKER-windows.zip
+          retention-days: 14
+
+  release:
+    needs: exe
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: OMAKER-windows
+      - name: Anexar a Release da tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh release view "$TAG" -R "$REPO" >/dev/null 2>&1 || gh release create "$TAG" -R "$REPO" --generate-notes --title "OMAKER $TAG"
+          gh release upload "$TAG" OMAKER-windows.zip -R "$REPO" --clobber
