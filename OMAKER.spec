@@ -10,6 +10,7 @@ datas += [
     ('omaker/relations/train_relations.json', 'omaker/relations'),
     ('omaker/evaluation/gold/samples.json', 'omaker/evaluation/gold'),
 ]
+datas += [('LICENSE', '.')]   # a AGPL exige o texto da licença junto do programa distribuído
 
 
 a = Analysis(

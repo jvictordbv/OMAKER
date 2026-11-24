@@ -223,4 +223,10 @@ O arquivo [`CITATION.cff`](CITATION.cff) traz as duas citações no formato lido
 
 ## Licença
 
-O repositório ainda não tem uma licença definida. Até que uma seja escolhida pelo autor, os direitos de uso, cópia e distribuição do código não estão concedidos.
+O OMAKER é distribuído sob a [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only).
+
+Em resumo: qualquer pessoa pode usar, estudar, modificar e redistribuir o código, inclusive para fins comerciais, desde que versões modificadas, distribuídas ou oferecidas como serviço pela rede, sejam publicadas sob a mesma licença, com o código-fonte. O texto da licença é o que vale; este resumo não o substitui.
+
+Para usar o OMAKER sob outros termos (por exemplo, num produto de código fechado), fale com os autores.
+
+Os modelos baixados na primeira execução têm licenças próprias, definidas por quem os publicou.
