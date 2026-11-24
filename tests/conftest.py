@@ -90,3 +90,23 @@ def sample_extraction():
         ("Chemotherapy", "DRUG", "causes", "nausea", "SYMPTOM", None),
     ]
     return tax, triples
+
+
+TINY_MODEL_TEXT = "aspirin prevents stroke ."   # SAMPLE_TEXT de test_relation_extractor
+
+
+@pytest.fixture
+def tiny_fp16_model(tmp_path):
+    """Tiny BERT saved in float16 (like the SpanBERT checkpoint) plus its tokenizer; offline."""
+    from transformers import BertConfig, BertModel, BertTokenizerFast
+
+    path = tmp_path / "tiny_bert"
+    path.mkdir()
+    vocab = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"] + TINY_MODEL_TEXT.split()
+    (path / "vocab.txt").write_text("\n".join(vocab) + "\n", encoding="utf-8")
+    BertTokenizerFast(vocab_file=str(path / "vocab.txt")).save_pretrained(path)
+    config = BertConfig(
+        vocab_size=64, hidden_size=32, num_hidden_layers=1, num_attention_heads=2, intermediate_size=64
+    )
+    BertModel(config).half().save_pretrained(path)
+    return str(path)
