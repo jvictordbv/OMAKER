@@ -1,26 +1,10 @@
 import pytest
 import torch
-from transformers import BertConfig, BertModel, BertTokenizerFast
 
 from omaker.domain.labels import MODEL_NAME, REL2ID
 from omaker.relations.model import RelationExtractorPURE
 
 SAMPLE_TEXT = "aspirin prevents stroke ."
-
-
-@pytest.fixture
-def tiny_fp16_model(tmp_path):
-    """Tiny BERT saved in float16 (like the SpanBERT checkpoint) plus its tokenizer; offline."""
-    path = tmp_path / "tiny_bert"
-    path.mkdir()
-    vocab = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"] + SAMPLE_TEXT.split()
-    (path / "vocab.txt").write_text("\n".join(vocab) + "\n", encoding="utf-8")
-    BertTokenizerFast(vocab_file=str(path / "vocab.txt")).save_pretrained(path)
-    config = BertConfig(
-        vocab_size=64, hidden_size=32, num_hidden_layers=1, num_attention_heads=2, intermediate_size=64
-    )
-    BertModel(config).half().save_pretrained(path)
-    return str(path)
 
 
 def _roundtrip(model_name, tmp_path):

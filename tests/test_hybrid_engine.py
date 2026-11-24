@@ -171,3 +171,25 @@ def test_llm_entity_loop_is_an_error_when_the_llm_is_the_only_source(fake_ollama
     with pytest.raises(LLMError):
         he.HybridEngine.extrair(TEXT, "qwen3:8b", 0.1, lambda _m: None, ner=weak_ner,
                                 client=OllamaClient("qwen3:8b", fake_ollama.host))
+
+
+def test_pure_uses_the_calibrated_threshold(fake_ollama, stub_ner, monkeypatch, tmp_path):
+    """Com calibração, o limite de confiança vem dela, e não do 0,70 fixo."""
+    from types import SimpleNamespace
+
+    from omaker.relations import model as pure_model
+    ckpt = tmp_path / "model.pt"
+    ckpt.write_bytes(b"x")
+    monkeypatch.setattr(he, "default_checkpoint_path", lambda: ckpt)
+    monkeypatch.setenv("OMAKER_ENTITIES", "ner")
+    ner = stub_ner([ent("Aspirin", "DRUG"), ent("stroke", "DISEASE")])
+
+    def run(threshold):
+        fake = SimpleNamespace(threshold=threshold, predict=lambda pairs: [("prevents", 0.6)] * len(pairs))
+        monkeypatch.setattr(pure_model.RelationExtractorPURE, "load", classmethod(lambda cls, path, device=None: fake))
+        _tax, triples = he.HybridEngine.extrair(TEXT, "qwen3:8b", 0.1, lambda _m: None, ner=ner, with_taxonomy=False,
+                                                client=OllamaClient("qwen3:8b", fake_ollama.host))
+        return [(t[0], t[2], t[3]) for t in triples]
+
+    assert run(None) == []                                   # sem calibração: 0,6 < 0,70
+    assert run(0.5) == [("Aspirin", "prevents", "stroke")]   # calibrado: 0,6 >= 0,5

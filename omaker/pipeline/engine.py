@@ -68,7 +68,13 @@ class HybridEngine:
 
         log(f"> [PURE] Loading '{checkpoint}'...")
         model = RelationExtractorPURE.load(str(checkpoint))
-        return model.predict(pairs)
+        threshold = getattr(model, "threshold", None)
+        if threshold is None:
+            threshold = DEFAULT_CONFIDENCE_THRESHOLD
+        else:
+            log(f"> [PURE] Calibrated: temperature {getattr(model, 'temperature', 1.0):.2f}, "
+                f"confidence threshold {threshold:.2f}.")
+        return model.predict(pairs), threshold
 
     @staticmethod
     def extrair(texto, modelo_llm, temp_llm, log, ner=None, client: LLMClient | None = None, with_taxonomy=True):
@@ -111,8 +117,7 @@ class HybridEngine:
         if pairs:
             checkpoint = default_checkpoint_path()
             if checkpoint.exists():
-                preds = HybridEngine._relations_pure(pairs, log, checkpoint)
-                threshold = DEFAULT_CONFIDENCE_THRESHOLD
+                preds, threshold = HybridEngine._relations_pure(pairs, log, checkpoint)
             else:
                 preds, threshold = classify_pairs(client, pairs, temp_llm, log), 0.0
             best = {}

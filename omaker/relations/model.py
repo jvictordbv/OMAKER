@@ -60,6 +60,9 @@ class RelationExtractorPURE(nn.Module):
         )
         # transformers 5 keeps the checkpoint dtype (SpanBERT is fp16); the head is fp32.
         self.float()
+        # Calibration (omaker/relations/calibration.py): softmax(logits / temperature); threshold None = default.
+        self.temperature = 1.0
+        self.threshold: float | None = None
 
     # ------------------------------------------------------------------ input
     def mark_text(self, text: str, sub_span: tuple, sub_type: str, obj_span: tuple, obj_type: str) -> str:
@@ -143,7 +146,7 @@ class RelationExtractorPURE(nn.Module):
             for i in range(0, len(samples), batch_size):
                 chunk = samples[i : i + batch_size]
                 logits, valid = self._encode(chunk)
-                probs = torch.softmax(logits, dim=-1)
+                probs = torch.softmax(logits / self.temperature, dim=-1)
                 conf, pred = probs.max(dim=-1)
                 for c, p, ok in zip(conf.tolist(), pred.tolist(), valid.tolist(), strict=False):
                     results.append((ID2REL[p], c) if ok else (NO_RELATION, 0.0))
@@ -183,6 +186,12 @@ class RelationExtractorPURE(nn.Module):
             raise ValueError("Checkpoint labels/markers differ from omaker/domain/labels.py. Retrain the model.")
         model = cls(model_name=ckpt["model_name"], num_relations=len(REL2ID))
         model.load_state_dict(ckpt["state_dict"])
+        from omaker.relations.calibration import read_calibration
+
+        calibration = read_calibration(path)   # model.calibration.json next to the checkpoint, if any
+        if calibration:
+            model.temperature = float(calibration["temperature"])
+            model.threshold = float(calibration["threshold"])
         model.to(device or ("cuda" if torch.cuda.is_available() else "cpu"))
         model.eval()
         return model
