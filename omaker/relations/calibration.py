@@ -9,7 +9,9 @@ ao lado do checkpoint, que RelationExtractorPURE.load lê sozinho (o model.pt n�
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import shutil
 from pathlib import Path
 
 import torch
@@ -174,12 +176,33 @@ def report(r: dict) -> str:
     ])
 
 
+def _file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def install(run) -> bool:
+    """Copia a calibração do treino para o checkpoint instalado, se ele for o mesmo modelo (mesmo sha256)."""
+    from omaker.paths import default_checkpoint_path
+
+    run, target = Path(run), default_checkpoint_path()
+    source = sidecar_path(run / "model.pt")
+    if not source.is_file() or not target.is_file() or _file_sha256(target) != _file_sha256(run / "model.pt"):
+        return False
+    shutil.copyfile(source, sidecar_path(target))
+    return True
+
+
 def main(argv=None) -> dict:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run", required=True, help="pasta do treino (runs/<pasta>) com model.pt e splits/")
     ap.add_argument("--device", default=None, help="cpu ou cuda (padrão: cpu)")
+    ap.add_argument("--install", action="store_true",
+                    help="copia a calibração para o checkpoint usado pela GUI, se ele for o deste treino")
     args = ap.parse_args(argv)
     r = calibrate(args.run, args.device)
+    if args.install:
+        print("Calibração instalada para a GUI." if install(args.run) else
+              "Calibração NÃO instalada: o checkpoint da GUI não é o deste treino (instale com train --install).")
     print(report(r))
     return r
 

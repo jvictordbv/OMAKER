@@ -156,3 +156,13 @@ def test_biored_config_is_valid():
     from omaker.paths import project_root
     cfg = load_config(project_root() / "configs" / "pure_biored.toml")
     assert cfg.splits_dir == "data/biored/splits" and cfg.save_every_steps == 50
+
+
+def test_install_removes_a_stale_calibration(tmp_path, monkeypatch):
+    """Um modelo novo instalado não pode herdar a calibração do modelo anterior."""
+    from omaker.relations.calibration import sidecar_path
+    gui = tmp_path / "gui.pt"
+    monkeypatch.setenv("OMAKER_CHECKPOINT", str(gui))
+    sidecar_path(gui).write_text('{"temperature": 9.0, "threshold": 0.9}', encoding="utf-8")
+    run_training(_config(tmp_path), model_factory=FakeModel, install=True)
+    assert gui.exists() and not sidecar_path(gui).exists()

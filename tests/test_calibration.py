@@ -77,3 +77,18 @@ def test_loaded_model_uses_calibration_sidecar(tiny_fp16_model, tmp_path):
     assert hot.temperature == 50.0 and hot.threshold == 0.4
     (_rel, conf_hot), = hot.predict([sample])
     assert conf_hot < conf_plain and conf_hot == pytest.approx(1 / len(REL2ID), abs=0.05)
+
+
+def test_install_copies_calibration_only_to_the_same_model(tmp_path, monkeypatch):
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "model.pt").write_bytes(b"pesos A")
+    cal.sidecar_path(run / "model.pt").write_text('{"temperature": 2.0, "threshold": 0.4}', encoding="utf-8")
+    gui = tmp_path / "gui.pt"
+    monkeypatch.setenv("OMAKER_CHECKPOINT", str(gui))
+
+    gui.write_bytes(b"pesos B")                 # outro modelo instalado: não copia
+    assert cal.install(run) is False and not cal.sidecar_path(gui).exists()
+    gui.write_bytes(b"pesos A")                 # o mesmo modelo: copia
+    assert cal.install(run) is True
+    assert cal.read_calibration(gui) == {"temperature": 2.0, "threshold": 0.4}
