@@ -329,7 +329,15 @@ def _train(run: Path, config: TrainConfig, splits: Splits, model_factory, device
         target = default_checkpoint_path()
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(run / "model.pt", target)
-        print(f"Checkpoint instalado para a GUI: {target}")
+        # A calibração vale só para o modelo em que foi ajustada: leva a deste treino ou apaga a antiga.
+        from omaker.relations.calibration import sidecar_path
+
+        if sidecar_path(run / "model.pt").is_file():
+            shutil.copy(sidecar_path(run / "model.pt"), sidecar_path(target))
+        else:
+            sidecar_path(target).unlink(missing_ok=True)
+        print(f"Checkpoint instalado para a GUI: {target} (calibre com: uv run python -m "
+              f"omaker.relations.calibration --run {run} --install)")
     (run / "last.pt").unlink(missing_ok=True)   # terminado: o ponto de retomada (grande) não serve mais
     t = metrics["test"]
     print(f"\nTeste: micro-F1 {t['micro']['f1']:.3f} (IC 95% {t['ci95'][0]:.3f} a {t['ci95'][1]:.3f}), "
