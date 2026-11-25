@@ -117,9 +117,9 @@ Fonte: `omaker/ui/pages/settings.py`, `omaker/ui/pages/metadata.py` ; Verificado
 
 ### Requisito: Valores padrão das preferências (CFG-09)
 
-Sem preferências gravadas, o sistema DEVE usar o modelo `qwen3:8b`, a temperatura 0,10, a URI base `http://www.mestrado.edu/ontologias/`, o caminho do Protégé vazio e, como pasta de destino, a pasta corrente no momento em que o programa abre.
+Sem preferências gravadas, o sistema DEVE usar o modelo `qwen3:8b`, a temperatura 0,10, a URI base `http://www.mestrado.edu/ontologias/`, o caminho do Protégé vazio e, como pasta de destino, `Documentos/OMAKER` na pasta do usuário (`default_output_dir` em `omaker/paths.py`), nunca a pasta corrente.
 
-Fonte: `omaker/ui/pages/settings.py`, `omaker/llm/client.py` ; Verificado por: `tests/test_ui_pages.py::test_settings_keeps_default_model_when_only_gemini_saved` (modelo padrão); os demais padrões não têm teste automatizado
+Fonte: `omaker/ui/pages/settings.py`, `omaker/llm/client.py` ; Verificado por: `tests/test_ui_pages.py::test_settings_keeps_default_model_when_only_gemini_saved` (modelo padrão), `tests/test_ui_pages.py::test_default_export_folder_does_not_depend_on_the_current_folder` (pasta de destino); os demais padrões não têm teste automatizado
 
 #### Cenário: primeira execução
 

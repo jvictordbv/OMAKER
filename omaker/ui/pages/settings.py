@@ -1,5 +1,4 @@
 """Página de configurações e o QSettings do programa, com leitores para as outras páginas."""
-import os
 
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtWidgets import (
@@ -18,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from omaker.ontology.iri import DEFAULT_URI_BASE
+from omaker.paths import default_output_dir
 
 
 def default_settings() -> QSettings:
@@ -148,7 +148,7 @@ class SettingsPage(QWidget):
     def carregar_configuracoes(self):
         self.metadados.input_autor.setText(self.configuracoes.value("autor", ""))
         self.metadados.input_uri.setText(self.configuracoes.value("uri_base", "") or DEFAULT_URI_BASE)
-        self.input_diretorio.setText(self.configuracoes.value("diretorio_exportacao", os.path.abspath(".")))
+        self.input_diretorio.setText(self.configuracoes.value("diretorio_exportacao", str(default_output_dir())))
 
         # --- CARREGA O CAMINHO DO PROTÉGÉ ---
         self.input_protege.setText(self.configuracoes.value("caminho_protege", ""))

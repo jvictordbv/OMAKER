@@ -75,3 +75,29 @@ def test_settings_drops_old_gemini_models(qtbot, tmp_path):
 def test_settings_keeps_default_model_when_only_gemini_saved(qtbot, tmp_path):
     page, _ = _settings_page(qtbot, tmp_path, lista_modelos_disponiveis=["gemini-2.5-flash"])
     assert page.modelo() == "qwen3:8b"
+
+
+def test_about_page_shows_the_package_version(qtbot):
+    from PySide6.QtWidgets import QLabel
+
+    import omaker
+    from omaker.ui.pages.about import AboutPage
+
+    page = AboutPage()
+    qtbot.addWidget(page)
+    texts = [label.text() for label in page.findChildren(QLabel)]
+    assert f"OMAKER v{omaker.__version__}" in texts
+
+
+def test_default_export_folder_does_not_depend_on_the_current_folder(qtbot, tmp_path, monkeypatch):
+    """Sem preferência salva, a pasta de destino é Documentos/OMAKER, e não a pasta de onde o programa abriu."""
+    from pathlib import Path
+
+    from PySide6.QtCore import QSettings
+
+    from omaker.ui import main_window as m
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "casa"))
+    monkeypatch.chdir(tmp_path)
+    win = m.OntoApp(configuracoes=QSettings(str(tmp_path / "cfg.ini"), QSettings.IniFormat))
+    qtbot.addWidget(win)
+    assert win.pagina_configuracoes.pasta_exportacao() == str(tmp_path / "casa" / "Documents" / "OMAKER")

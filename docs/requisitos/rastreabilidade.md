@@ -19,7 +19,7 @@ Liga cada requisito ao código que o implementa e aos testes que o verificam. Os
 - [Requisitos sem teste automatizado](#requisitos-sem-teste-automatizado)
 - [Requisitos com cobertura parcial](#requisitos-com-cobertura-parcial)
 
-Total: 171 requisitos (148 funcionais e 23 não funcionais); 150 com pelo menos um teste automatizado.
+Total: 173 requisitos (150 funcionais e 23 não funcionais); 152 com pelo menos um teste automatizado.
 
 ## Extração de entidades
 
@@ -89,6 +89,7 @@ Total: 171 requisitos (148 funcionais e 23 não funcionais); 150 com pelo menos 
 | [ATU-07](especificacoes/atualizacao-de-ontologia/spec.md#requisito-disjunções-só-entre-classes-do-omaker-atu-07) Disjunções só entre classes do OMAKER | `omaker/ontology/builder.py` | `test_alignment.py::test_reused_class_not_in_alldisjoint`<br>`test_alignment.py::test_alldisjoint_not_repeated_on_second_update` |
 | [ATU-08](especificacoes/atualizacao-de-ontologia/spec.md#requisito-atualização-idempotente-atu-08) Atualização idempotente | `omaker/ontology/builder.py` | `test_alignment.py::test_second_update_is_idempotent`<br>`test_alignment.py::test_idempotent_after_save_and_reload` |
 | [ATU-09](especificacoes/atualizacao-de-ontologia/spec.md#requisito-ontologia-do-omaker-sem-alinhamento-atu-09) Ontologia do OMAKER sem alinhamento | `omaker/ontology/builder.py` | `test_alignment.py::test_new_ontology_unchanged` |
+| [ATU-10](especificacoes/atualizacao-de-ontologia/spec.md#requisito-cópia-de-segurança-antes-de-sobrescrever-atu-10) Cópia de segurança antes de sobrescrever | `omaker/ontology/builder.py`, `omaker/pipeline/engine.py` | `tests/test_hybrid_engine.py::test_updater_keeps_a_backup_of_the_original_owl` |
 
 ## Sinônimos
 
@@ -193,6 +194,7 @@ Total: 171 requisitos (148 funcionais e 23 não funcionais); 150 com pelo menos 
 | [INT-09](especificacoes/interface/spec.md#requisito-mensagens-honestas-int-09) Mensagens honestas | `omaker/ui/messages.py`, `omaker/ui/pages/generator.py`, `omaker/ui/pages/updater.py` | `test_ui_messages.py::test_completion_message_never_claims_validation_when_unavailable`<br>`test_ui_messages.py::test_completion_message_consistent`<br>`test_ui_messages.py::test_completion_message_inconsistent` |
 | [INT-10](especificacoes/interface/spec.md#requisito-campos-obrigatórios-int-10) Campos obrigatórios | `omaker/ui/pages/generator.py`, `omaker/ui/pages/updater.py` | Sem teste automatizado |
 | [INT-11](especificacoes/interface/spec.md#requisito-botão-abrir-no-protégé-int-11) Botão Abrir no Protégé | `omaker/ui/pages/generator.py`, `omaker/ontology/protege.py` | `test_protege.py::test_open_button_starts_disabled`<br>`test_protege.py::test_open_button_shows_warning_on_oserror`<br>`test_ui_generation.py::test_generation_runs_off_gui_thread` |
+| [INT-12](especificacoes/interface/spec.md#requisito-versão-na-página-sobre-int-12) Versão na página Sobre | `omaker/ui/pages/about.py` | `tests/test_ui_pages.py::test_about_page_shows_the_package_version` |
 
 ## Distribuição
 

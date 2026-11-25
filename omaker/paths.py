@@ -31,6 +31,11 @@ def user_data_dir() -> Path:
     return Path(base) / "OMAKER"
 
 
+def default_output_dir() -> Path:
+    """Pasta de destino padrão das ontologias: Documentos/OMAKER do usuário (não a pasta corrente)."""
+    return Path.home() / "Documents" / "OMAKER"
+
+
 def default_checkpoint_path() -> Path:
     """OMAKER_CHECKPOINT; no .exe, a pasta do usuário (a do programa é temporária); senão, a raiz do projeto."""
     if checkpoint():
