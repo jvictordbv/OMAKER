@@ -48,3 +48,28 @@ def test_snap_expands_to_the_whole_word():
                                              ("chemical", "Chemical"), ("Gene", None)])
 def test_hf_labels_map_to_gold_types(label, expected):
     assert nb.hf_type(label) == expected
+
+
+@pytest.mark.parametrize("argv, model, label", [
+    ([], None, "d4data/biomedical-ner-all (OMAKER)"),
+    (["--ner", "bc5cdr"], "bc5cdr", "judithrosell/BC5CDR_PubMedBERT_NER (OMAKER)"),
+])
+def test_ner_option_measures_the_omaker_pipeline_with_the_chosen_model(tmp_path, monkeypatch, capsys,
+                                                                        argv, model, label):
+    from omaker.nlp import ner as ner_mod
+    from tests.test_biored_gold import PUBTATOR
+
+    (tmp_path / "Test.PubTator").write_text(PUBTATOR, encoding="utf-8")
+    built = []
+
+    class FakeNER:
+        def __init__(self, model_name=None, device=None):
+            built.append(model_name)
+
+        def extract(self, _text):
+            return []
+
+    monkeypatch.setattr(ner_mod, "BiomedicalNER", FakeNER)
+    nb.main(["--biored", str(tmp_path), *argv])
+    assert built == [model]
+    assert f"Modelo: `{label}`" in capsys.readouterr().out

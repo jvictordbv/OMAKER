@@ -13,6 +13,9 @@ MODEL_REVISION = "b436fe68816aa04256692ce7e27711bf6be15513"
 # Biomedical NER used to find entities in raw text.
 NER_MODEL_NAME = "d4data/biomedical-ner-all"
 NER_MODEL_REVISION = "015a4050c9ac99722e61c547aa9b4282bcbedc7f"
+# Alternative NER trained on BC5CDR (chemicals and diseases only), chosen with OMAKER_NER_MODEL=bc5cdr.
+BC5CDR_NER_MODEL_NAME = "judithrosell/BC5CDR_PubMedBERT_NER"
+BC5CDR_NER_MODEL_REVISION = "50659916e648f1bff80db87000ff646d2b85f22c"
 
 # Entity types. Every (S|O) x type marker is generated from this list.
 ENTITY_TYPES = ("DRUG", "SYMPTOM", "DISEASE", "GENE")

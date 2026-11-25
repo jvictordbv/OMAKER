@@ -4,11 +4,19 @@ import re
 import pytest
 import transformers
 
-from omaker.domain.labels import MODEL_NAME, MODEL_REVISION, NER_MODEL_NAME, NER_MODEL_REVISION
+from omaker.domain.labels import (
+    BC5CDR_NER_MODEL_NAME,
+    BC5CDR_NER_MODEL_REVISION,
+    MODEL_NAME,
+    MODEL_REVISION,
+    NER_MODEL_NAME,
+    NER_MODEL_REVISION,
+)
 from omaker.nlp import synonyms
 
 
-@pytest.mark.parametrize("revision", [MODEL_REVISION, NER_MODEL_REVISION, synonyms.SYNONYM_MODEL_REVISION])
+@pytest.mark.parametrize("revision", [MODEL_REVISION, NER_MODEL_REVISION, BC5CDR_NER_MODEL_REVISION,
+                                      synonyms.SYNONYM_MODEL_REVISION])
 def test_revisions_are_full_commit_hashes(revision):
     assert re.fullmatch(r"[0-9a-f]{40}", revision)
 
@@ -21,6 +29,17 @@ def test_ner_pipeline_gets_pinned_revision(monkeypatch):
     monkeypatch.setattr("transformers.pipeline", lambda *a, **k: seen.update(k) or object())
     BiomedicalNER(device=-1)
     assert seen["model"] == NER_MODEL_NAME and seen["revision"] == NER_MODEL_REVISION
+
+
+def test_bc5cdr_ner_pipeline_gets_its_pinned_revision(monkeypatch):
+    from omaker.nlp.ner import BiomedicalNER
+
+    seen = {}
+    monkeypatch.setattr("transformers.pipeline", lambda *a, **k: seen.update(k) or object())
+    monkeypatch.setenv("OMAKER_NER_MODEL", "bc5cdr")
+    BiomedicalNER(device=-1)
+    assert seen["model"] == BC5CDR_NER_MODEL_NAME == "judithrosell/BC5CDR_PubMedBERT_NER"
+    assert seen["revision"] == BC5CDR_NER_MODEL_REVISION
 
 
 def test_sentence_bert_gets_pinned_revision(monkeypatch):

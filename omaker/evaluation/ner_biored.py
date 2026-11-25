@@ -1,7 +1,8 @@
 """Mede um NER contra as menções de químicos e doenças anotadas no teste do BioRED.
 
-    uv run python -m omaker.evaluation.ner_biored                  # NER do OMAKER (d4data/biomedical-ner-all)
-    uv run python -m omaker.evaluation.ner_biored --model judithrosell/BC5CDR_PubMedBERT_NER
+    uv run python -m omaker.evaluation.ner_biored                  # NER do OMAKER (OMAKER_NER_MODEL, padrão d4data)
+    uv run python -m omaker.evaluation.ner_biored --ner bc5cdr     # NER do OMAKER com o BC5CDR e a tipagem de sintomas
+    uv run python -m omaker.evaluation.ner_biored --model judithrosell/BC5CDR_PubMedBERT_NER   # modelo cru
 
 Gabarito: as menções ChemicalEntity e DiseaseOrPhenotypicFeature dos resumos de teste. Uma menção prevista
 acerta só se o início e o fim baterem exatamente (depois de estender o trecho até a palavra inteira, como o
@@ -15,6 +16,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+from omaker.config import NER_MODELS
 from omaker.evaluation.metrics import _prf
 from omaker.paths import project_root
 
@@ -60,11 +62,12 @@ def evaluate(docs, extract) -> dict:
             "by_type": by_type}
 
 
-def omaker_extractor(device: int = -1):
-    """O NER do pipeline (omaker/nlp/ner.py), com o mesmo pós-processamento."""
+def omaker_extractor(device: int = -1, model: str | None = None):
+    """O NER do pipeline (omaker/nlp/ner.py), com o mesmo pós-processamento; model: d4data, bc5cdr ou
+    None (OMAKER_NER_MODEL)."""
     from omaker.nlp.ner import BiomedicalNER
 
-    ner = BiomedicalNER(device=device)
+    ner = BiomedicalNER(model, device=device)
     return lambda text: [(e.start, e.end, OMAKER_TYPES.get(e.type)) for e in ner.extract(text)]
 
 
@@ -101,8 +104,11 @@ def main(argv=None) -> dict:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--biored", default=str(project_root() / "data" / "biored"),
                     help="pasta com Test.PubTator (padrão: data/biored)")
-    ap.add_argument("--model", default=None, help="NER do Hugging Face com rótulos Chemical/Disease "
-                                                  "(padrão: o NER do OMAKER)")
+    which = ap.add_mutually_exclusive_group()
+    which.add_argument("--model", default=None, help="NER do Hugging Face com rótulos Chemical/Disease "
+                                                     "(padrão: o NER do OMAKER)")
+    which.add_argument("--ner", choices=NER_MODELS, default=None,
+                       help="NER do OMAKER a medir (padrão: OMAKER_NER_MODEL, ou d4data)")
     ap.add_argument("--device", type=int, default=-1, help="-1 para CPU, 0 para a primeira GPU")
     ap.add_argument("--out", default=None, help="grava o resultado em JSON")
     args = ap.parse_args(argv)
@@ -111,8 +117,8 @@ def main(argv=None) -> dict:
     if args.model:
         name, extract = args.model, hf_extractor(args.model, args.device)
     else:
-        from omaker.domain.labels import NER_MODEL_NAME
-        name, extract = f"{NER_MODEL_NAME} (OMAKER)", omaker_extractor(args.device)
+        from omaker.nlp.ner import ner_spec
+        name, extract = f"{ner_spec(args.ner).name} (OMAKER)", omaker_extractor(args.device, args.ner)
     r = evaluate(docs, extract)
     print(report(name, r))
     if args.out:

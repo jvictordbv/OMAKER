@@ -163,3 +163,21 @@ Fonte: `omaker/config.py` (`llm_prompt`) ; Verificado por: `tests/test_config.py
 - **DADO** `OMAKER_LLM_PROMPT=otimizado`
 - **QUANDO** o LLM vai classificar relações
 - **ENTÃO** a execução falha com a mensagem "use default ou optimized"
+
+### Requisito: NER escolhido por variável (CFG-13)
+
+O sistema DEVE ler `OMAKER_NER_MODEL` quando o NER é criado, aceitando `d4data` (ou vazio, o padrão: `d4data/biomedical-ner-all`) e `bc5cdr` (`judithrosell/BC5CDR_PubMedBERT_NER`, cada um na sua revisão fixa), e DEVE recusar qualquer outro valor com uma mensagem que diga os valores válidos.
+
+Fonte: `omaker/config.py`, `omaker/nlp/ner.py`, `omaker/domain/labels.py` ; Verificado por: `tests/test_config.py::test_ner_model_defaults_to_d4data`, `tests/test_config.py::test_invalid_ner_model_raises_with_the_valid_values`, `tests/test_ner_model.py::test_default_ner_is_d4data_with_its_pinned_revision`, `tests/test_ner_model.py::test_bc5cdr_uses_its_name_and_pinned_revision`, `tests/test_ner_model.py::test_ner_model_is_read_when_the_ner_is_created`, `tests/test_ner_model.py::test_invalid_ner_model_raises_when_the_ner_is_created`
+
+#### Cenário: testar o NER do BC5CDR
+
+- **DADO** `OMAKER_NER_MODEL=bc5cdr`
+- **QUANDO** o pipeline detecta as entidades
+- **ENTÃO** usa o `judithrosell/BC5CDR_PubMedBERT_NER` na revisão fixada
+
+#### Cenário: sem a variável
+
+- **DADO** `OMAKER_NER_MODEL` vazio
+- **QUANDO** o pipeline detecta as entidades
+- **ENTÃO** usa o NER de sempre, sem nenhuma diferença

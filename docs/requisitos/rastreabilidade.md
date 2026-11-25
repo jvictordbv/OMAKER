@@ -19,7 +19,7 @@ Liga cada requisito ao código que o implementa e aos testes que o verificam. Os
 - [Requisitos sem teste automatizado](#requisitos-sem-teste-automatizado)
 - [Requisitos com cobertura parcial](#requisitos-com-cobertura-parcial)
 
-Total: 178 requisitos (154 funcionais e 24 não funcionais); 177 com pelo menos um teste automatizado.
+Total: 180 requisitos (156 funcionais e 24 não funcionais); 179 com pelo menos um teste automatizado.
 
 ## Extração de entidades
 
@@ -38,6 +38,7 @@ Total: 178 requisitos (154 funcionais e 24 não funcionais); 177 com pelo menos 
 | [ENT-11](especificacoes/extracao-de-entidades/spec.md#requisito-união-das-fontes-sem-sobreposição-ent-11) União das fontes sem sobreposição | `omaker/llm/entities.py` | `test_hybrid_engine.py::test_llm_entities_are_verified_in_text` |
 | [ENT-12](especificacoes/extracao-de-entidades/spec.md#requisito-entidades-únicas-ent-12) Entidades únicas | `omaker/pipeline/engine.py` | `test_hybrid_engine.py::test_merge_both_sources` |
 | [ENT-13](especificacoes/extracao-de-entidades/spec.md#requisito-texto-sem-entidades-ent-13) Texto sem entidades | `omaker/pipeline/engine.py` | `test_engine_extraction.py::test_generation_without_entities_fails_with_the_message_and_writes_no_owl` |
+| [ENT-14](especificacoes/extracao-de-entidades/spec.md#requisito-rótulos-e-sintomas-com-o-ner-do-bc5cdr-ent-14) Rótulos e sintomas com o NER do BC5CDR | `omaker/nlp/ner.py`, `omaker/ontology/alignment.py` | `test_ner_model.py::test_bc5cdr_maps_chemical_to_drug_and_disease_to_disease`<br>`test_ner_model.py::test_bc5cdr_disease_matching_the_symptom_ontology_becomes_symptom`<br>`test_ner_model.py::test_d4data_does_not_retype_diseases_by_the_symptom_ontology` |
 
 ## Extração de relações
 
@@ -229,6 +230,7 @@ Total: 178 requisitos (154 funcionais e 24 não funcionais); 177 com pelo menos 
 | [CFG-10](especificacoes/configuracao/spec.md#requisito-restos-de-versões-antigas-cfg-10) Restos de versões antigas | `omaker/ui/pages/settings.py` | `test_ui_pages.py::test_settings_drops_old_gemini_models`<br>`test_ui_pages.py::test_settings_keeps_default_model_when_only_gemini_saved`<br>`test_ui_pages.py::test_settings_has_no_api_key_field` |
 | [CFG-11](especificacoes/configuracao/spec.md#requisito-modelo-informado-pelo-usuário-cfg-11) Modelo informado pelo usuário | `omaker/ui/pages/settings.py` | `test_ui_pages.py::test_typed_model_is_added_to_the_list_and_selected`<br>`test_ui_pages.py::test_typed_model_already_in_the_list_is_not_duplicated`<br>`test_ui_pages.py::test_typed_model_already_in_the_list_is_selected`<br>`test_ui_pages.py::test_blank_model_name_is_not_added`<br>`test_ui_pages.py::test_added_model_is_saved_with_the_list` |
 | [CFG-12](especificacoes/configuracao/spec.md#requisito-prompt-de-relações-escolhido-por-variável-cfg-12) Prompt de relações escolhido por variável | `omaker/config.py` | `test_config.py::test_llm_prompt_defaults_to_handwritten`<br>`test_config.py::test_invalid_llm_prompt_raises`<br>`test_llm_relations_prompt.py::test_env_is_read_at_call_time` |
+| [CFG-13](especificacoes/configuracao/spec.md#requisito-ner-escolhido-por-variável-cfg-13) NER escolhido por variável | `omaker/config.py`, `omaker/nlp/ner.py`, `omaker/domain/labels.py` | `test_config.py::test_ner_model_defaults_to_d4data`<br>`test_config.py::test_invalid_ner_model_raises_with_the_valid_values`<br>`test_ner_model.py::test_bc5cdr_uses_its_name_and_pinned_revision`<br>`test_ner_model.py::test_ner_model_is_read_when_the_ner_is_created` |
 
 ## Requisitos não funcionais
 
@@ -257,7 +259,7 @@ Total: 178 requisitos (154 funcionais e 24 não funcionais); 177 com pelo menos 
 | [RNF-21](nao-funcionais.md#requisito-fluxos-do-ci-com-permissões-mínimas-rnf-21) Fluxos do CI com permissões mínimas | `.github/workflows/ci.yml`, `.github/workflows/exe.yml` | `test_workflows.py::test_workflows_are_read_only_by_default`<br>`test_workflows.py::test_only_the_release_job_can_write_to_the_repository`<br>`test_workflows.py::test_every_external_action_is_pinned_by_commit_sha` |
 | [RNF-22](nao-funcionais.md#requisito-agpl-30-only-no-código-e-no-executável-rnf-22) AGPL-3.0-only no código e no executável | `LICENSE`, `pyproject.toml`, `OMAKER.spec`, `omaker/self_check.py` | `test_packaging.py::test_license_ships_with_the_executable`<br>`test_self_check.py::test_self_check_passes_from_source` |
 | [RNF-23](nao-funcionais.md#requisito-entrada-em-inglês-interface-em-português-rnf-23) Entrada em inglês, interface em português | `omaker/domain/text.py`, `omaker/ui/pages/runner.py` | `test_ui_generation.py::test_pages_say_the_text_must_be_in_english`<br>`test_ui_generation.py::test_non_english_text_asks_before_generating`<br>`test_text_utils.py::test_portuguese_and_spanish_texts_are_flagged` |
-| [RNF-24](nao-funcionais.md#requisito-modelos-do-hugging-face-com-revisão-fixa-rnf-24) Modelos do Hugging Face com revisão fixa | `omaker/domain/labels.py`, `omaker/nlp/ner.py`, `omaker/nlp/synonyms.py`, `omaker/relations/model.py` | `test_model_revisions.py::test_revisions_are_full_commit_hashes`<br>`test_model_revisions.py::test_ner_pipeline_gets_pinned_revision`<br>`test_model_revisions.py::test_sentence_bert_gets_pinned_revision`<br>`test_model_revisions.py::test_pure_pins_spanbert_revision_in_training_and_load` |
+| [RNF-24](nao-funcionais.md#requisito-modelos-do-hugging-face-com-revisão-fixa-rnf-24) Modelos do Hugging Face com revisão fixa | `omaker/domain/labels.py`, `omaker/nlp/ner.py`, `omaker/nlp/synonyms.py`, `omaker/relations/model.py` | `test_model_revisions.py::test_revisions_are_full_commit_hashes`<br>`test_model_revisions.py::test_ner_pipeline_gets_pinned_revision`<br>`test_model_revisions.py::test_sentence_bert_gets_pinned_revision`<br>`test_model_revisions.py::test_pure_pins_spanbert_revision_in_training_and_load`<br>`test_model_revisions.py::test_bc5cdr_ner_pipeline_gets_its_pinned_revision` |
 
 ## Requisitos sem teste automatizado
 

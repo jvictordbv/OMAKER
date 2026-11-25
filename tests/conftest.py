@@ -15,6 +15,12 @@ def no_model_download(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def default_ner_model(monkeypatch):
+    """Os testes partem do NER padrão, mesmo que OMAKER_NER_MODEL esteja definido na máquina."""
+    monkeypatch.delenv("OMAKER_NER_MODEL", raising=False)
+
+
+@pytest.fixture(autouse=True)
 def isolated_qsettings(tmp_path, monkeypatch):
     """Nenhum teste lê ou grava as configurações reais do usuário (registro MeuMestrado/OntoGenApp)."""
     from PySide6.QtCore import QSettings
