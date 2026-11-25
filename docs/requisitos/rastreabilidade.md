@@ -19,7 +19,7 @@ Liga cada requisito ao código que o implementa e aos testes que o verificam. Os
 - [Requisitos sem teste automatizado](#requisitos-sem-teste-automatizado)
 - [Requisitos com cobertura parcial](#requisitos-com-cobertura-parcial)
 
-Total: 180 requisitos (156 funcionais e 24 não funcionais); 179 com pelo menos um teste automatizado.
+Total: 181 requisitos (157 funcionais e 24 não funcionais); 180 com pelo menos um teste automatizado.
 
 ## Extração de entidades
 
@@ -182,6 +182,7 @@ Total: 180 requisitos (156 funcionais e 24 não funcionais); 179 com pelo menos 
 | [AVA-21](especificacoes/avaliacao/spec.md#requisito-medição-do-ner-ava-21) Medição do NER | `omaker/evaluation/ner_biored.py` | `test_ner_biored.py::test_gold_has_only_chemicals_and_diseases`<br>`test_ner_biored.py::test_exact_span_match_with_per_type_scores`<br>`test_ner_biored.py::test_snap_expands_to_the_whole_word` |
 | [AVA-22](especificacoes/avaliacao/spec.md#requisito-outro-ner-medido-ava-22) Outro NER medido | `omaker/evaluation/ner_biored.py` | `test_ner_biored.py::test_hf_labels_map_to_gold_types` |
 | [AVA-23](especificacoes/avaliacao/spec.md#requisito-otimização-reproduzível-do-prompt-de-relações-ava-23) Otimização reproduzível do prompt de relações | `omaker/llm/optimize.py` | `test_llm_optimize.py::test_full_run_writes_metrics_report_and_plain_prompt`<br>`test_llm_optimize.py::test_resume_skips_finished_steps`<br>`test_llm_optimize.py::test_resume_refuses_changed_settings`<br>`test_llm_optimize.py::test_install_copies_the_prompt` |
+| [AVA-24](especificacoes/avaliacao/spec.md#requisito-prompt-de-relações-medido-em-lotes-como-no-pipeline-ava-24) Prompt de relações medido em lotes, como no pipeline | `omaker/evaluation/llm_batch.py`, `omaker/llm/relations.py` | `test_llm_batch_eval.py::test_full_run_scores_both_prompts_on_dev_and_test_in_batches`<br>`test_llm_batch_eval.py::test_failed_batch_counts_as_no_relation_and_is_reported`<br>`test_llm_batch_eval.py::test_resume_continues_from_the_next_batch`<br>`test_llm_batch_eval.py::test_resume_refuses_changed_settings_or_prompt` |
 
 ## Interface
 
