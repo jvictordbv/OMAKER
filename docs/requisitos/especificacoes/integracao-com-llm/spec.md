@@ -20,9 +20,9 @@ Fonte: `omaker/llm/client.py`, `omaker/pipeline/engine.py` ; Verificado por: `te
 
 ### Requisito: Verificação antes de extrair (LLM-02)
 
-Antes de qualquer extração, em todos os modos de entidades, o sistema DEVE conferir se o Ollama responde e se o modelo está instalado, e DEVE falhar com uma mensagem acionável: "`ollama serve`" quando o Ollama não responde, ou a lista dos modelos instalados e o comando `ollama pull <modelo>` quando o modelo falta.
+Quando alguma etapa for usar o LLM, o sistema DEVE conferir se o Ollama responde e se o modelo está instalado, antes do NER se já se sabe que o LLM será usado (entidades pelo LLM ou taxonomia) e, no caso restante, só quando as relações caírem no LLM (sem checkpoint do PURE); NÃO DEVE exigir o Ollama quando nenhuma etapa o usa (modo `ner`, com o PURE e sem taxonomia); e DEVE falhar com uma mensagem acionável: "`ollama serve`" quando o Ollama não responde, ou a lista dos modelos instalados e o comando `ollama pull <modelo>` quando o modelo falta.
 
-Fonte: `omaker/llm/client.py`, `omaker/pipeline/engine.py` ; Verificado por: `tests/test_llm_client.py::test_check_missing_model_suggests_pull`, `tests/test_llm_client.py::test_check_lists_installed_models`
+Fonte: `omaker/llm/client.py`, `omaker/pipeline/engine.py` ; Verificado por: `tests/test_llm_client.py::test_check_missing_model_suggests_pull`, `tests/test_llm_client.py::test_check_lists_installed_models`, `tests/test_hybrid_engine.py::test_ollama_is_not_required_when_no_step_uses_the_llm`, `tests/test_hybrid_engine.py::test_llm_client_is_created_once_when_needed`
 
 #### Cenário: modelo não instalado
 
@@ -30,6 +30,12 @@ Fonte: `omaker/llm/client.py`, `omaker/pipeline/engine.py` ; Verificado por: `te
 - **QUANDO** a geração começa
 - **ENTÃO** ela falha antes de extrair entidades
 - **E** a mensagem lista "qwen3:8b" e sugere "ollama pull llama3"
+
+#### Cenário: avaliação sem o LLM
+
+- **DADO** o modo `ner`, um checkpoint do PURE e a extração sem taxonomia (o sistema `pure` da avaliação)
+- **QUANDO** a extração roda com o Ollama desligado
+- **ENTÃO** ela termina normalmente, sem conferir o Ollama
 
 ### Requisito: Nome exato do modelo (LLM-03)
 

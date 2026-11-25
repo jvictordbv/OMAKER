@@ -226,3 +226,41 @@ def test_updater_keeps_a_backup_of_the_original_owl(monkeypatch, tmp_path):
     assert backup.read_text(encoding="utf-8") == "<rdf>original</rdf>"
     assert original.read_text(encoding="utf-8") == "<rdf>novo</rdf>"
     assert any(backup.name in line for line in logs), logs
+
+
+def test_ollama_is_not_required_when_no_step_uses_the_llm(stub_ner, monkeypatch, tmp_path):
+    """Modo ner, com o PURE e sem taxonomia (a avaliação do sistema pure): nada chama o LLM, então nada confere o Ollama."""
+    from types import SimpleNamespace
+
+    from omaker.relations import model as pure_model
+    ckpt = tmp_path / "model.pt"
+    ckpt.write_bytes(b"x")
+    monkeypatch.setattr(he, "default_checkpoint_path", lambda: ckpt)
+    monkeypatch.setenv("OMAKER_ENTITIES", "ner")
+    fake = SimpleNamespace(threshold=None, predict=lambda pairs: [("prevents", 0.9)] * len(pairs))
+    monkeypatch.setattr(pure_model.RelationExtractorPURE, "load", classmethod(lambda cls, path, device=None: fake))
+
+    def no_ollama(*a, **k):
+        raise AssertionError("o Ollama não deveria ser conferido")
+
+    monkeypatch.setattr(he.HybridEngine, "_client", staticmethod(no_ollama))
+    ner = stub_ner([ent("Aspirin", "DRUG"), ent("stroke", "DISEASE")])
+    _tax, triples = he.HybridEngine.extrair(TEXT, "qwen3:8b", 0.1, lambda _m: None, ner=ner, with_taxonomy=False)
+    assert [(t[0], t[2], t[3]) for t in triples] == [("Aspirin", "prevents", "stroke")]
+
+
+def test_llm_client_is_created_once_when_needed(fake_ollama, stub_ner, monkeypatch, tmp_path):
+    monkeypatch.setenv("OMAKER_ENTITIES", "ner")
+    monkeypatch.setattr(he, "default_checkpoint_path", lambda: tmp_path / "nao-existe.pt")
+    created = []
+
+    def make(modelo, temp, log):
+        created.append(modelo)
+        return OllamaClient("qwen3:8b", fake_ollama.host)
+
+    monkeypatch.setattr(he.HybridEngine, "_client", staticmethod(make))
+    fake_ollama.script[:] = [json.dumps({"results": [{"id": 0, "relation": "prevents"}]}),
+                             json.dumps({"classes": [], "instances": [], "disjoint": []})]
+    ner = stub_ner([ent("Aspirin", "DRUG"), ent("stroke", "DISEASE")])
+    he.HybridEngine.extrair(TEXT, "qwen3:8b", 0.1, lambda _m: None, ner=ner)   # relações e taxonomia pelo LLM
+    assert created == ["qwen3:8b"]
