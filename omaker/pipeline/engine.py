@@ -84,7 +84,17 @@ class HybridEngine:
 
         # Where entities come from: "ner" (model only), "llm" (Qwen only) or "both" (merged); OMAKER_ENTITIES.
         source = entity_source()
-        client = client or HybridEngine._client(modelo_llm, temp_llm, log)
+        # O Ollama só é conferido se alguma etapa for usar o LLM. Quando já se sabe que vai (entidades pelo LLM ou
+        # taxonomia), confere logo, antes do NER; senão, só se as relações caírem no LLM (sem checkpoint do PURE).
+        clients = [client]
+
+        def llm() -> LLMClient:
+            if clients[0] is None:
+                clients[0] = HybridEngine._client(modelo_llm, temp_llm, log)
+            return clients[0]
+
+        if source in ("llm", "both") or with_taxonomy:
+            llm()
 
         entities = []
         if source in ("ner", "both"):
@@ -95,9 +105,9 @@ class HybridEngine:
             for word, label, score in getattr(ner_model, "last_rejected", [])[:10]:
                 log(f"  [NER] ignored: '{word}' labelled {label} ({score:.2f})")
         if source in ("llm", "both"):
-            log(f"> [LLM-NER] Asking {client.model} for entities (each one is verified in the text)...")
+            log(f"> [LLM-NER] Asking {llm().model} for entities (each one is verified in the text)...")
             try:
-                llm_entities = extract_entities_llm(client, texto, temperature=min(temp_llm, 0.1))
+                llm_entities = extract_entities_llm(llm(), texto, temperature=min(temp_llm, 0.1))
             except LLMError as err:
                 if source == "llm":
                     raise
@@ -123,7 +133,7 @@ class HybridEngine:
             if checkpoint.exists():
                 preds, threshold = HybridEngine._relations_pure(pairs, log, checkpoint)
             else:
-                preds, threshold = classify_pairs(client, pairs, temp_llm, log), 0.0
+                preds, threshold = classify_pairs(llm(), pairs, temp_llm, log), 0.0
             best = {}
             for p, (rel, conf) in zip(pairs, preds, strict=False):
                 if rel == NO_RELATION or (conf is not None and conf < threshold):
@@ -135,7 +145,7 @@ class HybridEngine:
         log(f"> [RELATIONS] {len(triples)} triples kept.")
 
         # with_taxonomy=False (avaliação de triplas): cada entidade fica na sua classe-base, sem chamar o LLM.
-        taxonomy = ask_taxonomy(client, uniq, texto, temp_llm, log) if with_taxonomy else validate_taxonomy({}, uniq)
+        taxonomy = ask_taxonomy(llm(), uniq, texto, temp_llm, log) if with_taxonomy else validate_taxonomy({}, uniq)
         return taxonomy, triples
 
     # ---- public API used by the GUI -----------------------------------------------------
