@@ -370,3 +370,28 @@ Fonte: `omaker/relations/download.py` ; Verificado por: sem teste automatizado
 - **DADO** `OMAKER_NO_DOWNLOAD=1` no ambiente
 - **QUANDO** o usuário roda o comando de download
 - **ENTÃO** o checkpoint é baixado mesmo assim
+
+### Requisito: Calibração do modelo publicado (MOD-27)
+
+Quando o checkpoint existir sem o arquivo de calibração, o sistema DEVE baixar só a calibração publicada, e apenas se o checkpoint for o publicado (mesmo sha256); NÃO DEVE baixar a calibração publicada para um checkpoint próprio; uma falha DEVE ser registrada no log, e o PURE DEVE seguir rodando sem calibração (limite 0,70), com nova tentativa na próxima execução.
+
+Fonte: `omaker/relations/download.py` ; Verificado por: `tests/test_download.py::test_missing_calibration_of_the_published_model_is_downloaded_again`, `tests/test_download.py::test_calibration_is_not_downloaded_for_another_model`, `tests/test_download.py::test_calibration_failure_keeps_the_model_and_says_so`
+
+#### Cenário: calibração que falhou antes
+
+- **DADO** o checkpoint publicado já baixado e o arquivo de calibração ausente
+- **QUANDO** o pipeline precisa do PURE
+- **ENTÃO** só a calibração é baixada
+- **E** o log diz "Calibration downloaded."
+
+#### Cenário: checkpoint próprio
+
+- **DADO** um checkpoint treinado pelo usuário, sem arquivo de calibração
+- **QUANDO** o pipeline precisa do PURE
+- **ENTÃO** nada é baixado, e o modelo roda com o limite padrão de 0,70
+
+#### Cenário: calibração sem internet
+
+- **DADO** o checkpoint publicado sem a calibração e nenhuma conexão
+- **QUANDO** o pipeline precisa do PURE
+- **ENTÃO** o PURE roda sem calibração, e o log diz que o download será tentado de novo

@@ -19,7 +19,7 @@ Liga cada requisito ao código que o implementa e aos testes que o verificam. Os
 - [Requisitos sem teste automatizado](#requisitos-sem-teste-automatizado)
 - [Requisitos com cobertura parcial](#requisitos-com-cobertura-parcial)
 
-Total: 170 requisitos (147 funcionais e 23 não funcionais); 149 com pelo menos um teste automatizado.
+Total: 171 requisitos (148 funcionais e 23 não funcionais); 150 com pelo menos um teste automatizado.
 
 ## Extração de entidades
 
@@ -149,6 +149,7 @@ Total: 170 requisitos (147 funcionais e 23 não funcionais); 149 com pelo menos 
 | [MOD-24](especificacoes/modelo-de-relacoes/spec.md#requisito-garantia-do-checkpoint-na-primeira-execução-mod-24) Garantia do checkpoint na primeira execução | `omaker/relations/download.py`, `omaker/pipeline/engine.py` | `test_download.py::test_ensure_skips_when_disabled_or_present`<br>`test_download.py::test_ensure_downloads_model_and_calibration`<br>`test_download.py::test_ensure_reports_failure_without_raising` |
 | [MOD-25](especificacoes/modelo-de-relacoes/spec.md#requisito-hashes-publicados-preenchidos-mod-25) Hashes publicados preenchidos | `omaker/relations/download.py` | `test_download.py::test_published_hashes_are_filled_in` |
 | [MOD-26](especificacoes/modelo-de-relacoes/spec.md#requisito-download-explícito-mod-26) Download explícito | `omaker/relations/download.py` | Sem teste automatizado |
+| [MOD-27](especificacoes/modelo-de-relacoes/spec.md#requisito-calibração-do-modelo-publicado-mod-27) Calibração do modelo publicado | `omaker/relations/download.py` | `tests/test_download.py::test_missing_calibration_of_the_published_model_is_downloaded_again`, `tests/test_download.py::test_calibration_is_not_downloaded_for_another_model`, `tests/test_download.py::test_calibration_failure_keeps_the_model_and_says_so` |
 
 ## Avaliação
 

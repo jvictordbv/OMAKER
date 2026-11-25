@@ -46,7 +46,7 @@ Construir ontologias formais (OWL, Lógica de Descrição) a partir de texto liv
 1. **Entidades:** um NER biomédico (`d4data/biomedical-ner-all`) e o LLM local (Qwen3 via Ollama) propõem as menções. Cada menção do LLM precisa ser achada no texto.
 2. **Pares candidatos:** pares de entidades na mesma frase, com tipos compatíveis.
 3. **Relações:**
-   - Com um checkpoint treinado, o PURE/SpanBERT classifica cada par, e só ficam as triplas com confiança de pelo menos 0,70.
+   - Com um checkpoint treinado, o PURE/SpanBERT classifica cada par, e só ficam as triplas com confiança acima do limite: o limite calibrado na validação (0,35 no modelo publicado, lido de `omaker_pure.calibration.json`) ou 0,70 quando o checkpoint não tem calibração.
    - Sem checkpoint, o LLM classifica.
    - Triplas que violam o domínio da relação são descartadas.
 4. **Taxonomia:** o LLM organiza as entidades em subclasses, e a resposta é validada (sem ciclos, sem classes duplicando entidades, sem instância fora do ramo do seu tipo).
