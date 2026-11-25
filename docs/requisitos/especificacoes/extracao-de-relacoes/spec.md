@@ -47,7 +47,7 @@ Fonte: `omaker/nlp/pairs.py`, `omaker/domain/labels.py` ; Verificado por: `tests
 
 O sistema NÃO DEVE carregar, baixar nem chamar um classificador quando não houver pares candidatos; nesse caso nenhuma tripla é produzida e a geração continua para a taxonomia.
 
-Fonte: `omaker/pipeline/engine.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/pipeline/engine.py` ; Verificado por: `tests/test_engine_extraction.py::test_text_without_pairs_loads_downloads_and_calls_no_classifier`
 
 #### Cenário: entidades isoladas
 
@@ -78,7 +78,7 @@ Fonte: `omaker/relations/model.py`, `omaker/domain/labels.py` ; Verificado por: 
 
 O sistema DEVE limitar a entrada do PURE a 256 tokens e DEVE classificar como `no_relation`, com confiança 0, todo par cujo marcador de sujeito ou de objeto tenha sido cortado.
 
-Fonte: `omaker/relations/model.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/relations/model.py` ; Verificado por: `tests/test_relation_extractor.py::test_pair_whose_object_marker_is_cut_is_no_relation_with_zero_confidence`, `tests/test_relation_extractor.py::test_pure_input_is_truncated_to_256_tokens`
 
 #### Cenário: frase longa demais
 
@@ -152,7 +152,7 @@ Fonte: `omaker/llm/relations.py` ; Verificado por: `tests/test_hybrid_engine.py:
 
 O sistema DEVE manter uma única tripla por (sujeito, relação, objeto), sem diferenciar maiúsculas, ficando com a de maior confiança, e NÃO DEVE manter previsões `no_relation`.
 
-Fonte: `omaker/pipeline/engine.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/pipeline/engine.py` ; Verificado por: `tests/test_engine_extraction.py::test_the_same_fact_in_two_sentences_gives_one_triple_with_the_highest_confidence`, `tests/test_engine_extraction.py::test_no_relation_predictions_are_never_kept_as_triples`
 
 #### Cenário: o mesmo fato em duas frases
 

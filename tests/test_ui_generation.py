@@ -259,3 +259,38 @@ def test_non_english_text_asks_before_updating(win, monkeypatch, tmp_path, boxes
     page.texto_entrada_atualizador.setPlainText(PT_TEXT)
     page.btn_atualizar.click()
     assert len(question.asked) == 1 and calls == []
+
+
+# ---- INT-10: campos obrigatórios
+@pytest.mark.parametrize("nome, texto", [("", "Aspirin prevents stroke."), ("teste", ""), ("   ", "   "), ("", "")])
+def test_generation_does_not_start_without_file_name_and_text(win, monkeypatch, boxes, nome, texto):
+    calls = []
+    monkeypatch.setattr(HybridEngine, "gerar_ontologia", lambda **kw: calls.append(kw))
+    page = win.pagina_gerador
+    page.input_nome_arquivo.setText(nome)
+    page.texto_entrada.setPlainText(texto)
+    page.btn_gerar.click()
+    assert calls == [] and not page.em_execucao()
+    (titulo, mensagem), = boxes["warning"]
+    assert "Texto" in mensagem and "Nome do Arquivo" in mensagem
+
+
+def test_update_without_a_selected_owl_warns_and_does_not_run(win, monkeypatch, boxes):
+    calls = []
+    monkeypatch.setattr(HybridEngine, "atualizar_ontologia", lambda **kw: calls.append(kw))
+    page = win.pagina_atualizador
+    page.texto_entrada_atualizador.setPlainText("Aspirin prevents stroke.")
+    page.btn_atualizar.click()
+    assert calls == [] and not page.em_execucao()
+    assert [m for _t, m in boxes["warning"]] == ["Selecione um arquivo .owl primeiro."]
+
+
+def test_update_without_new_evidence_text_warns_and_does_not_run(win, monkeypatch, tmp_path, boxes):
+    calls = []
+    monkeypatch.setattr(HybridEngine, "atualizar_ontologia", lambda **kw: calls.append(kw))
+    page = win.pagina_atualizador
+    page.caminho_owl_atual = str(tmp_path / "base.owl")
+    page.texto_entrada_atualizador.setPlainText("   ")
+    page.btn_atualizar.click()
+    assert calls == [] and not page.em_execucao()
+    assert [m for _t, m in boxes["warning"]] == ["Preencha o texto das novas evidências."]

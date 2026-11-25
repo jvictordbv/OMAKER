@@ -146,7 +146,7 @@ Fonte: `omaker/ui/messages.py`, `omaker/ui/pages/generator.py`, `omaker/ui/pages
 
 O sistema NÃO DEVE iniciar a geração sem o nome do arquivo e o texto, nem a atualização sem um arquivo `.owl` selecionado e o texto das novas evidências; em cada caso, DEVE mostrar um aviso que diz o que falta.
 
-Fonte: `omaker/ui/pages/generator.py`, `omaker/ui/pages/updater.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/ui/pages/generator.py`, `omaker/ui/pages/updater.py` ; Verificado por: `tests/test_ui_generation.py::test_generation_does_not_start_without_file_name_and_text`, `tests/test_ui_generation.py::test_update_without_a_selected_owl_warns_and_does_not_run`, `tests/test_ui_generation.py::test_update_without_new_evidence_text_warns_and_does_not_run`
 
 #### Cenário: atualização sem arquivo
 

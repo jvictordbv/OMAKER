@@ -39,7 +39,7 @@ O sistema NÃO DEVE enviar o texto do usuário a nenhum serviço fora da máquin
 
 Critério: as chamadas HTTP do código estão só em `omaker/llm/client.py` (Ollama), `omaker/relations/download.py` (Release `pure-biored-v1`) e `omaker/relations/biored.py` (BioRED, só no comando de treino); os modelos do Hugging Face são baixados pelas bibliotecas `transformers` e `sentence-transformers` na primeira execução.
 
-Fonte: `omaker/llm/client.py`, `omaker/relations/download.py`, `omaker/relations/biored.py`, `omaker/config.py` ; Verificado por: inspeção (busca por `requests` em `omaker/`); a substituição do cliente por um sem rede é verificada por `tests/test_llm_protocol.py::test_engine_runs_with_any_llm_client`
+Fonte: `omaker/llm/client.py`, `omaker/relations/download.py`, `omaker/relations/biored.py`, `omaker/config.py` ; Verificado por: inspeção (busca por `requests` em `omaker/`); a substituição do cliente por um sem rede é verificada por `tests/test_llm_protocol.py::test_engine_runs_with_any_llm_client`, `tests/test_local_only.py::test_ollama_host_defaults_to_localhost`, `tests/test_local_only.py::test_only_the_ollama_client_and_the_downloaders_import_network_libraries`, `tests/test_local_only.py::test_generating_an_ontology_sends_the_text_only_to_the_local_ollama`
 
 #### Cenário: Ollama na própria máquina
 
@@ -117,7 +117,7 @@ Fonte: `omaker/relations/train.py` ; Verificado por: `tests/test_training.py::te
 
 O sistema DEVE rodar no Windows com Python 3.12 (`requires-python = ">=3.12,<3.13"`); a suíte de testes e a montagem do executável DEVEM rodar no Windows do CI.
 
-Fonte: `pyproject.toml`, `.python-version`, `.github/workflows/ci.yml`, `.github/workflows/exe.yml` ; Verificado por: fluxos do CI (`runs-on: windows-latest`)
+Fonte: `pyproject.toml`, `.python-version`, `.github/workflows/ci.yml`, `.github/workflows/exe.yml` ; Verificado por: fluxos do CI (`runs-on: windows-latest`), `tests/test_workflows.py::test_project_requires_python_3_12`, `tests/test_workflows.py::test_tests_and_executable_build_run_on_windows`
 
 #### Cenário: pull request
 
@@ -141,7 +141,7 @@ Fonte: `omaker/paths.py`, `omaker/relations/train.py` ; Verificado por: `tests/t
 
 O sistema DEVE rodar a partir de uma pasta cujo caminho tenha acentos (por exemplo `C:\Projetos\acadêmicos\...`); por isso o projeto NÃO DEVE ser instalado em modo editável, cujo arquivo `.pth` o Python 3.12 do Windows lê em cp1252.
 
-Fonte: `pyproject.toml` (`[tool.uv] package = false`) ; Verificado por: sem teste automatizado (o repositório é desenvolvido numa pasta com acento)
+Fonte: `pyproject.toml` (`[tool.uv] package = false`) ; Verificado por: `tests/test_accented_paths.py::test_project_is_not_installed_in_editable_mode`, `tests/test_accented_paths.py::test_ontology_is_generated_and_updated_in_a_folder_with_accents`, `tests/test_accented_paths.py::test_checkpoint_is_downloaded_to_a_folder_with_accents`
 
 #### Cenário: repositório numa pasta com acento
 
@@ -223,7 +223,7 @@ O executável NÃO DEVE embutir os modelos. Valores medidos na Release v0.3.0: 7
 
 Critério: o passo "Tamanho" do fluxo do executável informa o tamanho da pasta montada; o `.zip` não contém `omaker_pure.pt`.
 
-Fonte: `OMAKER.spec`, `.github/workflows/exe.yml`, `omaker/relations/download.py` ; Verificado por: fluxo `.github/workflows/exe.yml` (passo "Tamanho"); sem teste automatizado de limite de tamanho
+Fonte: `OMAKER.spec`, `.github/workflows/exe.yml`, `omaker/relations/download.py` ; Verificado por: `tests/test_workflows.py::test_executable_does_not_bundle_the_models`, `tests/test_workflows.py::test_executable_workflow_reports_the_size_of_the_built_folder`
 
 #### Cenário: nova versão
 
@@ -261,7 +261,7 @@ Fonte: `tests/conftest.py`, `pyproject.toml` ; Verificado por: `tests/test_ui_sy
 
 Todo push e todo pull request DEVEM passar pelo `ruff check .` (regras E, F, W, B, I, UP e BLE; o limite de tamanho de linha, E501, fica desligado) e pela suíte rápida no CI; o gancho de pré-commit DEVE rodar o ruff e a suíte rápida antes de cada commit local. A `main` NÃO DEVE receber commit direto.
 
-Fonte: `.github/workflows/ci.yml`, `pyproject.toml`, `.pre-commit-config.yaml`, `CONTRIBUTING.md` ; Verificado por: fluxo `.github/workflows/ci.yml`
+Fonte: `.github/workflows/ci.yml`, `pyproject.toml`, `.pre-commit-config.yaml`, `CONTRIBUTING.md` ; Verificado por: fluxo `.github/workflows/ci.yml`, `tests/test_workflows.py::test_ci_runs_lint_and_the_fast_suite_on_every_push_and_pull_request`, `tests/test_workflows.py::test_ruff_rules_are_the_documented_ones`, `tests/test_workflows.py::test_pre_commit_hook_runs_ruff_and_the_fast_suite`
 
 #### Cenário: pull request com erro de lint
 
@@ -299,7 +299,7 @@ Fonte: `omaker/relations/download.py`, `omaker/relations/biored.py` ; Verificado
 
 Os fluxos do CI DEVEM ter só permissão de leitura por padrão, com escrita apenas no passo que anexa o executável à Release, e DEVEM fixar cada ação externa pelo SHA do commit.
 
-Fonte: `.github/workflows/ci.yml`, `.github/workflows/exe.yml` ; Verificado por: inspeção dos fluxos (sem teste automatizado)
+Fonte: `.github/workflows/ci.yml`, `.github/workflows/exe.yml` ; Verificado por: `tests/test_workflows.py::test_workflows_are_read_only_by_default`, `tests/test_workflows.py::test_only_the_release_job_can_write_to_the_repository`, `tests/test_workflows.py::test_every_external_action_is_pinned_by_commit_sha`
 
 #### Cenário: revisão de um fluxo
 

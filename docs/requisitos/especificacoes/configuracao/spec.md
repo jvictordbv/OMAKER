@@ -119,7 +119,7 @@ Fonte: `omaker/ui/pages/settings.py`, `omaker/ui/pages/metadata.py` ; Verificado
 
 Sem preferências gravadas, o sistema DEVE usar o modelo `qwen3:8b`, a temperatura 0,10, a URI base `http://www.mestrado.edu/ontologias/`, o caminho do Protégé vazio e, como pasta de destino, `Documentos/OMAKER` na pasta do usuário (`default_output_dir` em `omaker/paths.py`), nunca a pasta corrente.
 
-Fonte: `omaker/ui/pages/settings.py`, `omaker/llm/client.py` ; Verificado por: `tests/test_ui_pages.py::test_settings_keeps_default_model_when_only_gemini_saved` (modelo padrão), `tests/test_ui_pages.py::test_default_export_folder_does_not_depend_on_the_current_folder` (pasta de destino); os demais padrões não têm teste automatizado
+Fonte: `omaker/ui/pages/settings.py`, `omaker/llm/client.py` ; Verificado por: `tests/test_ui_pages.py::test_settings_keeps_default_model_when_only_gemini_saved` (modelo padrão), `tests/test_ui_pages.py::test_default_export_folder_does_not_depend_on_the_current_folder` (pasta de destino); os demais padrões não têm teste automatizado, `tests/test_ui_pages.py::test_first_run_uses_the_default_model_temperature_uri_and_protege_path`
 
 #### Cenário: primeira execução
 
@@ -144,7 +144,7 @@ Fonte: `omaker/ui/pages/settings.py` ; Verificado por: `tests/test_ui_pages.py::
 
 O sistema DEVE permitir acrescentar à lista um modelo digitado pelo usuário (o nome exato do `ollama list`), sem duplicar nomes já presentes, e DEVE selecioná-lo.
 
-Fonte: `omaker/ui/pages/settings.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/ui/pages/settings.py` ; Verificado por: `tests/test_ui_pages.py::test_typed_model_is_added_to_the_list_and_selected`, `tests/test_ui_pages.py::test_typed_model_already_in_the_list_is_not_duplicated`, `tests/test_ui_pages.py::test_typed_model_already_in_the_list_is_selected`, `tests/test_ui_pages.py::test_blank_model_name_is_not_added`, `tests/test_ui_pages.py::test_added_model_is_saved_with_the_list`
 
 #### Cenário: modelo quantizado
 

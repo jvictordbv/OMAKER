@@ -71,3 +71,34 @@ def test_load_uses_weights_only(tiny_fp16_model, tmp_path, monkeypatch):
 @pytest.mark.slow
 def test_spanbert_roundtrip(tmp_path):
     _roundtrip(MODEL_NAME, tmp_path)
+
+
+def test_pair_whose_object_marker_is_cut_is_no_relation_with_zero_confidence(tiny_fp16_model):
+    from omaker.relations.model import MAX_LENGTH
+
+    model = RelationExtractorPURE(model_name=tiny_fp16_model)
+    long_text = "aspirin " + "prevents " * 300 + "stroke ."
+    obj = long_text.rindex("stroke")
+    cut = dict(text=long_text, sub_span=(0, 7), sub_type="DRUG", obj_span=(obj, obj + 6), obj_type="DISEASE")
+    short = dict(text=SAMPLE_TEXT, sub_span=(0, 7), sub_type="DRUG", obj_span=(17, 23), obj_type="DISEASE")
+    marked = model.mark_text(long_text, cut["sub_span"], "DRUG", cut["obj_span"], "DISEASE")
+    assert len(model.tokenizer(marked)["input_ids"]) > MAX_LENGTH == 256   # o objeto fica depois do token 256
+
+    (rel_cut, conf_cut), (rel_short, conf_short) = model.predict([cut, short])
+    assert (rel_cut, conf_cut) == ("no_relation", 0.0)
+    assert rel_short in REL2ID and 0.0 < conf_short <= 1.0   # o outro par do lote continua classificado
+
+
+def test_pure_input_is_truncated_to_256_tokens(tiny_fp16_model, monkeypatch):
+    model = RelationExtractorPURE(model_name=tiny_fp16_model)
+    seen = []
+    real = model.encoder.forward
+
+    def spy(**enc):
+        seen.append(enc["input_ids"].shape[1])
+        return real(**enc)
+
+    monkeypatch.setattr(model.encoder, "forward", spy)
+    long_text = "aspirin stroke " + "prevents " * 400 + "."
+    model.predict([dict(text=long_text, sub_span=(0, 7), sub_type="DRUG", obj_span=(8, 14), obj_type="DISEASE")])
+    assert seen == [256]

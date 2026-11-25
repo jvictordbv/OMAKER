@@ -10,7 +10,7 @@ Agrupar termos que significam a mesma coisa (por exemplo "fever" e "pyrexia") co
 
 O sistema DEVE calcular os embeddings dos termos com `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`, agrupá-los por agrupamento aglomerativo com ligação média sobre a distância de cosseno (1 menos a similaridade), com limiar de distância 0,25, e DEVE devolver só os grupos com dois ou mais termos.
 
-Fonte: `omaker/nlp/synonyms.py`, `omaker/ui/workers.py` ; Verificado por: sem teste automatizado (o modelo real é exercitado à mão por `scripts/synonyms_gui.py` e pelo bloco principal de `omaker/nlp/synonyms.py`)
+Fonte: `omaker/nlp/synonyms.py`, `omaker/ui/workers.py` ; Verificado por: `tests/test_synonyms.py::test_detector_loads_the_multilingual_minilm_model`, `tests/test_synonyms.py::test_synonyms_are_grouped_and_an_isolated_term_is_left_out`, `tests/test_synonyms.py::test_cosine_distance_threshold_is_0_25`, `tests/test_synonyms.py::test_clustering_uses_average_linkage`
 
 #### Cenário: termos sinônimos e um termo isolado
 
@@ -23,7 +23,7 @@ Fonte: `omaker/nlp/synonyms.py`, `omaker/ui/workers.py` ; Verificado por: sem te
 
 O sistema DEVE devolver nenhum grupo quando receber menos de dois termos e DEVE pedir, na interface, que o usuário informe os termos quando a lista estiver vazia.
 
-Fonte: `omaker/nlp/synonyms.py`, `omaker/ui/pages/synonyms.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/nlp/synonyms.py`, `omaker/ui/pages/synonyms.py` ; Verificado por: `tests/test_synonyms.py::test_fewer_than_two_terms_give_no_group_and_no_embedding`, `tests/test_ui_synonyms.py::test_empty_concepts_field_warns_and_processes_nothing`
 
 #### Cenário: campo vazio
 

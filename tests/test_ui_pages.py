@@ -3,6 +3,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
+
 def test_main_window_composes_pages(qtbot):
     from omaker.ui import main_window as m
     from omaker.ui.pages.generator import GeneratorPage
@@ -101,3 +102,67 @@ def test_default_export_folder_does_not_depend_on_the_current_folder(qtbot, tmp_
     win = m.OntoApp(configuracoes=QSettings(str(tmp_path / "cfg.ini"), QSettings.IniFormat))
     qtbot.addWidget(win)
     assert win.pagina_configuracoes.pasta_exportacao() == str(tmp_path / "casa" / "Documents" / "OMAKER")
+
+
+# ---- CFG-09: valores padrão das preferências
+def test_first_run_uses_the_default_model_temperature_uri_and_protege_path(qtbot, tmp_path):
+    from omaker.ontology.iri import DEFAULT_URI_BASE
+
+    page, _cfg = _settings_page(qtbot, tmp_path)
+    assert [page.combo_modelo.itemText(i) for i in range(page.combo_modelo.count())] == ["qwen3:8b"]
+    assert page.modelo() == "qwen3:8b"
+    assert page.temperatura() == 0.10 and page.lbl_valor_temp.text() == "0.10"
+    assert page.uri_base() == DEFAULT_URI_BASE == "http://www.mestrado.edu/ontologias/"
+    assert page.metadados.input_uri.text() == DEFAULT_URI_BASE
+    assert page.caminho_protege() == "" and page.input_protege.text() == ""
+
+
+# ---- CFG-11: modelo informado pelo usuário
+def _add_model_button(page):
+    from PySide6.QtWidgets import QPushButton
+
+    (btn,) = [b for b in page.findChildren(QPushButton) if b.text() == "➕"]
+    return btn
+
+
+def test_typed_model_is_added_to_the_list_and_selected(qtbot, tmp_path):
+    page, _cfg = _settings_page(qtbot, tmp_path)
+    page.input_novo_modelo.setText("  qwen3:8b-q4_K_M ")
+    _add_model_button(page).click()
+    assert [page.combo_modelo.itemText(i) for i in range(page.combo_modelo.count())] == ["qwen3:8b", "qwen3:8b-q4_K_M"]
+    assert page.modelo() == "qwen3:8b-q4_K_M"
+
+
+def test_typed_model_already_in_the_list_is_not_duplicated(qtbot, tmp_path):
+    page, _cfg = _settings_page(qtbot, tmp_path, lista_modelos_disponiveis=["qwen3:8b", "llama3:8b"],
+                                modelo="llama3:8b")
+    page.input_novo_modelo.setText("qwen3:8b")
+    _add_model_button(page).click()
+    assert [page.combo_modelo.itemText(i) for i in range(page.combo_modelo.count())] == ["qwen3:8b", "llama3:8b"]
+
+
+def test_typed_model_already_in_the_list_is_selected(qtbot, tmp_path):
+    page, _cfg = _settings_page(qtbot, tmp_path, lista_modelos_disponiveis=["qwen3:8b", "llama3:8b"],
+                                modelo="llama3:8b")
+    page.input_novo_modelo.setText("qwen3:8b")
+    _add_model_button(page).click()
+    assert page.modelo() == "qwen3:8b"
+
+
+def test_blank_model_name_is_not_added(qtbot, tmp_path):
+    page, _cfg = _settings_page(qtbot, tmp_path)
+    page.input_novo_modelo.setText("   ")
+    _add_model_button(page).click()
+    assert page.combo_modelo.count() == 1 and page.modelo() == "qwen3:8b"
+
+
+def test_added_model_is_saved_with_the_list(qtbot, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QMessageBox
+
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    page, cfg = _settings_page(qtbot, tmp_path)
+    page.input_novo_modelo.setText("qwen3:8b-q4_K_M")
+    _add_model_button(page).click()
+    page.salvar_configuracoes()
+    assert cfg.value("modelo") == "qwen3:8b-q4_K_M"
+    assert list(cfg.value("lista_modelos_disponiveis")) == ["qwen3:8b", "qwen3:8b-q4_K_M"]

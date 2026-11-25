@@ -2,6 +2,7 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+import pytest  # noqa: E402
 from PySide6 import QtWidgets  # noqa: E402
 
 
@@ -105,3 +106,17 @@ def test_default_settings_are_isolated_in_tests(qtbot):
     win = m.OntoApp()
     qtbot.addWidget(win)
     assert win.pagina_configuracoes.configuracoes.fileName().endswith(".ini")
+
+
+@pytest.mark.parametrize("campo", ["", "  ,  , "])
+def test_empty_concepts_field_warns_and_processes_nothing(qtbot, monkeypatch, tmp_path, campo):
+    from omaker.ui.pages import synonyms
+
+    win, page = _synonyms_page(qtbot, tmp_path)
+    warned, started = [], []
+    monkeypatch.setattr(QtWidgets.QMessageBox, "warning", lambda *a, **k: warned.append(a[2]))
+    monkeypatch.setattr(synonyms, "SynonymWorker", lambda *a, **k: started.append(a))
+    page.input_conceitos_sinonimos.setText(campo)
+    page.btn_rodar_sinonimos.click()
+    assert warned == ["Insira pelo menos dois conceitos."]
+    assert started == [] and page.btn_rodar_sinonimos.isEnabled()
