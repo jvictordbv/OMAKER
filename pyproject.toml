@@ -1,6 +1,6 @@
 [project]
 name = "omaker"
-version = "0.3.0"
+version = "0.3.1"
 description = "OMAKER: texto biomedico para ontologia OWL (NER + LLM local + classificador de relacoes PURE)"
 requires-python = ">=3.12,<3.13"
 license = "AGPL-3.0-only"

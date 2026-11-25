@@ -1,6 +1,6 @@
 # Documentação do OMAKER
 
-Documentação técnica da versão 0.3.0. Ela descreve o sistema como ele é hoje; o que ainda não foi implementado aparece marcado como "Proposto".
+Documentação técnica da versão 0.3.1. Ela descreve o sistema como ele é hoje; o que ainda não foi implementado aparece marcado como "Proposto".
 
 ## Como ler
 
