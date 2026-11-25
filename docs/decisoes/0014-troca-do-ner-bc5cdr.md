@@ -54,6 +54,10 @@ Esperadas, se a proposta for aceita.
 - **Tipo GENE.** O modelo não reconhece genes; o tipo deixaria de vir do NER e passaria a depender só do LLM.
 - A troca exige refazer a avaliação de ponta a ponta, que é longa.
 
+## Andamento
+
+- 2026-11-25: o modelo do BC5CDR passou a ser escolhível, sem mudar o padrão: `OMAKER_NER_MODEL=bc5cdr` (requisitos CFG-13 e ENT-14), com a tipagem de sintomas pela Symptom Ontology proposta acima. Para comparar: `uv run python -m omaker.evaluation.ner_biored --ner bc5cdr`. A decisão de trocar o padrão continua com o João Victor.
+
 ## Referências
 
 - `omaker/nlp/ner.py` (`BiomedicalNER`), `omaker/domain/labels.py` (`NER_MODEL_NAME`, `ALLOWED_TYPE_PAIRS`), `omaker/evaluation/ner_biored.py`, `omaker/ontology/alignment.py`.

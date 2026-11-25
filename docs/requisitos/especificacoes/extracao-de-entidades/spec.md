@@ -188,3 +188,16 @@ Fonte: `omaker/pipeline/engine.py` ; Verificado por: `tests/test_engine_extracti
 - **DADO** um texto que não cita fármacos, sintomas nem doenças
 - **QUANDO** o usuário gera a ontologia
 - **ENTÃO** a geração falha com essa mensagem e nenhum arquivo `.owl` é gravado
+
+### Requisito: Rótulos e sintomas com o NER do BC5CDR (ENT-14)
+
+Com `OMAKER_NER_MODEL=bc5cdr`, o sistema DEVE tipar as menções `Chemical` como `DRUG` e `Disease` como `DISEASE`, e DEVE tipar como `SYMPTOM` a doença cujo texto normalizado seja um rótulo ou sinônimo exato da Symptom Ontology empacotada (`omaker/resources/symp.owl`, lida uma vez por processo). Com o NER padrão, esse retipamento NÃO DEVE acontecer.
+
+Fonte: `omaker/nlp/ner.py`, `omaker/ontology/alignment.py` ; Verificado por: `tests/test_ner_model.py::test_bc5cdr_maps_chemical_to_drug_and_disease_to_disease`, `tests/test_ner_model.py::test_each_model_ignores_the_labels_of_the_other`, `tests/test_ner_model.py::test_bc5cdr_disease_matching_the_symptom_ontology_becomes_symptom`, `tests/test_ner_model.py::test_d4data_does_not_retype_diseases_by_the_symptom_ontology`, `tests/test_ner_model.py::test_symptom_terms_are_labels_and_exact_synonyms_loaded_once_from_the_package`
+
+#### Cenário: sintoma reconhecido pela Symptom Ontology
+
+- **DADO** `OMAKER_NER_MODEL=bc5cdr` e o texto "The drug caused nausea and nephrotoxicity."
+- **QUANDO** o NER marca "nausea" e "nephrotoxicity" como `Disease`
+- **ENTÃO** "nausea", que é rótulo da Symptom Ontology, fica `SYMPTOM`
+- **E** "nephrotoxicity" continua `DISEASE`

@@ -66,6 +66,20 @@ def test_llm_prompt_defaults_to_handwritten():
     assert llm_prompt({"OMAKER_LLM_PROMPT": " Optimized "}) == "optimized"
 
 
+def test_ner_model_defaults_to_d4data():
+    from omaker.config import ner_model
+
+    assert ner_model({}) == ner_model({"OMAKER_NER_MODEL": "  "}) == "d4data"
+    assert ner_model({"OMAKER_NER_MODEL": " BC5CDR "}) == "bc5cdr"
+
+
+def test_invalid_ner_model_raises_with_the_valid_values():
+    from omaker.config import ner_model
+
+    with pytest.raises(ValueError, match="OMAKER_NER_MODEL.*d4data ou bc5cdr"):
+        ner_model({"OMAKER_NER_MODEL": "bc5"})
+
+
 def test_invalid_llm_prompt_raises():
     from omaker.config import llm_prompt
 

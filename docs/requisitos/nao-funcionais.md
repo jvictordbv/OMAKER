@@ -337,9 +337,9 @@ Fonte: `omaker/domain/text.py`, `omaker/ui/pages/runner.py` ; Verificado por: `t
 
 ### Requisito: Modelos do Hugging Face com revisão fixa (RNF-24)
 
-O sistema DEVE carregar o NER, o SpanBERT e o Sentence-BERT numa revisão fixa (o commit, com 40 dígitos hexadecimais, guardado ao lado do nome do modelo), para que uma atualização no Hugging Face não mude os resultados sem aviso.
+O sistema DEVE carregar o NER (o padrão e o do BC5CDR), o SpanBERT e o Sentence-BERT numa revisão fixa (o commit, com 40 dígitos hexadecimais, guardado ao lado do nome do modelo), para que uma atualização no Hugging Face não mude os resultados sem aviso.
 
-Fonte: `omaker/domain/labels.py` (`MODEL_REVISION`, `NER_MODEL_REVISION`), `omaker/nlp/synonyms.py` (`SYNONYM_MODEL_REVISION`), `omaker/nlp/ner.py`, `omaker/relations/model.py` ; Verificado por: `tests/test_model_revisions.py::test_revisions_are_full_commit_hashes`, `tests/test_model_revisions.py::test_ner_pipeline_gets_pinned_revision`, `tests/test_model_revisions.py::test_sentence_bert_gets_pinned_revision`, `tests/test_model_revisions.py::test_pure_pins_spanbert_revision_in_training_and_load`
+Fonte: `omaker/domain/labels.py` (`MODEL_REVISION`, `NER_MODEL_REVISION`), `omaker/nlp/synonyms.py` (`SYNONYM_MODEL_REVISION`), `omaker/nlp/ner.py`, `omaker/relations/model.py` ; Verificado por: `tests/test_model_revisions.py::test_revisions_are_full_commit_hashes`, `tests/test_model_revisions.py::test_ner_pipeline_gets_pinned_revision`, `tests/test_model_revisions.py::test_bc5cdr_ner_pipeline_gets_its_pinned_revision`, `tests/test_model_revisions.py::test_sentence_bert_gets_pinned_revision`, `tests/test_model_revisions.py::test_pure_pins_spanbert_revision_in_training_and_load`
 
 #### Cenário: modelo atualizado no Hugging Face
 

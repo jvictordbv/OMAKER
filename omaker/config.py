@@ -10,6 +10,8 @@ Variáveis reconhecidas:
 - OMAKER_LLM_SEED: semente enviada ao Ollama (padrão: nenhuma); a avaliação usa 0 para reprodutibilidade.
 - OMAKER_LLM_PROMPT: prompt de relações do LLM: default (o escrito à mão) ou optimized (o exportado por
   python -m omaker.llm.optimize --install, em omaker/llm/prompts/relations_optimized.json).
+- OMAKER_NER_MODEL: NER biomédico: d4data (padrão, d4data/biomedical-ner-all) ou bc5cdr
+  (judithrosell/BC5CDR_PubMedBERT_NER, com sintomas tipados pela Symptom Ontology).
 
 As preferências da interface (modelo, temperatura, pastas, Protégé) ficam no QSettings da GUI.
 """
@@ -23,6 +25,7 @@ from pathlib import Path
 DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 ENTITY_SOURCES = ("ner", "llm", "both")
 LLM_PROMPTS = ("default", "optimized")
+NER_MODELS = ("d4data", "bc5cdr")
 
 
 @dataclass(frozen=True)
@@ -66,6 +69,15 @@ def llm_prompt(env: Mapping[str, str] | None = None) -> str:
     value = env.get("OMAKER_LLM_PROMPT", "").strip().lower() or "default"
     if value not in LLM_PROMPTS:
         raise ValueError(f"OMAKER_LLM_PROMPT='{env.get('OMAKER_LLM_PROMPT')}' inválido; use default ou optimized.")
+    return value
+
+
+def ner_model(env: Mapping[str, str] | None = None) -> str:
+    """Validated OMAKER_NER_MODEL. Checked only where the NER is created."""
+    env = os.environ if env is None else env
+    value = env.get("OMAKER_NER_MODEL", "").strip().lower() or "d4data"
+    if value not in NER_MODELS:
+        raise ValueError(f"OMAKER_NER_MODEL='{env.get('OMAKER_NER_MODEL')}' inválido; use d4data ou bc5cdr.")
     return value
 
 

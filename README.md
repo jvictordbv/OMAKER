@@ -97,6 +97,7 @@ Variáveis de ambiente opcionais, lidas na hora do uso:
 | `OMAKER_NO_DOWNLOAD` | (desligado) | `1` impede o download automático do checkpoint |
 | `OMAKER_LLM_SEED` | (nenhuma) | Semente enviada ao Ollama |
 | `OMAKER_LLM_PROMPT` | `default` | Prompt de relações do LLM: `default` (escrito à mão) ou `optimized` (ver [Otimização do prompt](#otimização-do-prompt-de-relações-do-llm-dspy-opcional)) |
+| `OMAKER_NER_MODEL` | `d4data` | NER biomédico: `d4data` (`d4data/biomedical-ner-all`) ou `bc5cdr` (`judithrosell/BC5CDR_PubMedBERT_NER`; só químicos e doenças, e as doenças com rótulo ou sinônimo exato na Symptom Ontology viram sintomas) |
 | `OMAKER_JAVA` | (procura automática) | `java.exe` usado pelo HermiT |
 
 As preferências da interface (modelo, temperatura, pastas, Protégé) ficam salvas pelo próprio programa.
@@ -158,6 +159,8 @@ uv run python -m omaker.evaluation.e2e --gold-biored --model qwen3:8b-q4_K_M [--
 ```
 
 Nele, cada nome previsto é ligado aos conceitos anotados no resumo, e cada par conta um acerto só. Previsões fora do que o BioRED anota (pares doença e doença, relações de rótulo incerto como `Association`) são ignoradas; entidades que o BioRED não anotou contam como erro. O protocolo completo está em `omaker/evaluation/biored_gold.py`.
+
+Para comparar só os dois NER contra as menções de químicos e doenças do teste do BioRED, rode `uv run python -m omaker.evaluation.ner_biored` (o NER padrão) e `uv run python -m omaker.evaluation.ner_biored --ner bc5cdr` (o BC5CDR, com o mesmo pós-processamento e a tipagem de sintomas do pipeline).
 
 O gabarito fica em `omaker/evaluation/gold/samples.json`. O LLM roda com temperatura 0 e semente fixa, e o relatório aponta frases do gabarito que estejam nos dados de treino do PURE.
 

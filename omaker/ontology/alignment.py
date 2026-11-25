@@ -28,16 +28,16 @@ def _deprecated(cls) -> bool:
     return any(str(v).strip().lower() == "true" for v in getattr(cls, "deprecated", []))
 
 
-def build_label_index(onto) -> dict:
-    """Termo normalizado para classe: rótulos primeiro, depois sinônimos exatos, depois nomes.
-    Ficam de fora as classes criadas pelo OMAKER (OMAKER_NAMESPACE) e as obsoletas (owl:deprecated),
-    que na SYMP compartilham sinônimos com as classes em uso ("mammitis", "apoplexy")."""
+def build_label_index(onto, names: bool = True) -> dict:
+    """Termo normalizado para classe: rótulos primeiro, depois sinônimos exatos, depois nomes (names=False
+    deixa os nomes de fora). Ficam de fora as classes criadas pelo OMAKER (OMAKER_NAMESPACE) e as obsoletas
+    (owl:deprecated), que na SYMP compartilham sinônimos com as classes em uso ("mammitis", "apoplexy")."""
     classes = [c for c in onto.classes() if not c.iri.startswith(OMAKER_NAMESPACE) and not _deprecated(c)]
     synonym = onto.world[EXACT_SYNONYM]
     index: dict = {}
     for keys_of in (lambda c: c.label,
                     lambda c: synonym[c] if synonym is not None else [],
-                    lambda c: [c.name]):
+                    lambda c: [c.name] if names else []):
         for cls in classes:
             for key in keys_of(cls):
                 index.setdefault(norm_term(key), cls)
