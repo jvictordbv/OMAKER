@@ -208,3 +208,21 @@ def test_missing_checkpoint_is_downloaded_before_falling_back_to_the_llm(fake_ol
                                             client=OllamaClient("qwen3:8b", fake_ollama.host))
     assert asked == [tmp_path / "omaker_pure.pt"]                                          # tentou baixar
     assert [(t[0], t[2], t[3]) for t in triples] == [("Aspirin", "prevents", "stroke")]   # e caiu no LLM
+
+
+def test_updater_keeps_a_backup_of_the_original_owl(monkeypatch, tmp_path):
+    """O Atualizador sobrescreve o .owl; antes, guarda uma cópia do original ao lado dele."""
+    from omaker.ontology import builder as owl_builder
+    original = tmp_path / "a.owl"
+    original.write_text("<rdf>original</rdf>", encoding="utf-8")
+    monkeypatch.setattr(he.HybridEngine, "extrair", staticmethod(lambda texto, modelo, temp, log, **k: (EMPTY_TAX, [])))
+    monkeypatch.setattr(owl_builder, "load_world_ontology", lambda path: (object(), object()))
+    monkeypatch.setattr(owl_builder, "populate", lambda onto, tax, triples, log=print: 0)
+    monkeypatch.setattr(owl_builder, "run_reasoner", lambda world, log=print, java_exe="": owl_builder.ReasonerStatus.UNAVAILABLE)
+    monkeypatch.setattr(owl_builder, "save", lambda onto, path: open(path, "w", encoding="utf-8").write("<rdf>novo</rdf>"))
+    logs = []
+    he.HybridEngine.atualizar_ontologia(str(original), "txt", logs.append)
+    (backup,) = tmp_path.glob("a.backup-*.owl")
+    assert backup.read_text(encoding="utf-8") == "<rdf>original</rdf>"
+    assert original.read_text(encoding="utf-8") == "<rdf>novo</rdf>"
+    assert any(backup.name in line for line in logs), logs

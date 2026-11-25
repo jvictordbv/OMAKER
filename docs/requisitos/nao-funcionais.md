@@ -126,7 +126,7 @@ Fonte: `pyproject.toml`, `.python-version`, `.github/workflows/ci.yml`, `.github
 
 ### Requisito: Independência da pasta corrente (RNF-08)
 
-O sistema DEVE achar o checkpoint, os recursos do pacote e os caminhos relativos das configurações de treino a partir da raiz do projeto, e não da pasta corrente. Exceção conhecida: o padrão da pasta de destino na primeira execução é a pasta corrente ([CFG-09](especificacoes/configuracao/spec.md)).
+O sistema DEVE achar o checkpoint, os recursos do pacote e os caminhos relativos das configurações de treino a partir da raiz do projeto, e não da pasta corrente. A pasta de destino padrão também não depende dela ([CFG-09](especificacoes/configuracao/spec.md)).
 
 Fonte: `omaker/paths.py`, `omaker/relations/train.py` ; Verificado por: `tests/test_paths.py::test_checkpoint_path_independent_of_cwd`, `tests/test_ui_synonyms.py::test_synonyms_default_independent_of_cwd`
 

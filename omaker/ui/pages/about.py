@@ -7,6 +7,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from omaker import __version__
+
 
 class AboutPage(QWidget):
     def __init__(self):
@@ -30,7 +32,7 @@ class AboutPage(QWidget):
         layout_card.setContentsMargins(30, 30, 30, 30)
         layout_card.setSpacing(12)
 
-        lbl_nome_app = QLabel("OMAKER v1.0.0")
+        lbl_nome_app = QLabel(f"OMAKER v{__version__}")
         lbl_nome_app.setStyleSheet("color: #06b6d4; font-size: 24px; font-weight: 900; letter-spacing: 1px;")
 
         lbl_desc = QLabel("<b>OMAKER</b> (Ontology Mapping & Knowledge Engineering Resource) é um ambiente computacional "

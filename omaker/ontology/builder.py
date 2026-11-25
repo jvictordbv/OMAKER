@@ -182,6 +182,18 @@ def run_reasoner(world, log=print, java_exe: str = "") -> ReasonerStatus:
         return ReasonerStatus.UNAVAILABLE
 
 
+def backup_copy(path: str) -> str | None:
+    """Cópia do arquivo ao lado dele (<nome>.backup-AAAAMMDD-HHMMSS<extensão>), antes de sobrescrevê-lo."""
+    from datetime import datetime
+
+    if not os.path.isfile(path):
+        return None
+    stem, ext = os.path.splitext(path)
+    dest = f"{stem}.backup-{datetime.now():%Y%m%d-%H%M%S}{ext}"
+    shutil.copy2(path, dest)
+    return dest
+
+
 def save(onto, path: str):
     onto.save(file=path, format="rdfxml")
     return path

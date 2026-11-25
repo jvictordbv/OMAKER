@@ -173,6 +173,9 @@ class HybridEngine:
         world, onto = owl_builder.load_world_ontology(caminho_owl)
         added = owl_builder.populate(onto, taxonomy, triples, log_callback)
         status = owl_builder.run_reasoner(world, log_callback, find_java(protege_exe) or "")
+        backup = owl_builder.backup_copy(caminho_owl)   # o .owl é sobrescrito: guarda o original ao lado
+        if backup:
+            log_callback(f"> [BACKUP] Original ontology kept at {backup}")
         owl_builder.save(onto, caminho_owl)
         log_callback("\n> [SUCCESS] Merge finished.")
         return OntologyResult(caminho_owl, status, added)

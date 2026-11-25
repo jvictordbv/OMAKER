@@ -133,3 +133,16 @@ Fonte: `omaker/ontology/builder.py` ; Verificado por: `tests/test_alignment.py::
 - **DADO** uma ontologia nova do OMAKER
 - **QUANDO** ela recebe "nausea" (`SYMPTOM`) e "aspirin" (`DRUG`)
 - **ENTÃO** "nausea" fica na classe `Symptom` e o log não tem "[ALIGN]"
+
+### Requisito: Cópia de segurança antes de sobrescrever (ATU-10)
+
+Antes de gravar a ontologia atualizada por cima do arquivo escolhido, o sistema DEVE copiar o original para `<nome>.backup-AAAAMMDD-HHMMSS.owl`, na mesma pasta, e registrar no log onde a cópia ficou.
+
+Fonte: `omaker/ontology/builder.py` (`backup_copy`), `omaker/pipeline/engine.py` ; Verificado por: `tests/test_hybrid_engine.py::test_updater_keeps_a_backup_of_the_original_owl`
+
+#### Cenário: atualizar uma ontologia existente
+
+- **DADO** um arquivo `a.owl` escolhido no Atualizador
+- **QUANDO** a atualização termina
+- **ENTÃO** `a.owl` tem a ontologia atualizada
+- **E** `a.backup-<data>-<hora>.owl` guarda o conteúdo original, e o log mostra o nome da cópia

@@ -171,3 +171,15 @@ Fonte: `omaker/ui/pages/generator.py`, `omaker/ontology/protege.py` ; Verificado
 - **DADO** uma geração que gravou o arquivo `.owl`
 - **QUANDO** ela termina
 - **ENTÃO** o botão "Abrir no Protégé" fica habilitado
+
+### Requisito: Versão na página Sobre (INT-12)
+
+A página Sobre DEVE mostrar a versão do pacote (`omaker.__version__`), a mesma do `pyproject.toml`.
+
+Fonte: `omaker/ui/pages/about.py` ; Verificado por: `tests/test_ui_pages.py::test_about_page_shows_the_package_version`, `tests/test_packaging.py` (versão do pacote igual à do `pyproject.toml`)
+
+#### Cenário: nova versão
+
+- **DADO** a versão 0.3.0 em `pyproject.toml` e em `omaker/__init__.py`
+- **QUANDO** o usuário abre a página Sobre
+- **ENTÃO** ela mostra "OMAKER v0.3.0"
