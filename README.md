@@ -212,7 +212,7 @@ uv run ruff check .
 
 ## Documentação técnica
 
-A pasta [`docs/`](docs/README.md) traz a documentação de engenharia: requisitos por capacidade, com cenários verificáveis e rastreabilidade até os testes; arquitetura, com contexto, blocos, execução, implantação e riscos; e [registros de decisão](docs/decisoes/README.md).
+A pasta [`docs/`](docs/README.md) traz a documentação de engenharia: [requisitos](docs/requisitos/README.md) por capacidade, com cenários verificáveis e rastreabilidade até os testes; arquitetura, com contexto, blocos, execução, implantação e riscos; e [registros de decisão](docs/decisoes/README.md).
 
 ## Contribuindo
 

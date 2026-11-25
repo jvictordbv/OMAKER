@@ -6,7 +6,7 @@ Documentação técnica da versão 0.3.0. Ela descreve o sistema como ele é hoj
 
 | Se você quer... | Comece por |
 |---|---|
-| Saber o que o sistema faz e com que garantias | Requisitos (em preparação) |
+| Saber o que o sistema faz e com que garantias | [Requisitos](requisitos/README.md) |
 | Entender como ele é construído e por quê | Arquitetura (em preparação) |
 | Saber por que uma escolha foi feita e o que ela custou | [Registros de decisão](decisoes/README.md) |
 | Instalar, usar, treinar ou avaliar | [README do repositório](../README.md) |
