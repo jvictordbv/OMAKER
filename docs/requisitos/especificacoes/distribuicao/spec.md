@@ -77,7 +77,7 @@ Fonte: `omaker/self_check.py`, `omaker/__main__.py` ; Verificado por: `tests/tes
 
 O fluxo do executável DEVE falhar se o `--self-check` do executável montado terminar com código diferente de 0, DEVE compactar a pasta em `OMAKER-windows.zip` e, numa tag `v*`, DEVE anexar o `.zip` à Release da tag, criando-a se não existir; só esse último passo tem permissão de escrita no repositório.
 
-Fonte: `.github/workflows/exe.yml` ; Verificado por: sem teste automatizado (o próprio fluxo do CI é a verificação)
+Fonte: `.github/workflows/exe.yml` ; Verificado por: `tests/test_workflows.py::test_executable_workflow_fails_when_self_check_fails_and_zips_the_folder`, `tests/test_workflows.py::test_release_job_attaches_the_zip_to_the_tag_release_creating_it_if_needed`
 
 #### Cenário: tag de versão
 

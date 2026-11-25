@@ -59,7 +59,7 @@ Fonte: `omaker/llm/client.py` ; Verificado por: `tests/test_llm_client.py::test_
 
 O sistema DEVE enviar em cada pedido o esquema JSON esperado (campo `format`) e `think` desligado, e DEVE ler a resposta removendo um bloco `<think>...</think>` e uma cerca de código antes de interpretar o JSON; se o Ollama recusar o campo `think` (erro 400), o pedido DEVE ser repetido sem ele.
 
-Fonte: `omaker/llm/client.py` ; Verificado por: `tests/test_llm_client.py::test_parses_think_block_and_fenced_json`; a repetição sem `think` não tem teste automatizado
+Fonte: `omaker/llm/client.py` ; Verificado por: `tests/test_llm_client.py::test_parses_think_block_and_fenced_json`; a repetição sem `think` não tem teste automatizado, `tests/test_llm_client.py::test_request_is_repeated_without_think_when_ollama_rejects_it`, `tests/test_llm_client.py::test_other_400_errors_are_not_repeated`
 
 #### Cenário: resposta com raciocínio e cerca
 
@@ -102,7 +102,7 @@ Fonte: `omaker/llm/client.py` ; Verificado por: `tests/test_llm_client.py::test_
 
 O sistema DEVE pedir ao Ollama uma janela de contexto de 8.192 tokens (`num_ctx`), para que prompts longos não sejam cortados em silêncio, e DEVE usar um tempo limite de 600 s por pedido.
 
-Fonte: `omaker/llm/client.py` ; Verificado por: `tests/test_llm_client.py::test_parses_think_block_and_fenced_json` (`num_ctx`); o tempo limite de 600 s não tem teste automatizado
+Fonte: `omaker/llm/client.py` ; Verificado por: `tests/test_llm_client.py::test_parses_think_block_and_fenced_json` (`num_ctx`); o tempo limite de 600 s não tem teste automatizado, `tests/test_llm_client.py::test_each_request_uses_a_600_second_timeout_and_8192_token_context`
 
 #### Cenário: opções do pedido
 

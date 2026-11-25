@@ -110,3 +110,50 @@ def test_atualizar_returns_ontology_result(tmp_path, monkeypatch, sample_extract
     assert result.path == first.path
     assert result.reasoner is ReasonerStatus.UNAVAILABLE
     assert isinstance(result.relations_added, int)
+
+
+EMPTY_TAX = {"classes": {}, "instances": {}, "disjoint": []}
+
+
+def _new_onto(taxonomy=EMPTY_TAX, triples=()):
+    _world, onto = owl_builder.new_world_ontology("http://t.org/nova.owl")
+    owl_builder.populate(onto, taxonomy, list(triples), log=lambda m: None)
+    return onto
+
+
+# ---- ONT-06: estrutura básica da ontologia
+def test_new_ontology_has_the_root_and_the_four_base_classes():
+    onto = _new_onto()
+    root = onto["BiomedicalEntity"]
+    assert root is not None and owl_builder.Thing in root.is_a
+    for base in ("Drug", "Symptom", "Disease", "Gene"):
+        assert onto[base].is_a == [root], base
+
+
+def test_new_ontology_has_the_three_object_properties_with_drug_domain_on_treats_and_prevents():
+    onto = _new_onto()
+    for rel in ("treats", "causes", "prevents"):
+        assert issubclass(onto[rel], owl_builder.ObjectProperty), rel
+    assert onto["treats"].domain == [onto["Drug"]]
+    assert onto["prevents"].domain == [onto["Drug"]]
+    assert onto["causes"].domain == []
+
+
+def test_new_ontology_declares_the_base_classes_disjoint():
+    onto = _new_onto()
+    bases = {onto[b] for b in ("Drug", "Symptom", "Disease", "Gene")}
+    assert [set(d.entities) for d in onto.disjoint_classes()] == [bases]
+
+
+# ---- ONT-07: indivíduos
+def test_individual_gets_a_safe_identifier_and_the_original_text_as_label():
+    onto = _new_onto({"classes": {}, "instances": {"back pain": "Symptom"}, "disjoint": []})
+    ind = onto["back_pain"]
+    assert ind is not None and ind.label == ["back pain"] and onto["Symptom"] in ind.is_a
+
+
+def test_individual_named_like_a_class_gets_the_ind_suffix():
+    onto = _new_onto({"classes": {"Fever": "Symptom"}, "instances": {"Fever": "Fever"}, "disjoint": []})
+    ind = onto["Fever_ind"]
+    assert ind is not None and ind.label == ["Fever"] and ind.is_a == [onto["Fever"]]
+    assert isinstance(onto["Fever"], owl_builder.owlready2.ThingClass)   # a classe continua sendo classe

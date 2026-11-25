@@ -96,7 +96,7 @@ Fonte: `omaker/llm/taxonomy.py` ; Verificado por: `tests/test_hybrid_engine.py::
 
 O sistema DEVE criar a classe raiz `BiomedicalEntity`, as classes-base `Drug`, `Symptom`, `Disease` e `Gene` como subclasses dela, as propriedades de objeto `treats`, `causes` e `prevents` (com domínio `Drug` em `treats` e `prevents`) e um axioma que declara as classes-base disjuntas entre si.
 
-Fonte: `omaker/ontology/builder.py`, `omaker/domain/labels.py` ; Verificado por: `tests/test_alignment.py::test_unrelated_external_ontology_gets_omaker_bases` (criação da raiz e das classes-base); as propriedades e a disjunção das classes-base não têm teste automatizado direto
+Fonte: `omaker/ontology/builder.py`, `omaker/domain/labels.py` ; Verificado por: `tests/test_alignment.py::test_unrelated_external_ontology_gets_omaker_bases` (criação da raiz e das classes-base); as propriedades e a disjunção das classes-base não têm teste automatizado direto, `tests/test_owl_builder.py::test_new_ontology_has_the_root_and_the_four_base_classes`, `tests/test_owl_builder.py::test_new_ontology_has_the_three_object_properties_with_drug_domain_on_treats_and_prevents`, `tests/test_owl_builder.py::test_new_ontology_declares_the_base_classes_disjoint`
 
 #### Cenário: ontologia nova
 
@@ -108,7 +108,7 @@ Fonte: `omaker/ontology/builder.py`, `omaker/domain/labels.py` ; Verificado por:
 
 O sistema DEVE criar um indivíduo por entidade única, com identificador seguro para OWL e `rdfs:label` igual ao texto original, e DEVE acrescentar o sufixo `_ind` ao identificador que coincidir com o nome de uma classe.
 
-Fonte: `omaker/ontology/builder.py`, `omaker/domain/text.py` ; Verificado por: `tests/test_alignment.py::test_new_ontology_unchanged` (indivíduo localizado pelo rótulo e tipado pela classe-base); o sufixo `_ind` não tem teste automatizado
+Fonte: `omaker/ontology/builder.py`, `omaker/domain/text.py` ; Verificado por: `tests/test_alignment.py::test_new_ontology_unchanged` (indivíduo localizado pelo rótulo e tipado pela classe-base); o sufixo `_ind` não tem teste automatizado, `tests/test_owl_builder.py::test_individual_gets_a_safe_identifier_and_the_original_text_as_label`, `tests/test_owl_builder.py::test_individual_named_like_a_class_gets_the_ind_suffix`
 
 #### Cenário: entidade com espaço
 

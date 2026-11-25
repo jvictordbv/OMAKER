@@ -170,3 +170,52 @@ def test_calibration_failure_keeps_the_model_and_says_so(tmp_path, monkeypatch):
     logs = []
     assert dl.ensure_pure_checkpoint(dest, logs.append) is True   # o PURE roda, sem calibração
     assert any("without calibration" in line and "sem internet" in line for line in logs), logs
+
+
+# ---- MOD-26: download explícito (python -m omaker.relations.download)
+@pytest.fixture
+def published_payload(monkeypatch):
+    """A Release falsa serve PAYLOAD (modelo e calibração) por uma sessão falsa; os sha256 publicados passam a ser o dele."""
+    import requests
+
+    sessions = []
+
+    def make_session():
+        sessions.append(FakeSession())
+        return sessions[-1]
+
+    monkeypatch.setattr(requests, "Session", make_session)
+    monkeypatch.setitem(dl.PURE_MODEL, "sha256", SHA)
+    monkeypatch.setitem(dl.PURE_MODEL, "calibration_sha256", SHA)
+    return sessions
+
+
+def test_download_command_downloads_even_with_automatic_download_disabled(tmp_path, monkeypatch, published_payload):
+    monkeypatch.setenv("OMAKER_NO_DOWNLOAD", "1")
+    dest = tmp_path / "modelos" / "omaker_pure.pt"
+    assert dl.main(["--dest", str(dest)]) == 0
+    assert dest.read_bytes() == PAYLOAD
+    assert dl.calibration_path(dest).read_bytes() == PAYLOAD
+    assert published_payload   # a sessão (falsa) foi de fato usada
+
+
+def test_download_command_uses_the_default_checkpoint_path_without_dest(tmp_path, monkeypatch, published_payload):
+    from omaker import paths
+
+    default = tmp_path / "padrao" / "omaker_pure.pt"
+    monkeypatch.setattr(paths, "default_checkpoint_path", lambda: default)
+    assert dl.main([]) == 0
+    assert default.read_bytes() == PAYLOAD
+
+
+def test_download_command_exits_with_1_on_failure(tmp_path, monkeypatch):
+    import requests
+
+    class OfflineSession:
+        def get(self, *a, **k):
+            raise requests.ConnectionError("sem internet")
+
+    monkeypatch.setattr(requests, "Session", OfflineSession)
+    dest = tmp_path / "omaker_pure.pt"
+    assert dl.main(["--dest", str(dest)]) == 1
+    assert not dest.exists()

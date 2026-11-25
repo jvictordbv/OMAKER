@@ -363,7 +363,7 @@ Fonte: `omaker/relations/download.py` ; Verificado por: `tests/test_download.py:
 
 O comando `python -m omaker.relations.download` DEVE baixar o checkpoint para o caminho padrão, ou para `--dest`, mesmo com `OMAKER_NO_DOWNLOAD` definido, e DEVE terminar com código 0 em caso de sucesso e 1 em caso de falha.
 
-Fonte: `omaker/relations/download.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/relations/download.py` ; Verificado por: `tests/test_download.py::test_download_command_downloads_even_with_automatic_download_disabled`, `tests/test_download.py::test_download_command_uses_the_default_checkpoint_path_without_dest`, `tests/test_download.py::test_download_command_exits_with_1_on_failure`
 
 #### Cenário: baixar antes de usar
 

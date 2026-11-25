@@ -29,7 +29,7 @@ Fonte: `omaker/pipeline/engine.py`, `omaker/config.py` ; Verificado por: `tests/
 
 O sistema DEVE rodar o NER `d4data/biomedical-ner-all` frase a frase, com agregação dos subtokens, e DEVE converter as posições de cada menção para posições no texto completo.
 
-Fonte: `omaker/nlp/ner.py`, `omaker/domain/labels.py` ; Verificado por: sem teste automatizado (o modelo real é exercitado à mão por `scripts/ner_smoke.py`)
+Fonte: `omaker/nlp/ner.py`, `omaker/domain/labels.py` ; Verificado por: `tests/test_ner_model.py::test_ner_uses_the_biomedical_model_with_subtoken_aggregation`, `tests/test_ner_model.py::test_ner_runs_sentence_by_sentence_and_offsets_count_from_the_start_of_the_text`
 
 #### Cenário: texto com várias frases
 
@@ -41,7 +41,7 @@ Fonte: `omaker/nlp/ner.py`, `omaker/domain/labels.py` ; Verificado por: sem test
 
 O sistema DEVE aceitar do NER só os rótulos `medication` (vira `DRUG`), `sign_symptom` (vira `SYMPTOM`) e `disease_disorder` (vira `DISEASE`), com pontuação de pelo menos 0,5, e DEVE registrar no log até 10 detecções descartadas, com o rótulo e a pontuação.
 
-Fonte: `omaker/nlp/ner.py`, `omaker/pipeline/engine.py` ; Verificado por: `tests/test_hybrid_engine.py::test_merge_both_sources` (registro das descartadas); o mapeamento e o limite de 0,5 não têm teste automatizado
+Fonte: `omaker/nlp/ner.py`, `omaker/pipeline/engine.py` ; Verificado por: `tests/test_hybrid_engine.py::test_merge_both_sources` (registro das descartadas); o mapeamento e o limite de 0,5 não têm teste automatizado, `tests/test_ner_model.py::test_ner_maps_only_the_three_accepted_labels`, `tests/test_ner_model.py::test_ner_ignores_labels_outside_the_mapping_and_records_them`, `tests/test_ner_model.py::test_ner_keeps_detections_with_score_of_at_least_one_half`, `tests/test_ner_model.py::test_engine_logs_the_ignored_detection_with_label_and_score`, `tests/test_ner_model.py::test_engine_logs_at_most_ten_ignored_detections`
 
 #### Cenário: rótulo fora do mapeamento
 
@@ -72,7 +72,7 @@ Fonte: `omaker/nlp/ner.py` ; Verificado por: `tests/test_ner_labels.py::test_lab
 
 O sistema DEVE estender cada menção do NER até os limites da palavra (caracteres alfanuméricos vizinhos), porque o NER às vezes corta pedaços de palavra.
 
-Fonte: `omaker/nlp/ner.py` ; Verificado por: sem teste automatizado em `omaker/nlp/ner.py`; a função equivalente do NER de avaliação é verificada por `tests/test_ner_biored.py::test_snap_expands_to_the_whole_word`
+Fonte: `omaker/nlp/ner.py` ; Verificado por: sem teste automatizado em `omaker/nlp/ner.py`; a função equivalente do NER de avaliação é verificada por `tests/test_ner_biored.py::test_snap_expands_to_the_whole_word`, `tests/test_ner_model.py::test_ner_extends_a_cut_mention_to_the_whole_word`
 
 #### Cenário: subtoken cortado
 
@@ -84,7 +84,7 @@ Fonte: `omaker/nlp/ner.py` ; Verificado por: sem teste automatizado em `omaker/n
 
 O sistema DEVE eliminar menções do NER que se sobrepõem, mantendo a de maior pontuação, e DEVE devolver as menções em ordem de posição no texto.
 
-Fonte: `omaker/nlp/ner.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/nlp/ner.py` ; Verificado por: `tests/test_ner_model.py::test_ner_keeps_the_highest_scoring_of_two_overlapping_detections`, `tests/test_ner_model.py::test_ner_returns_mentions_in_text_order`
 
 #### Cenário: duas detecções no mesmo trecho
 
@@ -120,7 +120,7 @@ Fonte: `omaker/llm/entities.py` ; Verificado por: `tests/test_hybrid_engine.py::
 
 O sistema DEVE pedir ao LLM uma resposta no esquema JSON de entidades, com o tipo restrito a `DRUG`, `SYMPTOM` ou `DISEASE`, e DEVE descartar propostas com nome vazio ou com outro tipo.
 
-Fonte: `omaker/llm/entities.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/llm/entities.py` ; Verificado por: `tests/test_llm_entities.py::test_llm_is_asked_for_the_entity_schema_with_the_three_types`, `tests/test_llm_entities.py::test_llm_proposals_with_an_unknown_type_or_an_empty_name_are_discarded`
 
 #### Cenário: tipo desconhecido
 
@@ -132,7 +132,7 @@ Fonte: `omaker/llm/entities.py` ; Verificado por: sem teste automatizado
 
 O sistema DEVE enviar o texto ao LLM em blocos de frases inteiras de até 3.000 caracteres e DEVE manter uma única proposta por nome, sem diferenciar maiúsculas (a primeira recebida vale).
 
-Fonte: `omaker/llm/entities.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/llm/entities.py` ; Verificado por: `tests/test_llm_entities.py::test_long_text_is_sent_in_blocks_of_whole_sentences_of_at_most_3000_chars`, `tests/test_llm_entities.py::test_a_single_sentence_longer_than_the_limit_is_sent_alone`, `tests/test_llm_entities.py::test_the_first_proposal_of_a_name_wins_regardless_of_case`
 
 #### Cenário: texto longo
 
@@ -144,7 +144,7 @@ Fonte: `omaker/llm/entities.py` ; Verificado por: sem teste automatizado
 
 O sistema DEVE pedir as entidades ao LLM com a temperatura configurada, limitada a no máximo 0,1.
 
-Fonte: `omaker/pipeline/engine.py` ; Verificado por: sem teste automatizado
+Fonte: `omaker/pipeline/engine.py` ; Verificado por: `tests/test_engine_extraction.py::test_entities_are_asked_with_the_configured_temperature_capped_at_0_1`
 
 #### Cenário: temperatura alta nas configurações
 
@@ -181,7 +181,7 @@ Fonte: `omaker/pipeline/engine.py` ; Verificado por: `tests/test_hybrid_engine.p
 
 O sistema DEVE interromper a extração com o erro "No biomedical entities (drug / symptom / disease) were found in the text." quando nenhuma fonte encontrar entidades.
 
-Fonte: `omaker/pipeline/engine.py` ; Verificado por: sem teste automatizado do motor; o tratamento desse erro na avaliação é verificado em [AVA-11](../avaliacao/spec.md)
+Fonte: `omaker/pipeline/engine.py` ; Verificado por: `tests/test_engine_extraction.py::test_generation_without_entities_fails_with_the_message_and_writes_no_owl`
 
 #### Cenário: texto sem termos biomédicos
 

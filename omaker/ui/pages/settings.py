@@ -125,8 +125,8 @@ class SettingsPage(QWidget):
             return
         if self.combo_modelo.findText(novo_modelo) == -1:
             self.combo_modelo.addItem(novo_modelo)
-            self.combo_modelo.setCurrentText(novo_modelo)
-            self.input_novo_modelo.clear()
+        self.combo_modelo.setCurrentText(novo_modelo)   # novo ou já na lista: fica selecionado (CFG-11)
+        self.input_novo_modelo.clear()
 
     def salvar_configuracoes(self):
         self.configuracoes.remove("api_key")   # sobra da versão com Gemini; o motor local não usa chave

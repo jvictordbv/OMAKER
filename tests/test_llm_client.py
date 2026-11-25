@@ -1,3 +1,7 @@
+import copy
+import json
+from types import SimpleNamespace
+
 import pytest
 
 from omaker.llm.client import LLMError, OllamaClient
@@ -64,3 +68,54 @@ def test_output_limit_stops_a_looping_model_without_retrying(fake_ollama):
         c.chat_json("s", "u", {})
     assert len(fake_ollama.calls) == 1   # repetir a mesma pergunta daria o mesmo laço
     assert fake_ollama.calls[0]["options"]["num_predict"] == c.max_tokens > 0
+
+
+class _Resp:
+    def __init__(self, status, body):
+        self.status_code, self._body = status, body
+        self.text = body if isinstance(body, str) else json.dumps(body)
+
+    def json(self):
+        return self._body
+
+
+@pytest.fixture
+def recorded_posts(monkeypatch):
+    """Troca requests.post do cliente: responde em ordem a partir de .replies e guarda (url, payload, timeout)."""
+    from omaker.llm import client as client_mod
+
+    state = SimpleNamespace(replies=[], posts=[])
+
+    def fake_post(url, json=None, timeout=None):
+        state.posts.append((url, copy.deepcopy(json), timeout))
+        return state.replies.pop(0)
+
+    monkeypatch.setattr(client_mod.requests, "post", fake_post)
+    return state
+
+
+OK_REPLY = {"message": {"content": '{"ok": true}'}, "done_reason": "stop"}
+
+
+def test_request_is_repeated_without_think_when_ollama_rejects_it(recorded_posts):
+    recorded_posts.replies[:] = [_Resp(400, '{"error": "registry.ollama.ai/x does not support thinking (think)"}'),
+                                 _Resp(200, OK_REPLY)]
+    assert OllamaClient("qwen3:8b", "http://127.0.0.1:1").chat_json("s", "u", {"type": "object"}) == {"ok": True}
+    (_u1, first, _t1), (_u2, second, _t2) = recorded_posts.posts
+    assert first["think"] is False and "think" not in second
+    assert {k: v for k, v in first.items() if k != "think"} == second   # o resto do pedido é o mesmo
+
+
+def test_other_400_errors_are_not_repeated(recorded_posts):
+    recorded_posts.replies[:] = [_Resp(400, '{"error": "invalid format schema"}')]
+    with pytest.raises(LLMError, match="400"):
+        OllamaClient("qwen3:8b", "http://127.0.0.1:1").chat_json("s", "u", {"type": "object"})
+    assert len(recorded_posts.posts) == 1
+
+
+def test_each_request_uses_a_600_second_timeout_and_8192_token_context(recorded_posts):
+    recorded_posts.replies[:] = [_Resp(200, OK_REPLY)]
+    OllamaClient("qwen3:8b", "http://127.0.0.1:1").chat_json("s", "u", {"type": "object"})
+    ((url, payload, timeout),) = recorded_posts.posts
+    assert url == "http://127.0.0.1:1/api/chat" and timeout == 600
+    assert payload["options"]["num_ctx"] == 8192 and payload["options"]["num_predict"] == 4096
