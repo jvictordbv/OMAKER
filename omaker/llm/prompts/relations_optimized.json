@@ -1,0 +1,38 @@
+{
+ "format": 1,
+ "instruction": "You classify the relation between a subject and an object entity inside one sentence.\nLabels: treats (subject treats/relieves object), causes (subject causes/induces object),\nprevents (subject prevents/reduces risk of object), no_relation.\nAnswer no_relation unless the sentence explicitly states the relation between THESE two entities\n(co-occurrence in the same sentence or record is not a relation).",
+ "examples": [
+  {
+   "sentence": "Mirtazapine, the first noradrenergic and specific serotonergic antidepressant (NaSSA), has been associated with RLS in several recent publications.",
+   "subject": "Mirtazapine",
+   "subject_type": "DRUG",
+   "object": "RLS",
+   "object_type": "DISEASE",
+   "relation": "causes"
+  },
+  {
+   "sentence": "Often, chemotherapy by doxorubicin (Adriamycin) is limited due to life threatening cardiotoxicity in patients during and posttherapy.",
+   "subject": "doxorubicin",
+   "subject_type": "DRUG",
+   "object": "cardiotoxicity",
+   "object_type": "DISEASE",
+   "relation": "causes"
+  },
+  {
+   "sentence": "A 3-year-old Chinese boy presented with prominent clinical features of malonic aciduria, including developmental delay, short stature, brain abnormalities and massive excretion of malonic acid and methylmalonic acid.",
+   "subject": "malonic acid",
+   "subject_type": "DRUG",
+   "object": "developmental delay",
+   "object_type": "DISEASE",
+   "relation": "no_relation"
+  },
+  {
+   "sentence": "The incidence of discontinuations for hypertension-related and oedema-related AEs were significantly higher with etoricoxib (2.5% and 1.1% respectively) compared with diclofenac (1.5% and 0.4% respectively; p<0.001 for hypertension and p<0.01 for oedema).",
+   "subject": "etoricoxib",
+   "subject_type": "DRUG",
+   "object": "hypertension",
+   "object_type": "DISEASE",
+   "relation": "causes"
+  }
+ ]
+}

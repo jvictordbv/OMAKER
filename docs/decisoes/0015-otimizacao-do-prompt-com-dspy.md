@@ -37,6 +37,20 @@ Sem o checkpoint do PURE, e nos sistemas `llm` e `ner+llm` da avaliação, as re
 - Os rótulos do BioRED vêm do resumo (supervisão distante, [0005](0005-biored-como-dados-de-treino.md)): o prompt pode aprender parte do ruído.
 - Uma dependência a mais (o extra `dspy`) para manter no CI.
 
+## Andamento
+
+- 2026-11-25: primeira otimização completa (`bootstrap`, 60 pares de treino, semente 0, `qwen3:8b-q4_K_M`, DSPy 3.5.0, commit `ab33bba`). O prompt otimizado acrescenta 4 exemplos à instrução escrita à mão, sem mudar o texto dela.
+
+| Conjunto | Prompt | P | R | micro-F1 | macro-F1 |
+|---|---|---|---|---|---|
+| Validação (453 pares) | Escrito à mão | 0,410 | 0,316 | 0,357 | 0,434 |
+| Validação (453 pares) | Otimizado | 0,548 | 0,650 | 0,595 | 0,655 |
+| Teste (385 pares, uma vez) | Escrito à mão | 0,512 | 0,444 | 0,475 | 0,496 |
+| Teste (385 pares, uma vez) | Otimizado | 0,568 | 0,704 | 0,629 | 0,623 |
+
+- O ganho vem da revocação de `causes` e `treats`. Os dois prompts erram `prevents` do mesmo jeito: o gabarito não tem nenhum par `prevents`, e todos os previstos são falsos positivos (94 no teste com o escrito à mão, 75 com o otimizado).
+- O prompt foi instalado em `omaker/llm/prompts/relations_optimized.json` e só é usado com `OMAKER_LLM_PROMPT=optimized`. O padrão continua o escrito à mão até a medida pelo caminho em lotes do pipeline (DT-28).
+
 ## Referências
 
 - `omaker/llm/optimize.py`, `omaker/llm/relations.py`, `omaker/config.py` (`llm_prompt`), `pyproject.toml` (extra `dspy`), `.github/workflows/ci.yml`.
