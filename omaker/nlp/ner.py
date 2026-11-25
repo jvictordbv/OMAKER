@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 
 from omaker.domain.entities import Entity
-from omaker.domain.labels import NER_MODEL_NAME
+from omaker.domain.labels import NER_MODEL_NAME, NER_MODEL_REVISION
 from omaker.domain.text import split_sentences
 
 # Maps the NER model's labels (lower-cased) to OMAKER entity types.
@@ -33,6 +33,7 @@ class BiomedicalNER:
         self.pipe = pipeline(
             "token-classification",
             model=model_name,
+            revision=NER_MODEL_REVISION if model_name == NER_MODEL_NAME else None,
             aggregation_strategy="simple",
             device=device,
         )

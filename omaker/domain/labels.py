@@ -5,10 +5,14 @@ export lives here, so there is a single source of truth.
 """
 
 # Encoder (English). Change it here and nowhere else.
+# The revisions are Hugging Face commits: a new upload by the model's author does not change OMAKER.
+# Changing a model means changing its revision too (the "sha" of https://huggingface.co/api/models/<name>).
 MODEL_NAME = "SpanBERT/spanbert-base-cased"
+MODEL_REVISION = "b436fe68816aa04256692ce7e27711bf6be15513"
 
 # Biomedical NER used to find entities in raw text.
 NER_MODEL_NAME = "d4data/biomedical-ner-all"
+NER_MODEL_REVISION = "015a4050c9ac99722e61c547aa9b4282bcbedc7f"
 
 # Entity types. Every (S|O) x type marker is generated from this list.
 ENTITY_TYPES = ("DRUG", "SYMPTOM", "DISEASE", "GENE")

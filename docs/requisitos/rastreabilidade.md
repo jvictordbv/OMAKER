@@ -19,7 +19,7 @@ Liga cada requisito ao código que o implementa e aos testes que o verificam. Os
 - [Requisitos sem teste automatizado](#requisitos-sem-teste-automatizado)
 - [Requisitos com cobertura parcial](#requisitos-com-cobertura-parcial)
 
-Total: 173 requisitos (150 funcionais e 23 não funcionais); 152 com pelo menos um teste automatizado.
+Total: 175 requisitos (151 funcionais e 24 não funcionais); 154 com pelo menos um teste automatizado.
 
 ## Extração de entidades
 
@@ -151,6 +151,7 @@ Total: 173 requisitos (150 funcionais e 23 não funcionais); 152 com pelo menos 
 | [MOD-25](especificacoes/modelo-de-relacoes/spec.md#requisito-hashes-publicados-preenchidos-mod-25) Hashes publicados preenchidos | `omaker/relations/download.py` | `test_download.py::test_published_hashes_are_filled_in` |
 | [MOD-26](especificacoes/modelo-de-relacoes/spec.md#requisito-download-explícito-mod-26) Download explícito | `omaker/relations/download.py` | Sem teste automatizado |
 | [MOD-27](especificacoes/modelo-de-relacoes/spec.md#requisito-calibração-do-modelo-publicado-mod-27) Calibração do modelo publicado | `omaker/relations/download.py` | `tests/test_download.py::test_missing_calibration_of_the_published_model_is_downloaded_again`, `tests/test_download.py::test_calibration_is_not_downloaded_for_another_model`, `tests/test_download.py::test_calibration_failure_keeps_the_model_and_says_so` |
+| [MOD-28](especificacoes/modelo-de-relacoes/spec.md#requisito-carga-do-checkpoint-sem-baixar-o-encoder-mod-28) Carga do checkpoint sem baixar o encoder | `omaker/relations/model.py` | `test_relation_extractor.py::test_load_builds_encoder_from_config_without_base_weights`<br>`test_relation_extractor.py::test_load_uses_weights_only` |
 
 ## Avaliação
 
@@ -253,6 +254,7 @@ Total: 173 requisitos (150 funcionais e 23 não funcionais); 152 com pelo menos 
 | [RNF-21](nao-funcionais.md#requisito-fluxos-do-ci-com-permissões-mínimas-rnf-21) Fluxos do CI com permissões mínimas | `.github/workflows/ci.yml`, `.github/workflows/exe.yml` | Inspeção dos fluxos (sem teste automatizado) |
 | [RNF-22](nao-funcionais.md#requisito-agpl-30-only-no-código-e-no-executável-rnf-22) AGPL-3.0-only no código e no executável | `LICENSE`, `pyproject.toml`, `OMAKER.spec`, `omaker/self_check.py` | `test_packaging.py::test_license_ships_with_the_executable`<br>`test_self_check.py::test_self_check_passes_from_source` |
 | [RNF-23](nao-funcionais.md#requisito-entrada-em-inglês-interface-em-português-rnf-23) Entrada em inglês, interface em português | `omaker/domain/text.py`, `omaker/ui/pages/runner.py` | `test_ui_generation.py::test_pages_say_the_text_must_be_in_english`<br>`test_ui_generation.py::test_non_english_text_asks_before_generating`<br>`test_text_utils.py::test_portuguese_and_spanish_texts_are_flagged` |
+| [RNF-24](nao-funcionais.md#requisito-modelos-do-hugging-face-com-revisão-fixa-rnf-24) Modelos do Hugging Face com revisão fixa | `omaker/domain/labels.py`, `omaker/nlp/ner.py`, `omaker/nlp/synonyms.py`, `omaker/relations/model.py` | `test_model_revisions.py::test_revisions_are_full_commit_hashes`<br>`test_model_revisions.py::test_ner_pipeline_gets_pinned_revision`<br>`test_model_revisions.py::test_sentence_bert_gets_pinned_revision`<br>`test_model_revisions.py::test_pure_pins_spanbert_revision_in_training_and_load` |
 
 ## Requisitos sem teste automatizado
 

@@ -395,3 +395,16 @@ Fonte: `omaker/relations/download.py` ; Verificado por: `tests/test_download.py:
 - **DADO** o checkpoint publicado sem a calibração e nenhuma conexão
 - **QUANDO** o pipeline precisa do PURE
 - **ENTÃO** o PURE roda sem calibração, e o log diz que o download será tentado de novo
+
+### Requisito: Carga do checkpoint sem baixar o encoder (MOD-28)
+
+Ao carregar um checkpoint, o sistema DEVE montar o encoder só a partir da configuração e do tokenizador do modelo-base e usar os pesos do próprio checkpoint; NÃO DEVE baixar os pesos do SpanBERT base. A leitura DEVE usar `torch.load(..., weights_only=True)`.
+
+Fonte: `omaker/relations/model.py` ; Verificado por: `tests/test_relation_extractor.py::test_load_builds_encoder_from_config_without_base_weights`, `tests/test_relation_extractor.py::test_load_uses_weights_only`
+
+#### Cenário: primeiro uso com o checkpoint publicado
+
+- **DADO** o checkpoint publicado já baixado
+- **QUANDO** o pipeline carrega o PURE
+- **ENTÃO** os pesos do SpanBERT base (cerca de 412 MB) não são baixados
+- **E** as previsões são as mesmas do modelo salvo

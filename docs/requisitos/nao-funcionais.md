@@ -29,6 +29,7 @@ Qualidades que valem para o sistema inteiro. Cada requisito tem um critério ver
 | RNF-21 | Segurança | Fluxos do CI com permissões mínimas |
 | RNF-22 | Licenciamento | AGPL-3.0-only no código e no executável |
 | RNF-23 | Idioma | Entrada em inglês, interface em português |
+| RNF-24 | Reprodutibilidade | Modelos do Hugging Face com revisão fixa |
 
 ## Privacidade
 
@@ -333,3 +334,15 @@ Fonte: `omaker/domain/text.py`, `omaker/ui/pages/runner.py` ; Verificado por: `t
 - **DADO** um texto médico em espanhol
 - **QUANDO** o usuário clica no botão de gerar
 - **ENTÃO** o programa pergunta se deve processar mesmo assim
+
+### Requisito: Modelos do Hugging Face com revisão fixa (RNF-24)
+
+O sistema DEVE carregar o NER, o SpanBERT e o Sentence-BERT numa revisão fixa (o commit, com 40 dígitos hexadecimais, guardado ao lado do nome do modelo), para que uma atualização no Hugging Face não mude os resultados sem aviso.
+
+Fonte: `omaker/domain/labels.py` (`MODEL_REVISION`, `NER_MODEL_REVISION`), `omaker/nlp/synonyms.py` (`SYNONYM_MODEL_REVISION`), `omaker/nlp/ner.py`, `omaker/relations/model.py` ; Verificado por: `tests/test_model_revisions.py::test_revisions_are_full_commit_hashes`, `tests/test_model_revisions.py::test_ner_pipeline_gets_pinned_revision`, `tests/test_model_revisions.py::test_sentence_bert_gets_pinned_revision`, `tests/test_model_revisions.py::test_pure_pins_spanbert_revision_in_training_and_load`
+
+#### Cenário: modelo atualizado no Hugging Face
+
+- **DADO** o autor do NER publica uma versão nova do modelo
+- **QUANDO** o OMAKER carrega o NER
+- **ENTÃO** ele continua usando o commit fixado
