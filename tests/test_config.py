@@ -57,3 +57,17 @@ def test_bad_entity_source_reported_when_generating(monkeypatch, stub_ner):
 
 def test_empty_entity_source_defaults_to_both():
     assert load_settings({"OMAKER_ENTITIES": "  "}).entity_source == "both"
+
+
+def test_llm_prompt_defaults_to_handwritten():
+    from omaker.config import llm_prompt
+
+    assert llm_prompt({}) == "default"
+    assert llm_prompt({"OMAKER_LLM_PROMPT": " Optimized "}) == "optimized"
+
+
+def test_invalid_llm_prompt_raises():
+    from omaker.config import llm_prompt
+
+    with pytest.raises(ValueError, match="OMAKER_LLM_PROMPT.*default ou optimized"):
+        llm_prompt({"OMAKER_LLM_PROMPT": "optimised"})

@@ -79,6 +79,8 @@ O único `TODO` no código é o do ícone, em `OMAKER.spec`; não há `FIXME`. O
 | DT-25 | O executável não tem ícone (`icon=None  # TODO Fase 6`); o arquivo de origem está só com o João. | `OMAKER.spec` | Adicionar `assets/logo_omaker.ico` quando o arquivo for entregue. |
 | DT-26 | O marcador `ollama` está declarado, mas nenhum teste o usa: não há teste automatizado contra um Ollama real nem contra o `qwen3`. O comportamento do modelo real só é medido pela avaliação de ponta a ponta. | `pyproject.toml`, `tests/` | Um teste de fumaça com o Ollama real, fora do CI. |
 | DT-27 | Os nomes do `QSettings` (`MeuMestrado`, `OntoGenApp`) e algumas classes da interface (`OperaGXSplash`) são sobras de versões antigas. Trocar o `QSettings` faria o usuário perder as preferências. | `omaker/ui/pages/settings.py`, `omaker/ui/splash.py` | Manter, ou migrar as chaves na troca de nome. |
+| DT-28 | A otimização do prompt avalia um par por chamada, enquanto o pipeline manda lotes de 15 pares em JSON; o ganho medido na otimização pode não se repetir no pipeline. A métrica do otimizador é a acurácia por par; o relatório traz o micro-F1. | `omaker/llm/optimize.py`, `omaker/llm/relations.py` | Avaliar o prompt otimizado também pelo caminho do pipeline (lotes) antes de torná-lo o padrão ([registro 0015](../decisoes/0015-otimizacao-do-prompt-com-dspy.md)). |
+| DT-29 | `omaker/llm/optimize.py` usa `omaker.evaluation.metrics`, `omaker.relations.data` e a função privada `_commit` de `omaker/evaluation/e2e.py`, o que aumenta o acoplamento entre pacotes descrito no DT-02. | `omaker/llm/optimize.py` | Mover `_commit` para um módulo comum, junto com a solução do DT-02. |
 
 ## 11.3 Como esta seção é mantida
 

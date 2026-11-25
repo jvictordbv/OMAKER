@@ -1,4 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
+
 from PyInstaller.utils.hooks import collect_data_files
 
 datas = []
@@ -10,6 +12,9 @@ datas += [
     ('omaker/relations/train_relations.json', 'omaker/relations'),
     ('omaker/evaluation/gold/samples.json', 'omaker/evaluation/gold'),
 ]
+# Prompt de relações otimizado (python -m omaker.llm.optimize --install): só existe depois da otimização.
+if os.path.isfile('omaker/llm/prompts/relations_optimized.json'):
+    datas += [('omaker/llm/prompts/relations_optimized.json', 'omaker/llm/prompts')]
 datas += [('LICENSE', '.')]   # a AGPL exige o texto da licença junto do programa distribuído
 
 

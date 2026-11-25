@@ -19,7 +19,7 @@ Liga cada requisito ao código que o implementa e aos testes que o verificam. Os
 - [Requisitos sem teste automatizado](#requisitos-sem-teste-automatizado)
 - [Requisitos com cobertura parcial](#requisitos-com-cobertura-parcial)
 
-Total: 175 requisitos (151 funcionais e 24 não funcionais); 174 com pelo menos um teste automatizado.
+Total: 178 requisitos (154 funcionais e 24 não funcionais); 177 com pelo menos um teste automatizado.
 
 ## Extração de entidades
 
@@ -54,6 +54,7 @@ Total: 175 requisitos (151 funcionais e 24 não funcionais); 174 com pelo menos 
 | [REL-09](especificacoes/extracao-de-relacoes/spec.md#requisito-classificação-pelo-llm-rel-09) Classificação pelo LLM | `omaker/llm/relations.py` | `test_hybrid_engine.py::test_taxonomy_validation_rejects_bad_llm_output` |
 | [REL-10](especificacoes/extracao-de-relacoes/spec.md#requisito-uma-tripla-por-fato-rel-10) Uma tripla por fato | `omaker/pipeline/engine.py` | `test_engine_extraction.py::test_the_same_fact_in_two_sentences_gives_one_triple_with_the_highest_confidence`<br>`test_engine_extraction.py::test_no_relation_predictions_are_never_kept_as_triples` |
 | [REL-11](especificacoes/extracao-de-relacoes/spec.md#requisito-domínio-das-relações-rel-11) Domínio das relações | `omaker/pipeline/engine.py`, `omaker/domain/labels.py` | `test_hybrid_engine.py::test_taxonomy_validation_rejects_bad_llm_output` |
+| [REL-12](especificacoes/extracao-de-relacoes/spec.md#requisito-prompt-de-relações-otimizado-opcional-rel-12) Prompt de relações otimizado, opcional | `omaker/llm/relations.py` | `test_llm_relations_prompt.py::test_default_prompt_is_the_handwritten_one`<br>`test_llm_relations_prompt.py::test_optimized_prompt_sends_instruction_and_examples`<br>`test_llm_relations_prompt.py::test_optimized_requested_without_file_falls_back_to_default` |
 
 ## Geração de ontologia
 
@@ -179,6 +180,7 @@ Total: 175 requisitos (151 funcionais e 24 não funcionais); 174 com pelo menos 
 | [AVA-20](especificacoes/avaliacao/spec.md#requisito-previsões-fora-do-escopo-ignoradas-ava-20) Previsões fora do escopo ignoradas | `omaker/evaluation/biored_gold.py`, `omaker/evaluation/e2e.py` | `test_biored_gold.py::test_out_of_scope_predictions_are_ignored` |
 | [AVA-21](especificacoes/avaliacao/spec.md#requisito-medição-do-ner-ava-21) Medição do NER | `omaker/evaluation/ner_biored.py` | `test_ner_biored.py::test_gold_has_only_chemicals_and_diseases`<br>`test_ner_biored.py::test_exact_span_match_with_per_type_scores`<br>`test_ner_biored.py::test_snap_expands_to_the_whole_word` |
 | [AVA-22](especificacoes/avaliacao/spec.md#requisito-outro-ner-medido-ava-22) Outro NER medido | `omaker/evaluation/ner_biored.py` | `test_ner_biored.py::test_hf_labels_map_to_gold_types` |
+| [AVA-23](especificacoes/avaliacao/spec.md#requisito-otimização-reproduzível-do-prompt-de-relações-ava-23) Otimização reproduzível do prompt de relações | `omaker/llm/optimize.py` | `test_llm_optimize.py::test_full_run_writes_metrics_report_and_plain_prompt`<br>`test_llm_optimize.py::test_resume_skips_finished_steps`<br>`test_llm_optimize.py::test_resume_refuses_changed_settings`<br>`test_llm_optimize.py::test_install_copies_the_prompt` |
 
 ## Interface
 
@@ -226,6 +228,7 @@ Total: 175 requisitos (151 funcionais e 24 não funcionais); 174 com pelo menos 
 | [CFG-09](especificacoes/configuracao/spec.md#requisito-valores-padrão-das-preferências-cfg-09) Valores padrão das preferências | `omaker/ui/pages/settings.py`, `omaker/llm/client.py` | `test_ui_pages.py::test_settings_keeps_default_model_when_only_gemini_saved`<br>`test_ui_pages.py::test_first_run_uses_the_default_model_temperature_uri_and_protege_path` |
 | [CFG-10](especificacoes/configuracao/spec.md#requisito-restos-de-versões-antigas-cfg-10) Restos de versões antigas | `omaker/ui/pages/settings.py` | `test_ui_pages.py::test_settings_drops_old_gemini_models`<br>`test_ui_pages.py::test_settings_keeps_default_model_when_only_gemini_saved`<br>`test_ui_pages.py::test_settings_has_no_api_key_field` |
 | [CFG-11](especificacoes/configuracao/spec.md#requisito-modelo-informado-pelo-usuário-cfg-11) Modelo informado pelo usuário | `omaker/ui/pages/settings.py` | `test_ui_pages.py::test_typed_model_is_added_to_the_list_and_selected`<br>`test_ui_pages.py::test_typed_model_already_in_the_list_is_not_duplicated`<br>`test_ui_pages.py::test_typed_model_already_in_the_list_is_selected`<br>`test_ui_pages.py::test_blank_model_name_is_not_added`<br>`test_ui_pages.py::test_added_model_is_saved_with_the_list` |
+| [CFG-12](especificacoes/configuracao/spec.md#requisito-prompt-de-relações-escolhido-por-variável-cfg-12) Prompt de relações escolhido por variável | `omaker/config.py` | `test_config.py::test_llm_prompt_defaults_to_handwritten`<br>`test_config.py::test_invalid_llm_prompt_raises`<br>`test_llm_relations_prompt.py::test_env_is_read_at_call_time` |
 
 ## Requisitos não funcionais
 

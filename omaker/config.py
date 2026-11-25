@@ -8,6 +8,8 @@ Variáveis reconhecidas:
 - OMAKER_NO_DOWNLOAD: 1 desliga o download automático do checkpoint publicado (omaker/relations/download.py).
 - OMAKER_JAVA: java.exe usado pelo HermiT; lido por omaker.ontology.java.find_java.
 - OMAKER_LLM_SEED: semente enviada ao Ollama (padrão: nenhuma); a avaliação usa 0 para reprodutibilidade.
+- OMAKER_LLM_PROMPT: prompt de relações do LLM: default (o escrito à mão) ou optimized (o exportado por
+  python -m omaker.llm.optimize --install, em omaker/llm/prompts/relations_optimized.json).
 
 As preferências da interface (modelo, temperatura, pastas, Protégé) ficam no QSettings da GUI.
 """
@@ -20,6 +22,7 @@ from pathlib import Path
 
 DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 ENTITY_SOURCES = ("ner", "llm", "both")
+LLM_PROMPTS = ("default", "optimized")
 
 
 @dataclass(frozen=True)
@@ -55,6 +58,15 @@ def llm_seed(env: Mapping[str, str] | None = None) -> int | None:
     env = os.environ if env is None else env
     value = env.get("OMAKER_LLM_SEED", "").strip()
     return int(value) if value else None
+
+
+def llm_prompt(env: Mapping[str, str] | None = None) -> str:
+    """Validated OMAKER_LLM_PROMPT. Checked only where the LLM classifies relations."""
+    env = os.environ if env is None else env
+    value = env.get("OMAKER_LLM_PROMPT", "").strip().lower() or "default"
+    if value not in LLM_PROMPTS:
+        raise ValueError(f"OMAKER_LLM_PROMPT='{env.get('OMAKER_LLM_PROMPT')}' inválido; use default ou optimized.")
+    return value
 
 
 def load_settings(env: Mapping[str, str] | None = None) -> Settings:

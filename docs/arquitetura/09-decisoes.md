@@ -20,6 +20,7 @@ As decisões de arquitetura do OMAKER estão registradas, uma por arquivo, na pa
 | 0012 | Atualização alinhada à hierarquia da ontologia externa | Aceita | 2026-11-12 | [0012-atualizacao-alinhada-a-hierarquia.md](../decisoes/0012-atualizacao-alinhada-a-hierarquia.md) |
 | 0013 | Limite de tokens na resposta do LLM | Aceita | 2026-11-12 | [0013-limite-de-tokens-do-llm.md](../decisoes/0013-limite-de-tokens-do-llm.md) |
 | 0014 | Troca do NER por um modelo treinado no BC5CDR | Proposta | 2026-11-12 | [0014-troca-do-ner-bc5cdr.md](../decisoes/0014-troca-do-ner-bc5cdr.md) |
+| 0015 | Otimização do prompt de relações com DSPy | Proposta | 2026-11-25 | [0015-otimizacao-do-prompt-com-dspy.md](../decisoes/0015-otimizacao-do-prompt-com-dspy.md) |
 
 Treze registros estão aceitos e um está proposto. A ordem dos números é a ordem em que os registros foram escritos, não a das datas: a data é a da decisão ou do pull request que a integrou ao código, por isso o 0004 (2026-10-20) é a decisão mais antiga.
 

@@ -280,3 +280,15 @@ Fonte: `omaker/evaluation/ner_biored.py` ; Verificado por: `tests/test_ner_biore
 - **DADO** um NER que devolve o rótulo `Gene`
 - **QUANDO** o rótulo é convertido
 - **ENTÃO** ele não tem tipo e não conta como químico nem como doença
+
+### Requisito: Otimização reproduzível do prompt de relações (AVA-23)
+
+O sistema DEVE oferecer um comando (`python -m omaker.llm.optimize`, com o extra opcional `dspy`) que compare o prompt escrito à mão com um prompt otimizado nos mesmos dados do BioRED: exemplos de otimização tirados do treino, escolha pela validação e teste usado uma única vez no relatório final. Cada etapa DEVE ser gravada para a execução poder ser retomada com `--resume`, e a retomada DEVE recusar configurações diferentes. O prompt otimizado DEVE ser exportado em JSON simples (instrução e exemplos), e só instalado com `--install`.
+
+Fonte: `omaker/llm/optimize.py` ; Verificado por: `tests/test_llm_optimize.py::test_baseline_program_uses_the_handwritten_instruction_without_examples`, `tests/test_llm_optimize.py::test_evaluate_scores_with_micro_f1_without_no_relation`, `tests/test_llm_optimize.py::test_full_run_writes_metrics_report_and_plain_prompt`, `tests/test_llm_optimize.py::test_resume_skips_finished_steps`, `tests/test_llm_optimize.py::test_resume_redoes_only_the_missing_step`, `tests/test_llm_optimize.py::test_resume_refuses_changed_settings`, `tests/test_llm_optimize.py::test_install_copies_the_prompt`, `tests/test_llm_optimize.py::test_export_prompt_is_plain_json_and_round_trips` (no CI, com o extra `dspy`)
+
+#### Cenário: otimização interrompida
+
+- **DADO** uma otimização que caiu depois da avaliação do prompt escrito à mão
+- **QUANDO** o usuário roda `--resume runs/<pasta>`
+- **ENTÃO** só as etapas que faltam são refeitas
