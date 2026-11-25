@@ -53,4 +53,4 @@ Um registro aceito não é reescrito. Se a decisão muda, escreve-se um registro
 | [0013](0013-limite-de-tokens-do-llm.md) | Limite de tokens na resposta do LLM | Aceita | 2026-11-12 |
 | [0014](0014-troca-do-ner-bc5cdr.md) | Troca do NER por um modelo treinado no BC5CDR | Proposta | 2026-11-12 |
 
-A visão de conjunto das decisões, ligada à arquitetura, está em ../arquitetura/09-decisoes.md (seção 09 da documentação de arquitetura).
+A visão de conjunto das decisões, ligada à arquitetura, está em [seção 09 da documentação de arquitetura](../arquitetura/09-decisoes.md).

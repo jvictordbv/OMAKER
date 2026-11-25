@@ -140,5 +140,5 @@ Fonte: <arquivo do código> ; Verificado por: <arquivo do teste>::<nome do teste
 
 - [Requisitos não funcionais](nao-funcionais.md): privacidade, reprodutibilidade, portabilidade, robustez, desempenho e recursos, manutenibilidade, segurança, licenciamento e idioma.
 - [Rastreabilidade](rastreabilidade.md): requisito, módulos e testes, e a lista dos requisitos sem teste automatizado.
-- Documentação de arquitetura (documentação de arquitetura, em `docs/arquitetura/`) e [registros de decisão](../decisoes/README.md): o como e o porquê.
+- [Documentação de arquitetura](../arquitetura/README.md) e [registros de decisão](../decisoes/README.md): o como e o porquê.
 - [README do repositório](../../README.md): instalação, uso, treino e avaliação.
