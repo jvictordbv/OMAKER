@@ -9,12 +9,13 @@ from collections.abc import Sequence
 
 import torch
 import torch.nn as nn
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoConfig, AutoModel, AutoTokenizer
 
 from omaker.domain.labels import (
     ENTITY_TYPES,
     ID2REL,
     MODEL_NAME,
+    MODEL_REVISION,
     NO_RELATION,
     REL2ID,
     marker_tokens,
@@ -42,11 +43,18 @@ def find_span(text: str, name: str, avoid: tuple | None = None) -> tuple | None:
 class RelationExtractorPURE(nn.Module):
     """Relation classifier: encoder + [h_subj_marker ; h_obj_marker] -> MLP."""
 
-    def __init__(self, model_name: str = MODEL_NAME, num_relations: int = len(REL2ID), dropout: float = 0.1):
+    def __init__(self, model_name: str = MODEL_NAME, num_relations: int = len(REL2ID), dropout: float = 0.1,
+                 pretrained: bool = True):
+        """pretrained=False builds the encoder from its config only (random weights): `load` uses it,
+        since the checkpoint's state_dict already holds the whole encoder."""
         super().__init__()
         self.model_name = model_name
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.encoder = AutoModel.from_pretrained(model_name)
+        revision = MODEL_REVISION if model_name == MODEL_NAME else None
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
+        if pretrained:
+            self.encoder = AutoModel.from_pretrained(model_name, revision=revision)
+        else:
+            self.encoder = AutoModel.from_config(AutoConfig.from_pretrained(model_name, revision=revision))
 
         self.tokenizer.add_special_tokens({"additional_special_tokens": marker_tokens()})
         self.encoder.resize_token_embeddings(len(self.tokenizer))
@@ -181,10 +189,10 @@ class RelationExtractorPURE(nn.Module):
     @classmethod
     def load(cls, path: str, device: str | None = None) -> RelationExtractorPURE:
         """Loads a checkpoint written by `save`. Raises if the file is missing or incompatible."""
-        ckpt = torch.load(path, map_location=device or "cpu")
+        ckpt = torch.load(path, map_location=device or "cpu", weights_only=True)
         if ckpt.get("rel2id") != REL2ID or tuple(ckpt.get("entity_types", ())) != tuple(ENTITY_TYPES):
             raise ValueError("Checkpoint labels/markers differ from omaker/domain/labels.py. Retrain the model.")
-        model = cls(model_name=ckpt["model_name"], num_relations=len(REL2ID))
+        model = cls(model_name=ckpt["model_name"], num_relations=len(REL2ID), pretrained=False)
         model.load_state_dict(ckpt["state_dict"])
         from omaker.relations.calibration import read_calibration
 

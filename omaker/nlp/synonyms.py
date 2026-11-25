@@ -3,17 +3,22 @@ from sentence_transformers import SentenceTransformer
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics.pairwise import cosine_similarity
 
+# Revisão fixa (commit do Hugging Face), como os modelos de omaker/domain/labels.py.
+SYNONYM_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+SYNONYM_MODEL_REVISION = "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
+
 
 class SynonymDetector:
     """
     Detector de Sinônimos e Conceitos Equivalentes usando Embeddings Semânticos
     e Agrupamento Não Supervisionado (Inspirado no artigo SiMHOMer).
     """
-    def __init__(self, model_name='sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'):
+    def __init__(self, model_name=SYNONYM_MODEL_NAME):
         # 1. Carrega o modelo de Embeddings (Sentence-BERT)
         # Ele converte qualquer palavra ou frase em um vetor denso de 384 números
         print("Carregando o modelo de Embeddings Semânticos na memória...")
-        self.model = SentenceTransformer(model_name)
+        revision = SYNONYM_MODEL_REVISION if model_name == SYNONYM_MODEL_NAME else None
+        self.model = SentenceTransformer(model_name, revision=revision)
 
     def agrupar_sinonimos(self, conceitos: list[str], threshold: float = 0.25) -> dict:
         """
