@@ -20,6 +20,7 @@ Projeto de mestrado de João Victor Ferreira Barbosa, na Universidade Federal de
 - [Treino e avaliação do modelo](#treino-e-avaliação-do-modelo)
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Testes e qualidade](#testes-e-qualidade)
+- [Documentação técnica](#documentação-técnica)
 - [Contribuindo](#contribuindo)
 - [Como citar](#como-citar)
 - [Licença](#licença)
@@ -208,6 +209,10 @@ uv run ruff check .
 - Os testes marcados `slow` baixam modelos.
 - Os marcados `ollama` precisam do Ollama real.
 - O CI (GitHub Actions) roda o lint e a suíte rápida no Windows a cada push e pull request.
+
+## Documentação técnica
+
+A pasta [`docs/`](docs/README.md) traz a documentação de engenharia: requisitos por capacidade, com cenários verificáveis e rastreabilidade até os testes; arquitetura, com contexto, blocos, execução, implantação e riscos; e [registros de decisão](docs/decisoes/README.md).
 
 ## Contribuindo
 
