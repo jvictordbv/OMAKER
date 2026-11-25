@@ -172,3 +172,21 @@ Fonte: `omaker/pipeline/engine.py`, `omaker/domain/labels.py` ; Verificado por: 
 - **QUANDO** o filtro de domínio é aplicado
 - **ENTÃO** a tripla é descartada
 - **E** o log tem uma linha "[SKIP]" que cita "tumor"
+
+### Requisito: Prompt de relações otimizado, opcional (REL-12)
+
+Com `OMAKER_LLM_PROMPT=optimized` e o arquivo `omaker/llm/prompts/relations_optimized.json` presente, o sistema DEVE classificar as relações pelo LLM com a instrução e os exemplos desse arquivo; sem a variável, DEVE usar o prompt escrito à mão; com a variável e sem o arquivo, DEVE registrar no log e usar o prompt escrito à mão. O uso NÃO DEVE depender do pacote `dspy`.
+
+Fonte: `omaker/llm/relations.py` ; Verificado por: `tests/test_llm_relations_prompt.py::test_default_prompt_is_the_handwritten_one`, `tests/test_llm_relations_prompt.py::test_handwritten_prompt_is_instruction_plus_json_request`, `tests/test_llm_relations_prompt.py::test_optimized_prompt_sends_instruction_and_examples`, `tests/test_llm_relations_prompt.py::test_optimized_requested_without_file_falls_back_to_default`
+
+#### Cenário: prompt otimizado instalado
+
+- **DADO** `OMAKER_LLM_PROMPT=optimized` e o prompt otimizado instalado
+- **QUANDO** o LLM classifica os pares
+- **ENTÃO** o prompt enviado contém a instrução otimizada e os exemplos
+
+#### Cenário: arquivo ausente
+
+- **DADO** `OMAKER_LLM_PROMPT=optimized` e nenhum prompt instalado
+- **QUANDO** o LLM classifica os pares
+- **ENTÃO** o log avisa e o prompt escrito à mão é usado

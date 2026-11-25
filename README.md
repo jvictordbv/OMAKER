@@ -96,6 +96,7 @@ Variáveis de ambiente opcionais, lidas na hora do uso:
 | `OMAKER_CHECKPOINT` | `omaker_pure.pt` na raiz (no `.exe`, `%LOCALAPPDATA%\OMAKER\models`) | Checkpoint do classificador PURE |
 | `OMAKER_NO_DOWNLOAD` | (desligado) | `1` impede o download automático do checkpoint |
 | `OMAKER_LLM_SEED` | (nenhuma) | Semente enviada ao Ollama |
+| `OMAKER_LLM_PROMPT` | `default` | Prompt de relações do LLM: `default` (escrito à mão) ou `optimized` (ver [Otimização do prompt](#otimização-do-prompt-de-relações-do-llm-dspy-opcional)) |
 | `OMAKER_JAVA` | (procura automática) | `java.exe` usado pelo HermiT |
 
 As preferências da interface (modelo, temperatura, pastas, Protégé) ficam salvas pelo próprio programa.
@@ -177,6 +178,28 @@ uv run python -m omaker.relations.release --run runs/<pasta-do-treino> --out dis
 ```
 
 O arquivo publicado não leva as frases de treino (texto de resumos do PubMed), só os hashes delas, que bastam para a verificação de contaminação. Depois de publicar, atualize os sha256 em `omaker/relations/download.py`.
+
+### Otimização do prompt de relações do LLM (DSPy, opcional)
+
+Sem checkpoint do PURE, o LLM classifica os pares com um prompt escrito à mão. O [DSPy](https://dspy.ai/) pode escolher exemplos few-shot (e, com `--optimizer mipro`, reescrever a instrução) usando os dados do BioRED convertidos (`data/biored/splits/`): o trainset é sorteado do treino com semente fixa, a escolha é feita na validação e o teste é avaliado uma única vez, para o prompt atual e para o otimizado.
+
+```bash
+uv sync --extra dev --extra dspy
+uv run python -m omaker.llm.optimize --model qwen3:8b-q4_K_M
+```
+
+A otimização faz muitas chamadas ao LLM local e leva horas. Cada execução grava em `runs/<data>-dspy/`:
+- o cache do DSPy (`cache/`) e as etapas prontas (`state.json`), para retomar de onde parou;
+- `metrics.json` e `report.md`: micro-F1 sem `no_relation` e F1 por classe, do prompt atual e do otimizado, na validação e no teste;
+- `relations_prompt.json`: a instrução e os exemplos do prompt otimizado, em texto.
+
+Se cair, retome com `--resume runs/<pasta>`. Para usar o prompt otimizado no pipeline, instale-o (vai para `omaker/llm/prompts/relations_optimized.json`) e defina `OMAKER_LLM_PROMPT=optimized`:
+
+```bash
+uv run python -m omaker.llm.optimize --resume runs/<pasta> --install
+```
+
+Sem a variável (ou sem o arquivo), o pipeline usa o prompt escrito à mão. O pipeline não precisa do DSPy.
 
 > O dataset de treino atual (`omaker/relations/train_relations.json`, 31 frases) serve para verificar o pipeline, não para tirar conclusões. A escolha do dataset de avaliação está em aberto.
 

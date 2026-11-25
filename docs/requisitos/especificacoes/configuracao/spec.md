@@ -151,3 +151,15 @@ Fonte: `omaker/ui/pages/settings.py` ; Verificado por: `tests/test_ui_pages.py::
 - **DADO** o usuário digita `qwen3:8b-q4_K_M` e clica no botão de acrescentar
 - **QUANDO** a lista é atualizada
 - **ENTÃO** `qwen3:8b-q4_K_M` aparece na lista e fica selecionado
+
+### Requisito: Prompt de relações escolhido por variável (CFG-12)
+
+O sistema DEVE ler `OMAKER_LLM_PROMPT` na hora do uso, aceitando `default` (ou vazio) e `optimized`, e DEVE recusar qualquer outro valor com uma mensagem que diga os valores válidos.
+
+Fonte: `omaker/config.py` (`llm_prompt`) ; Verificado por: `tests/test_config.py::test_llm_prompt_defaults_to_handwritten`, `tests/test_config.py::test_invalid_llm_prompt_raises`, `tests/test_llm_relations_prompt.py::test_env_is_read_at_call_time`
+
+#### Cenário: valor digitado errado
+
+- **DADO** `OMAKER_LLM_PROMPT=otimizado`
+- **QUANDO** o LLM vai classificar relações
+- **ENTÃO** a execução falha com a mensagem "use default ou optimized"
