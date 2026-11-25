@@ -92,6 +92,7 @@ def test_ensure_downloads_model_and_calibration(tmp_path, monkeypatch):
         dest.write_bytes(b"ok")
 
     monkeypatch.setattr(dl, "download_file", fake_download)
+    monkeypatch.setattr(dl, "_sha256", lambda _p: dl.PURE_MODEL["sha256"])   # o arquivo falso faz papel do publicado
     assert dl.ensure_pure_checkpoint(tmp_path / "omaker_pure.pt", lambda _m: None) is True
     assert [c[1] for c in calls] == ["omaker_pure.pt", "omaker_pure.calibration.json"]
     assert calls[0][2] == dl.PURE_MODEL["sha256"]
@@ -131,3 +132,41 @@ def test_published_hashes_are_filled_in():
     import re
     for key in ("sha256", "calibration_sha256"):
         assert re.fullmatch(r"[0-9a-f]{64}", dl.PURE_MODEL[key]), key
+
+
+def _published_model(tmp_path, monkeypatch, sha=None):
+    """Checkpoint já baixado (sem a calibração) e downloads falsos registrados em calls."""
+    monkeypatch.delenv("OMAKER_NO_DOWNLOAD", raising=False)
+    dest = tmp_path / "omaker_pure.pt"
+    dest.write_bytes(b"pesos")
+    monkeypatch.setattr(dl, "_sha256", lambda _p: sha or dl.PURE_MODEL["sha256"])
+    calls = []
+    monkeypatch.setattr(dl, "download_file", lambda url, d, sha256, progress=None, session=None:
+                        calls.append(d.name) or d.write_bytes(b"{}"))
+    return dest, calls
+
+
+def test_missing_calibration_of_the_published_model_is_downloaded_again(tmp_path, monkeypatch):
+    """Se a calibração falhou numa vez anterior, a próxima execução baixa só ela."""
+    dest, calls = _published_model(tmp_path, monkeypatch)
+    assert dl.ensure_pure_checkpoint(dest, lambda _m: None) is True
+    assert calls == ["omaker_pure.calibration.json"]
+
+
+def test_calibration_is_not_downloaded_for_another_model(tmp_path, monkeypatch):
+    """Um checkpoint próprio não recebe a calibração do modelo publicado."""
+    dest, calls = _published_model(tmp_path, monkeypatch, sha="f" * 64)
+    assert dl.ensure_pure_checkpoint(dest, lambda _m: None) is True
+    assert calls == []
+
+
+def test_calibration_failure_keeps_the_model_and_says_so(tmp_path, monkeypatch):
+    dest, _calls = _published_model(tmp_path, monkeypatch)
+
+    def boom(url, d, sha256, progress=None, session=None):
+        raise ConnectionError("sem internet")
+
+    monkeypatch.setattr(dl, "download_file", boom)
+    logs = []
+    assert dl.ensure_pure_checkpoint(dest, logs.append) is True   # o PURE roda, sem calibração
+    assert any("without calibration" in line and "sem internet" in line for line in logs), logs

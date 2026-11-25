@@ -62,31 +62,48 @@ def download_file(url: str, dest, sha256: str | None, progress=None, session=Non
     return dest
 
 
+def _download_disabled() -> bool:
+    return os.environ.get("OMAKER_NO_DOWNLOAD", "").strip() not in ("", "0")
+
+
+def calibration_path(dest: Path) -> Path:
+    return dest.with_name(dest.stem + ".calibration.json")
+
+
 def ensure_pure_checkpoint(dest, log) -> bool:
-    """Garante o checkpoint em dest, baixando-o se faltar. Devolve False (e registra o motivo) se não conseguir."""
+    """Garante o checkpoint em dest, baixando-o se faltar. Devolve False (e registra o motivo) se não conseguir.
+
+    A calibração publicada também é baixada quando falta, mas só para o checkpoint publicado (mesmo sha256):
+    um checkpoint próprio não pode receber a calibração de outro modelo.
+    """
     dest = Path(dest)
-    if dest.exists():
-        return True
-    if os.environ.get("OMAKER_NO_DOWNLOAD", "").strip() not in ("", "0"):
-        return False
-    log(f"> [PURE] Model not found. Downloading it once (about 440 MB) to {dest} ...")
-    marks = set()
+    if not dest.exists():
+        if _download_disabled():
+            return False
+        log(f"> [PURE] Model not found. Downloading it once (about 440 MB) to {dest} ...")
+        marks = set()
 
-    def progress(fraction):
-        mark = int(fraction * 10)
-        if mark not in marks:
-            marks.add(mark)
-            log(f"  [PURE] download {mark * 10}%")
+        def progress(fraction):
+            mark = int(fraction * 10)
+            if mark not in marks:
+                marks.add(mark)
+                log(f"  [PURE] download {mark * 10}%")
 
-    try:
-        download_file(PURE_MODEL["url"], dest, PURE_MODEL["sha256"], progress)
-        calibration = dest.with_name(dest.stem + ".calibration.json")
-        download_file(PURE_MODEL["calibration_url"], calibration, PURE_MODEL["calibration_sha256"])
-    except Exception as err:  # noqa: BLE001  sem internet, Release fora do ar etc.: o pipeline segue sem o PURE
-        log(f"> [PURE] Download failed ({err}). Relations will be classified by the LLM; "
-            f"the download resumes next time.")
-        return False
-    log("> [PURE] Model downloaded.")
+        try:
+            download_file(PURE_MODEL["url"], dest, PURE_MODEL["sha256"], progress)
+        except Exception as err:  # noqa: BLE001  sem internet, Release fora do ar etc.: o pipeline segue sem o PURE
+            log(f"> [PURE] Download failed ({err}). Relations will be classified by the LLM; "
+                f"the download resumes next time.")
+            return False
+        log("> [PURE] Model downloaded.")
+    calibration = calibration_path(dest)
+    if not calibration.exists() and not _download_disabled() and _sha256(dest) == PURE_MODEL["sha256"]:
+        try:
+            download_file(PURE_MODEL["calibration_url"], calibration, PURE_MODEL["calibration_sha256"])
+            log("> [PURE] Calibration downloaded.")
+        except Exception as err:  # noqa: BLE001  o modelo já está aqui: roda sem calibração e tenta de novo depois
+            log(f"> [PURE] Calibration download failed ({err}). The model runs without calibration "
+                f"(confidence threshold 0.70); the download is retried next time.")
     return True
 
 
