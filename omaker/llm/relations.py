@@ -68,10 +68,14 @@ def relation_system(log) -> str:
     return optimized_system(json.loads(OPTIMIZED_PROMPT.read_text(encoding="utf-8")))
 
 
-def classify_pairs(client: LLMClient, pairs: list[dict], temperature: float, log) -> list[tuple[str, None]]:
-    """Classifies candidate pairs with the LLM when there is no trained PURE checkpoint (no confidence)."""
+def classify_pairs(client: LLMClient, pairs: list[dict], temperature: float, log,
+                   system: str | None = None) -> list[tuple[str, None]]:
+    """Classifies candidate pairs with the LLM when there is no trained PURE checkpoint (no confidence).
+
+    `system` replaces the prompt chosen by OMAKER_LLM_PROMPT (omaker.evaluation.llm_batch compares both).
+    """
     log("> [LLM] No trained PURE checkpoint found: classifying pairs with the LLM (no confidence scores).")
-    system = relation_system(log)
+    system = system or relation_system(log)
     out = [(NO_RELATION, None)] * len(pairs)
     for start in range(0, len(pairs), PAIR_BATCH):
         chunk = pairs[start:start + PAIR_BATCH]

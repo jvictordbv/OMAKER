@@ -292,3 +292,15 @@ Fonte: `omaker/llm/optimize.py` ; Verificado por: `tests/test_llm_optimize.py::t
 - **DADO** uma otimização que caiu depois da avaliação do prompt escrito à mão
 - **QUANDO** o usuário roda `--resume runs/<pasta>`
 - **ENTÃO** só as etapas que faltam são refeitas
+
+### Requisito: Prompt de relações medido em lotes, como no pipeline (AVA-24)
+
+O sistema DEVE oferecer um comando (`python -m omaker.evaluation.llm_batch`, sem o extra `dspy`) que meça o prompt escrito à mão e o prompt otimizado instalado pelo mesmo caminho do pipeline: `classify_pairs`, em lotes de 15 pares consecutivos, com a saída em JSON, nos pares de validação e de teste do BioRED, com temperatura e semente fixas. Um lote que falhe DEVE contar todo como `no_relation` e entrar na contagem de lotes com falha. Cada lote respondido DEVE ser gravado, para a execução poder ser retomada com `--resume`, e a retomada DEVE recusar configurações ou textos de prompt diferentes.
+
+Fonte: `omaker/evaluation/llm_batch.py`, `omaker/llm/relations.py` (`classify_pairs`, parâmetro `system`) ; Verificado por: `tests/test_llm_batch_eval.py::test_batches_have_at_most_15_consecutive_pairs_in_pipeline_format`, `tests/test_llm_batch_eval.py::test_systems_are_the_handwritten_and_the_optimized_pipeline_prompts`, `tests/test_llm_batch_eval.py::test_systems_require_the_installed_optimized_prompt`, `tests/test_llm_batch_eval.py::test_full_run_scores_both_prompts_on_dev_and_test_in_batches`, `tests/test_llm_batch_eval.py::test_failed_batch_counts_as_no_relation_and_is_reported`, `tests/test_llm_batch_eval.py::test_resume_continues_from_the_next_batch`, `tests/test_llm_batch_eval.py::test_resume_refuses_changed_settings_or_prompt`
+
+#### Cenário: medida interrompida
+
+- **DADO** uma medida que caiu no meio dos lotes do prompt otimizado
+- **QUANDO** o usuário roda `--resume runs/<pasta>`
+- **ENTÃO** só os lotes que faltam são pedidos ao LLM
