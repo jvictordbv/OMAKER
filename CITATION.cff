@@ -12,7 +12,7 @@ authors:
     orcid: "https://orcid.org/0009-0004-9329-4956"
 repository-code: "https://github.com/jvictordbv/OMAKER"
 license: AGPL-3.0-only
-version: 0.2.0
+version: 0.3.0
 keywords:
   - ontology engineering
   - OWL
